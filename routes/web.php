@@ -5,6 +5,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\LikeController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ImageController;
 
@@ -30,6 +32,15 @@ Route::get('/categories/{category:slug}', [ArticleController::class, 'articlesBy
 
 
 Route::middleware('auth')->group(function () {
+
+    Route::post('/articles/{article:slug}/like', [LikeController::class, 'toggle'])->name('articles.like.toggle');
+    Route::get('/articles/{article:slug}/like/status', [LikeController::class, 'status'])->name('articles.like.status');
+
+    Route::post('/articles/{article:slug}/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::put('/comments/{comment}', [CommentController::class, 'update'])->name('comments.update');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+
+
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');

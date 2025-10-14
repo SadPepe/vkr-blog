@@ -49,12 +49,11 @@ class ArticleController extends Controller
         ]);
 
         return redirect()->route('articles.show', $article->slug);
-
-
     }
 
     public function destroy(Article $article)
-    {   Gate::authorize('delete', $article);
+    {
+        Gate::authorize('delete', $article);
 
         try {
             // Удаляем связанное изображение
@@ -71,9 +70,6 @@ class ArticleController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-
-
-
     }
 
     public function edit(Article $article)
@@ -147,15 +143,31 @@ class ArticleController extends Controller
 
     public function show(Article $article)
     {
+
+        $article->incrementViews();
+
+        $article->load([
+            'user',
+            'comments.user',
+            'comments.replies.user'
+        ]);
+
+        $article->is_liked = auth()->check() ? $article->getIsLikedAttribute() : false;
+        $article->likes_count = $article->likes_count;
+
         return Inertia::render('Articles/Show', [
-            'article' => $article->load('user')
+            'article' => $article
         ]);
     }
 
     public function index()
     {
+        $articles = Article::with(['user'])
+            ->latest()
+            ->paginate(12);
+
         return inertia('Home', [
-            'articles' => Article::with('user')->latest()->paginate(12)
+            'articles' => $articles
         ]);
     }
 
@@ -178,8 +190,6 @@ class ArticleController extends Controller
                 ->paginate(12),
             'searchQuery' => $search
         ]);
-
-
     }
 
 
@@ -205,20 +215,6 @@ class ArticleController extends Controller
                 'categories' => $categories,
                 'activeCategory' => $activeCategory
             ]);
-
         }
-
-
-
-
     }
-
-
-
-
-
-
-
-
 }
-
