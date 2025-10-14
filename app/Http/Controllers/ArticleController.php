@@ -9,6 +9,8 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Gate;
 use App\Traits\HandlesArticles;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+
 
 
 
@@ -143,7 +145,7 @@ class ArticleController extends Controller
 
     public function show(Article $article)
     {
-
+        // Обновляем метод увеличения просмотров
         $article->incrementViews();
 
         $article->load([
@@ -166,8 +168,16 @@ class ArticleController extends Controller
             ->latest()
             ->paginate(12);
 
+        // Используем PopularArticleController для получения популярных статей
+        $popularArticleController = new \App\Http\Controllers\PopularArticleController();
+        $popularArticles = $popularArticleController->getPopularArticles(5, 'week');
+
+        $categories = Category::orderBy('name')->get();
+
         return inertia('Home', [
-            'articles' => $articles
+            'articles' => $articles,
+            'popularArticles' => $popularArticles,
+            'categories' => $categories
         ]);
     }
 
@@ -200,21 +210,47 @@ class ArticleController extends Controller
         return Inertia::render('Articles/Create');   // Vue component
     }
 
+
     public function articlesByCategory($categorySlug = null)
     {
-        $articles = Article::all();
-        $categories = Category::all();
+        $categories = Category::orderBy('name')->get();
 
         if ($categorySlug) {
+            $articles = Article::where('category_slug', $categorySlug)
+                ->with(['user'])
+                ->latest()
+                ->paginate(10);
 
-            $articles = Article::where('category_slug', $categorySlug)->with("user")->latest()->paginate(10);
-            $activeCategory = $categorySlug;
+            // Для категорий тоже используем популярные статьи за неделю
+            $popularArticleController = new \App\Http\Controllers\PopularArticleController();
+            $popularArticles = Article::where('category_slug', $categorySlug)
+                ->with(['user'])
+                ->addSelect([
+                    'recent_views' => \App\Models\ArticleView::select(DB::raw('COUNT(*)'))
+                        ->whereColumn('article_views.article_id', 'articles.id')
+                        ->where('article_views.created_at', '>=', now()->subWeek()),
+
+                    'recent_likes' => \App\Models\Like::select(DB::raw('COUNT(*)'))
+                        ->whereColumn('likes.article_id', 'articles.id')
+                        ->where('likes.created_at', '>=', now()->subWeek()),
+
+                    'recent_comments' => \App\Models\Comment::select(DB::raw('COUNT(*)'))
+                        ->whereColumn('comments.article_id', 'articles.id')
+                        ->where('comments.created_at', '>=', now()->subWeek())
+                        ->whereNull('comments.parent_id')
+                ])
+                ->orderByRaw('(recent_views * 1 + recent_likes * 2 + recent_comments * 1.5) DESC')
+                ->limit(5)
+                ->get();
 
             return Inertia::render('Home', [
                 'articles' => $articles,
                 'categories' => $categories,
-                'activeCategory' => $activeCategory
+                'popularArticles' => $popularArticles,
+                'activeCategory' => $categorySlug
             ]);
         }
+
+        return $this->index();
     }
 }

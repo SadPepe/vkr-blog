@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\LikeController;
+use App\Http\Controllers\PopularArticleController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ImageController;
 
@@ -26,9 +27,6 @@ Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('l
 Route::get('/search', [ArticleController::class, 'search'])->name('articles.search');
 
 Route::get('/categories/{category:slug}', [ArticleController::class, 'articlesByCategory'])->name('articlesByCategory');
-
-
-
 
 
 Route::middleware('auth')->group(function () {

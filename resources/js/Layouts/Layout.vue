@@ -1,11 +1,11 @@
 <template>
-    <div class="mt-[150px] mx-auto max-w-screen-xl">
+    <div class="mt-[150px] mx-auto max-w-[1500px]">
         <header class="">
             <Navbar @search="performSearch" />
         </header>
 
         <PageTransition>
-            <main class="min-h-[85vh]">
+            <main>
                 <slot />
             </main>
         </PageTransition>
