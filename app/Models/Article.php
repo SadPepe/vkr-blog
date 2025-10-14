@@ -18,7 +18,8 @@ class Article extends Model
         'user_id',
         'category_slug',
         'views_count',
-        'likes_count'
+        'likes_count',
+        'comments_count'
     ];
     protected $dates = [
         'published_at',
@@ -49,15 +50,20 @@ class Article extends Model
         return $this->hasMany(Comment::class)->orderBy('created_at');
     }
 
+    public function syncCommentsCount()
+    {
+        $this->update(['comments_count' => $this->comments()->count()]);
+    }
+
     public function likes()
     {
         return $this->hasMany(Like::class);
     }
 
     // Проверяем, лайкнул ли текущий пользователь статью
-   
 
-     public function getIsLikedAttribute()
+
+    public function getIsLikedAttribute()
     {
         if (!auth()->check()) {
             return false;
@@ -75,11 +81,36 @@ class Article extends Model
     {
         $this->update(['likes_count' => $this->likes()->count()]);
     }
-    
 
-    // Увеличиваем счетчик просмотров
+    public function views()
+    {
+        return $this->hasMany(ArticleView::class);
+    }
+
+    // Метод для увеличения просмотров
     public function incrementViews()
     {
         $this->increment('views_count');
+
+        // Также записываем в таблицу просмотров
+        ArticleView::create([
+            'article_id' => $this->id,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent()
+        ]);
     }
+
+    // Получаем количество просмотров за период
+    public function getViewsCountForPeriod($period)
+    {
+        $date = match ($period) {
+            'day' => now()->subDay(),
+            'week' => now()->subWeek(),
+            'month' => now()->subMonth(),
+            default => now()->subWeek()
+        };
+
+        return $this->views()->where('created_at', '>=', $date)->count();
+    }
+
 }

@@ -53,11 +53,12 @@ class CommentController extends Controller
     {
         Gate::authorize('delete', $comment);
 
+        $article = $comment->article;
+
         $comment->delete();
 
-        if (request()->wantsJson()) {
-            return response()->json(['message' => 'Комментарий удален']);
-        }
+        // Обновляем счетчик комментариев статьи
+        $article->decrement('comments_count');
 
         return back()->with('success', 'Комментарий удален');
     }
