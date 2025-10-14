@@ -22,7 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'about',
-        
+
     ];
 
     /**
@@ -49,18 +49,23 @@ class User extends Authenticatable
     }
 
     public function getAvatarUrlAttribute()
-{
-    if (!$this->avatar) {
-        return null;
+    {
+        if (!$this->avatar) {
+            return null;
+        }
+
+        return str_starts_with($this->avatar, 'http')
+            ? $this->avatar
+            : asset('storage/' . $this->avatar);
     }
-    
-    return str_starts_with($this->avatar, 'http') 
-        ? $this->avatar 
-        : asset('storage/'.$this->avatar);
-}
 
     public function articles()
     {
         return $this->hasMany(Article::class);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
     }
 }
