@@ -6,6 +6,9 @@
 
 
                 <div class="article-container px-2 md:px-0">
+                    <ArticleStats :article="article" :views-count="article.views_count"
+                        :initial-liked="article.is_liked" :initial-likes-count="article.likes_count"
+                        :comments-count="article.comments.length" class="mb-6" />
 
                     <p class="text-gray-800 dark:text-stone-300 text-lg mt-6">Автор:
                         <a href="#"
@@ -27,10 +30,7 @@
 
                 </div>
 
-                <CommentSection 
-                    :comments="article.comments"
-                    :article="article"
-                />
+                <CommentSection :comments="article.comments" :article="article" />
 
 
             </div>
@@ -41,6 +41,7 @@
 <script setup>
 import MainLayout from '@/Layouts/Layout.vue'
 import CommentSection from '@/Components/Comments/CommentSection.vue';
+import ArticleStats from '@/Components/ArticleStats.vue';
 
 defineProps({
     article: {

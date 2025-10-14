@@ -143,11 +143,17 @@ class ArticleController extends Controller
 
     public function show(Article $article)
     {
+
+        $article->incrementViews();
+
         $article->load([
             'user',
             'comments.user',
             'comments.replies.user'
         ]);
+
+        $article->is_liked = auth()->check() ? $article->getIsLikedAttribute() : false;
+        $article->likes_count = $article->likes_count;
 
         return Inertia::render('Articles/Show', [
             'article' => $article
@@ -156,8 +162,12 @@ class ArticleController extends Controller
 
     public function index()
     {
+        $articles = Article::with(['user'])
+            ->latest()
+            ->paginate(12);
+
         return inertia('Home', [
-            'articles' => Article::with('user')->latest()->paginate(12)
+            'articles' => $articles
         ]);
     }
 
