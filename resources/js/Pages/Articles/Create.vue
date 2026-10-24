@@ -5,6 +5,7 @@
                 <div class="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-600 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                 
                 <button
+                    type="button"
                     @click="saveArticle"
                     :disabled="isSaving"
                     :class="[
@@ -28,56 +29,60 @@
         </div>
 
         <TiptapEditor
-            v-model="content"
             ref="editor"
-            :initial-content="content"
+            draft-key="article-create"
+            :initial-title="''"
+            :initial-content="''"
+            :initial-excerpt="''"
             @save="saveArticle"
         />
     </MainLayout>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import TiptapEditor from "@/Components/TipTapEditor.vue";
 import MainLayout from "@/Layouts/Layout.vue";
 import { router } from "@inertiajs/vue3";
 
 const editor = ref(null);
-const content = ref();
 const isSaving = ref(false);
-const lastSaved = ref(null);
 
 const saveArticle = async () => {
-    if (isSaving.value) return;
-    
-    isSaving.value = true;
-    
-    try {
-        // Получаем данные из редактора
-        const { formData, blobUrls } = await editor.value.prepareArticleData();
+    if (isSaving.value || !editor.value) return;
 
-        // Отправляем данные на сервер
-        await router.post(route("articles.store"), formData, {
-            onSuccess: () => {
-                // Очищаем blob-ссылки после успешной загрузки
-                editor.value.cleanupBlobUrls(blobUrls);
-                lastSaved.value = new Date().toLocaleTimeString('ru-RU');
-                
-                showNotification('Статья успешно сохранена!', 'success');
-            },
-            onError: (errors) => {
-                console.error("Ошибка сохранения:", errors);
-                showNotification('Ошибка при сохранении статьи', 'error');
-            },
-        });
-    } catch (error) {
-        console.error("Ошибка:", error);
-        showNotification('Произошла непредвиденная ошибка', 'error');
-    } finally {
-        isSaving.value = false;
+    const { formData, assetUrls, error } = await editor.value.prepareArticleData();
+
+    if (error) {
+        window.alert(error);
+        return;
     }
+
+    if (!formData) return;
+
+    isSaving.value = true;
+
+    // Inertia отправляет запрос асинхронно — сбрасываем флаг в onFinish,
+    // а не сразу после вызова (иначе возможна двойная отправка).
+    router.post(route("articles.store"), formData, {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Очищаем blob-ссылки и черновик после успешного сохранения
+            editor.value.cleanupBlobUrls(assetUrls);
+            editor.value.clearDraft();
+            lastSaved.value = new Date().toLocaleTimeString("ru-RU");
+        },
+        onError: (errors) => {
+            console.error("Ошибка сохранения:", errors);
+            window.alert("Ошибка при сохранении статьи");
+        },
+        onFinish: () => {
+            isSaving.value = false;
+        },
+    });
 };
 
+const lastSaved = ref(null);
 </script>
 
 <style scoped>

@@ -1,5 +1,5 @@
 <template>
-    <div class="mt-[150px] mx-auto max-w-[1500px]">
+    <div class="mt-24 mx-auto max-w-[1500px]">
         <header class="">
             <Navbar @search="performSearch" />
         </header>
@@ -14,7 +14,6 @@
 </template>
 
 <script setup>
-import { Link } from "@inertiajs/vue3";
 import Navbar from "@/Components/Navbar.vue";
 import PageTransition from "@/Shared/PageTransition.vue";
 import Footer from "@/Components/Footer.vue";

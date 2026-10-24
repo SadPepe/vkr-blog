@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
 use App\Models\Article;
 
 trait HandlesArticles
@@ -21,11 +22,79 @@ trait HandlesArticles
         return $slug;
     }
 
+    /**
+     * Возвращает допустимый ключ сортировки (по умолчанию - новые первыми).
+     */
+    protected function resolveSort(Request $request): string
+    {
+        $allowed = ['latest', 'oldest', 'popular', 'likes', 'comments'];
+        $sort = $request->input('sort');
+
+        return in_array($sort, $allowed, true) ? $sort : 'latest';
+    }
+
+    /**
+     * Применяет сортировку к запросу статей.
+     */
+    protected function applySort($query, string $sort)
+    {
+        return match ($sort) {
+            'oldest' => $query->orderBy('created_at'),
+            'popular' => $query->orderByDesc('views_count'),
+            'likes' => $query->orderByDesc('likes_count'),
+            'comments' => $query->orderByDesc('comments_count'),
+            default => $query->latest(),
+        };
+    }
+
     protected function deleteImage($path)
     {
         if (str_starts_with($path, '/storage/')) {
             $relativePath = str_replace('/storage/', '', $path);
             Storage::disk('public')->delete($relativePath);
+        }
+    }
+
+    /**
+     * Достаёт из HTML-контента пути встроенных изображений
+     * (/storage/images/*), сохранённых в публичном диске.
+     */
+    protected function extractContentImagePaths($content): array
+    {
+        $paths = [];
+        if (!$content) {
+            return $paths;
+        }
+
+        if (preg_match_all('#/storage/images/([^"\']+)#i', $content, $matches)) {
+            foreach ($matches[1] as $file) {
+                $paths[] = trim($file);
+            }
+        }
+
+        return array_values(array_unique($paths));
+    }
+
+    protected function deleteContentImages($content): void
+    {
+        foreach ($this->extractContentImagePaths($content) as $file) {
+            Storage::disk('public')->delete('images/' . $file);
+        }
+    }
+
+    /**
+     * Удаляет изображения, которые были в старом контенте, но исчезли
+     * из нового (картинку удалили из редактора).
+     */
+    protected function deleteRemovedContentImages($oldContent, $newContent): void
+    {
+        $removed = array_diff(
+            $this->extractContentImagePaths($oldContent),
+            $this->extractContentImagePaths($newContent)
+        );
+
+        foreach ($removed as $file) {
+            Storage::disk('public')->delete('images/' . $file);
         }
     }
 }

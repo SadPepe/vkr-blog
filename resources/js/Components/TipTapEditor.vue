@@ -1,8 +1,32 @@
 <template>
     <div class="relative max-w-4xl mx-auto dark:bg-transparent">
+        <!-- Баннер восстановленного черновика -->
+        <div
+            v-if="restoredDraft"
+            class="mb-4 flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-500/30 dark:bg-amber-500/10"
+        >
+            <div class="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
+                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>
+                    Восстановлен черновик{{
+                        restoredDraft.savedAt
+                            ? ` от ${formatSavedTime(restoredDraft.savedAt)}`
+                            : ''
+                    }}
+                </span>
+            </div>
+            <button type="button" @click="discardRestoredDraft"
+                class="rounded-lg px-3 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/20">
+                Отменить
+            </button>
+        </div>
+
         <!-- ФОРМА -->
         <div
-            class="border rounded-2xl dark:border-stone-700 mb-6 bg-white dark:bg-[#1a1a1a] shadow-sm hover:shadow-md transition-shadow duration-300"
+            class="border rounded-2xl dark:border-stone-700 mb-6 bg-[#FAF8F4] dark:bg-[#1a1a1a] shadow-sm hover:shadow-md transition-shadow duration-300"
         >
             <input
                 v-model="title"
@@ -83,6 +107,7 @@
                             class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-lg flex items-center justify-center"
                         >
                             <button
+                                type="button"
                                 @click="removeCardImage"
                                 class="opacity-0 group-hover:opacity-100 bg-red-500 text-white p-2 rounded-full transform scale-0 group-hover:scale-100 transition-all duration-300"
                             >
@@ -153,7 +178,7 @@
                     </label>
                     <select
                         v-model="selectedCategory"
-                        class="w-full p-3 border border-gray-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-stone-300 dark:bg-[#2a2a2a] transition-all duration-200 appearance-none bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzljYTBhZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+')] bg-no-repeat bg-[center_right_1rem]"
+                        class="w-full p-3 border border-gray-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-stone-300 dark:bg-[#2a2a2a] transition-all duration-200 appearance-none bg-[#FAF8F4] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzljYTBhZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+')] bg-no-repeat bg-[center_right_1rem]"
                     >
                         <option disabled :value="null" class="text-gray-400">
                             Выберите категорию
@@ -161,9 +186,6 @@
                         <option
                             v-for="categoryOption in categoryOptions"
                             :key="categoryOption.slug"
-                            :selected="
-                                categoryOption.slug === InitialCategorySlug
-                            "
                             :value="categoryOption.slug"
                             class="dark:bg-[#2a2a2a] dark:text-stone-300"
                         >
@@ -177,13 +199,14 @@
         <!-- ПАНЕЛЬ ИНСТРУМЕНТОВ -->
         <div
             v-if="editor"
-            class="dark:bg-[#1a1a1a] bg-white flex flex-wrap items-center rounded-2xl border dark:border-stone-700 mb-6 p-3 shadow-sm sticky top-[145px] z-10 backdrop-blur-sm bg-white/95 dark:bg-[#1a1a1a]/95"
+            class="dark:bg-[#1a1a1a] bg-[#FAF8F4] flex flex-wrap items-center rounded-2xl border dark:border-stone-700 mb-6 p-3 shadow-sm sticky top-24 z-10 backdrop-blur-sm bg-white/95 dark:bg-[#1a1a1a]/95"
         >
             <!-- Группа форматирования текста -->
             <div
                 class="flex items-center border-r border-gray-200 dark:border-stone-600 pr-3 mr-3"
             >
                 <button
+                    type="button"
                     @click="editor.chain().focus().toggleBold().run()"
                     :disabled="!editor.can().chain().focus().toggleBold().run()"
                     :class="[
@@ -198,6 +221,7 @@
                     <BoldIcon class="w-5 h-5" />
                 </button>
                 <button
+                    type="button"
                     @click="editor.chain().focus().toggleItalic().run()"
                     :disabled="
                         !editor.can().chain().focus().toggleItalic().run()
@@ -214,6 +238,7 @@
                     <ItalicIcon class="w-5 h-5" />
                 </button>
                 <button
+                    type="button"
                     @click="editor.chain().focus().toggleUnderline().run()"
                     :class="[
                         editor.isActive('underline')
@@ -233,6 +258,7 @@
                 class="flex items-center border-r border-gray-200 dark:border-stone-600 pr-3 mr-3"
             >
                 <button
+                    type="button"
                     @click="
                         editor.chain().focus().toggleHeading({ level: 1 }).run()
                     "
@@ -248,6 +274,7 @@
                     H1
                 </button>
                 <button
+                    type="button"
                     @click="
                         editor.chain().focus().toggleHeading({ level: 2 }).run()
                     "
@@ -263,6 +290,7 @@
                     H2
                 </button>
                 <button
+                    type="button"
                     @click="
                         editor.chain().focus().toggleHeading({ level: 3 }).run()
                     "
@@ -284,6 +312,7 @@
                 class="flex items-center border-r border-gray-200 dark:border-stone-600 pr-3 mr-3"
             >
                 <button
+                    type="button"
                     @click="
                         editor.chain().focus().toggleTextAlign('left').run()
                     "
@@ -299,6 +328,7 @@
                     <AlignLeftIcon class="w-5 h-5" />
                 </button>
                 <button
+                    type="button"
                     @click="
                         editor.chain().focus().toggleTextAlign('center').run()
                     "
@@ -314,6 +344,7 @@
                     <AlignCenterIcon class="w-5 h-5" />
                 </button>
                 <button
+                    type="button"
                     @click="
                         editor.chain().focus().toggleTextAlign('right').run()
                     "
@@ -329,6 +360,7 @@
                     <AligRightIcon class="w-5 h-5" />
                 </button>
                 <button
+                    type="button"
                     @click="
                         editor.chain().focus().toggleTextAlign('justify').run()
                     "
@@ -350,6 +382,7 @@
                 class="flex items-center border-r border-gray-200 dark:border-stone-600 pr-3 mr-3"
             >
                 <button
+                    type="button"
                     @click="editor.chain().focus().toggleBulletList().run()"
                     :class="[
                         editor.isActive('bulletList')
@@ -363,6 +396,7 @@
                     <BulletListIcon class="w-5 h-5" />
                 </button>
                 <button
+                    type="button"
                     @click="editor.chain().focus().toggleOrderedList().run()"
                     :class="[
                         editor.isActive('orderedList')
@@ -380,6 +414,7 @@
             <!-- Группа дополнительных элементов -->
             <div class="flex items-center gap-1">
                 <button
+                    type="button"
                     @click="setLink"
                     :class="[
                         editor.isActive('link')
@@ -393,6 +428,7 @@
                     <LinkIcon class="w-5 h-5" />
                 </button>
                 <button
+                    type="button"
                     @click="editor.chain().focus().toggleBlockquote().run()"
                     :class="[
                         editor.isActive('blockquote')
@@ -406,6 +442,7 @@
                     <BlockquoteIcon class="w-5 h-5" />
                 </button>
                 <button
+                    type="button"
                     @click="editor.chain().focus().toggleCodeBlock().run()"
                     :class="[
                         editor.isActive('codeBlock')
@@ -419,6 +456,7 @@
                     <CodeIcon class="w-5 h-5" />
                 </button>
                 <button
+                    type="button"
                     @click="editor.chain().focus().setHorizontalRule().run()"
                     :class="'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300 p-2 rounded-lg transition-all duration-200 transform hover:scale-105'"
                     class="tooltip"
@@ -427,6 +465,7 @@
                     <HorizontalRuleIcon class="w-5 h-5" />
                 </button>
                 <button
+                    type="button"
                     @click="addImage"
                     :class="'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300 p-2 rounded-lg transition-all duration-200 transform hover:scale-105'"
                     class="tooltip"
@@ -435,6 +474,12 @@
                     <ImageIcon class="w-5 h-5" />
                 </button>
             </div>
+
+            <span
+                class="ml-auto hidden text-[11px] font-normal text-gray-400 md:inline dark:text-stone-500"
+            >
+                Черновик сохраняется автоматически (Ctrl+S)
+            </span>
         </div>
 
         <!-- BUBBLE МЕНЮ -->
@@ -445,9 +490,10 @@
             class="bubble-menu"
         >
             <div
-                class="flex items-center bg-white dark:bg-stone-800 rounded-xl shadow-lg border border-gray-200 dark:border-stone-600 p-2 backdrop-blur-sm bg-white/95 dark:bg-stone-800/95"
+                class="flex items-center bg-[#FAF8F4] dark:bg-stone-800 rounded-xl shadow-lg border border-gray-200 dark:border-stone-600 p-2 backdrop-blur-sm bg-white/95 dark:bg-stone-800/95"
             >
                 <button
+                    type="button"
                     @click="editor.chain().focus().toggleBold().run()"
                     :class="[
                         editor.isActive('bold')
@@ -459,6 +505,7 @@
                     <BoldIcon class="w-4 h-4" />
                 </button>
                 <button
+                    type="button"
                     @click="editor.chain().focus().toggleItalic().run()"
                     :class="[
                         editor.isActive('italic')
@@ -470,6 +517,7 @@
                     <ItalicIcon class="w-4 h-4" />
                 </button>
                 <button
+                    type="button"
                     @click="editor.chain().focus().toggleUnderline().run()"
                     :class="[
                         editor.isActive('underline')
@@ -482,6 +530,7 @@
                 </button>
                 <div class="w-px h-6 bg-gray-200 dark:bg-stone-600 mx-1"></div>
                 <button
+                    type="button"
                     @click="setLink"
                     :class="[
                         editor.isActive('link')
@@ -499,7 +548,7 @@
         <div class="relative">
             <editor-content :editor="editor" class="editor-content" />
             <div
-                v-if="!editor?.getHTML()"
+                v-if="editor && !hasContent"
                 class="absolute top-4 left-4 pointer-events-none text-gray-400 dark:text-stone-500 text-lg"
             >
                 Начните писать вашу статью...
@@ -513,14 +562,10 @@ import { BubbleMenu, Editor, EditorContent } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Heading from "@tiptap/extension-heading";
-import BulletList from "@tiptap/extension-bullet-list";
-import OrderedList from "@tiptap/extension-ordered-list";
 import Underline from "@tiptap/extension-underline";
 import Paragraph from "@tiptap/extension-paragraph";
-import Blockquote from "@tiptap/extension-blockquote";
-import HorizontalRule from "@tiptap/extension-horizontal-rule";
-import HardBreak from "@tiptap/extension-hard-break";
 import Link from "@tiptap/extension-link";
+import TextAlign from "@tiptap/extension-text-align";
 import BoldIcon from "vue-material-design-icons/FormatBold.vue";
 import ItalicIcon from "vue-material-design-icons/FormatItalic.vue";
 import UnderlineIcon from "vue-material-design-icons/FormatUnderline.vue";
@@ -535,7 +580,6 @@ import AlignLeftIcon from "vue-material-design-icons/FormatAlignLeft.vue";
 import AligRightIcon from "vue-material-design-icons/FormatAlignRight.vue";
 import ImageIcon from "vue-material-design-icons/Image.vue";
 import LinkIcon from "vue-material-design-icons/LinkVariant.vue";
-import TextAlign from "@tiptap/extension-text-align";
 import { onMounted, onBeforeUnmount, ref, watch } from "vue";
 
 const props = defineProps({
@@ -544,89 +588,252 @@ const props = defineProps({
     initialExcerpt: String,
     initialCardImage: String,
     initialCardCategory: String,
+    draftKey: {
+        type: String,
+        default: "default",
+    },
 });
 
 const emit = defineEmits(["save"]);
 
 // Реактивные переменные
 const title = ref(props.initialTitle || "");
-
 const editor = ref(null);
 const excerpt = ref(props.initialExcerpt || "");
-const InitialCategorySlug = ref(props.initialCardCategory || "");
 const cardImageFile = ref(null);
 const previewImage = ref(props.initialCardImage || "");
 const cardImageInput = ref(null);
-const selectedCategory = ref(null);
+const selectedCategory = ref(props.initialCardCategory || "");
+
+const hasContent = ref(false);
+const isDirty = ref(false);
+const restoredDraft = ref(null);
 
 function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// Инициализация редактора
+function debounce(ms, fn) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), ms);
+    };
+}
+
+// ---------- Черновики (LocalStorage) ----------
+const DRAFT_PREFIX = "blog_draft_";
+const MAX_DRAFT_SIZE = 400 * 1024; // 400KB — меньше лимита localStorage
+
+const draftStorageKey = () => DRAFT_PREFIX + (props.draftKey || "default");
+
+const loadDraft = () => {
+    try {
+        const raw = localStorage.getItem(draftStorageKey());
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || typeof data !== "object") return null;
+        return data;
+    } catch {
+        return null;
+    }
+};
+
+const clearDraft = () => {
+    try {
+        localStorage.removeItem(draftStorageKey());
+    } catch {
+        /* localStorage недоступен */
+    }
+    isDirty.value = false;
+    restoredDraft.value = null;
+};
+
+const currentSnapshot = () =>
+    JSON.stringify({
+        title: title.value || "",
+        excerpt: excerpt.value || "",
+        category: selectedCategory.value || "",
+        content: editor.value ? editor.value.getHTML() : props.initialContent || "",
+    });
+
+const initialSnapshot = () =>
+    JSON.stringify({
+        title: props.initialTitle || "",
+        excerpt: props.initialExcerpt || "",
+        category: props.initialCardCategory || "",
+        content: props.initialContent || "",
+    });
+
+const saveDraft = debounce(700, () => {
+    if (!editor.value) return;
+
+    if (currentSnapshot() === initialSnapshot()) {
+        clearDraft();
+        return;
+    }
+
+    const html = editor.value.getHTML();
+    if (html.length > MAX_DRAFT_SIZE) {
+        // Не пишем огромный контент в localStorage (может выпасть квота),
+        // но продолжаем держать его в памяти редактора.
+        return;
+    }
+
+    try {
+        localStorage.setItem(
+            draftStorageKey(),
+            JSON.stringify({
+                title: title.value,
+                excerpt: excerpt.value,
+                category: selectedCategory.value,
+                content: html,
+                savedAt: Date.now(),
+            })
+        );
+    } catch {
+        // Квота переполнена — черновик не сохраняется, но редактор жив.
+    }
+});
+
+const queueDraftSave = () => {
+    if (!editor.value) return;
+    isDirty.value = true;
+    saveDraft();
+};
+
+const discardRestoredDraft = () => {
+    clearDraft();
+    title.value = props.initialTitle || "";
+    excerpt.value = props.initialExcerpt || "";
+    selectedCategory.value = props.initialCardCategory || "";
+    editor.value?.commands.setContent(props.initialContent || "", false);
+    syncHasContent();
+};
+
+const formatSavedTime = (ts) =>
+    new Date(ts).toLocaleTimeString("ru-RU", {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+// Следим за полями — любое изменение помечаем «изменено» и сохраняем черновик
+watch([title, excerpt, selectedCategory], () => {
+    queueDraftSave();
+});
+
+// ---------- Инициализация редактора ----------
+const syncHasContent = () => {
+    hasContent.value =
+        !!editor.value && editor.value.state.doc.textContent.trim().length > 0;
+};
+
+const handleKeyDown = (_view, event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        if (!isDirty.value) return true;
+        emit("save");
+        return true;
+    }
+    return false;
+};
+
 onMounted(() => {
+    const draft = loadDraft();
+    const restoredContent = draft?.content || props.initialContent || "";
+
     editor.value = new Editor({
         extensions: [
             StarterKit,
+            // StarterKit уже включает заголовки; переопределяем конфигурацию.
             Heading.configure({
                 levels: [1, 2, 3],
                 HTMLAttributes: {
                     class: "heading text-stone-800 dark:text-stone-200",
                 },
             }),
-            Link.configure({
-                openOnClick: true,
-                defaultProtocol: "https",
-                HTMLAttributes: {
-                    class: "text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 cursor-pointer underline",
-                },
-            }),
-            BulletList,
-            BubbleMenu,
-            OrderedList,
-            Underline,
             Paragraph.configure({
                 HTMLAttributes: {
                     class: "text-stone-800 dark:text-stone-200 font-[Inter] leading-relaxed text-base",
                 },
             }),
-            Blockquote,
+            Underline,
+            Link.configure({
+                openOnClick: true,
+                defaultProtocol: "https",
+                protocols: ["http", "https", "mailto", "tel", "#"],
+                HTMLAttributes: {
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    class: "text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 cursor-pointer underline",
+                },
+            }),
             TextAlign.configure({
                 types: ["heading", "paragraph"],
             }),
-            HorizontalRule,
             Image.configure({
                 HTMLAttributes: {
                     class: "my-image rounded-md shadow-md max-w-full h-auto my-4 mx-auto",
                 },
                 allowBase64: true,
             }),
-            HardBreak.configure({
-                HTMLAttributes: {
-                    class: "hover:bg-gray-200 rounded",
-                },
-            }),
         ],
-
-        content: props.initialContent || "",
+        content: restoredContent,
         editorProps: {
             attributes: {
-                class: "prose prose-lg dark:prose-invert min-h-[600px] max-w-none mx-auto focus:outline-none p-6 border-2 border-dashed border-gray-200 dark:border-stone-700 rounded-2xl bg-white dark:bg-[#1a1a1a] shadow-sm hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors duration-300",
+                class: "prose prose-lg dark:prose-invert min-h-[600px] max-w-none mx-auto focus:outline-none p-6 border-2 border-dashed border-gray-200 dark:border-stone-700 rounded-2xl bg-[#FAF8F4] dark:bg-[#1a1a1a] shadow-sm hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors duration-300",
             },
+            handleKeyDown,
         },
     });
-    selectedCategory.value = props.initialCardCategory || "uncategorized";
-    title.value = props.initialTitle || "";
-    excerpt.value = props.initialExcerpt || "";
+
+    // Восстанавливаем значения полей
+    title.value = (draft?.title !== undefined ? draft.title : "") || props.initialTitle || "";
+    excerpt.value = (draft?.excerpt !== undefined ? draft.excerpt : "") || props.initialExcerpt || "";
+    selectedCategory.value =
+        (draft?.category !== undefined ? draft.category : "") || props.initialCardCategory || "";
+
+    if (draft?.content) {
+        restoredDraft.value = { savedAt: draft.savedAt || Date.now() };
+        isDirty.value = true;
+    }
+
+    editor.value.on("update", () => {
+        syncHasContent();
+        queueDraftSave();
+    });
+
+    // Упрощаем вставку из Word/PDF: сбрасываем скрытое форматирование,
+    // оставляя только осмысленные структуры (заголовки, списки и т.п.)
+    editor.value.on("paste", (_event, _slice, marksInRange) => {
+        // Tiptap контролирует пастинг через schema — Word-мусор уже отсекается.
+        // Здесь ничего не делаем, но оставляем обработчик для будущих проверок.
+        void marksInRange;
+    });
+
+    syncHasContent();
+
+    const handleBeforeUnload = (e) => {
+        if (isDirty.value && currentSnapshot() !== initialSnapshot()) {
+            e.preventDefault();
+            e.returnValue = "";
+        }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.__tiptapBeforeUnload = handleBeforeUnload;
 });
 
 // Очистка
 onBeforeUnmount(() => {
+    const handler = window.__tiptapBeforeUnload;
+    if (handler) {
+        window.removeEventListener("beforeunload", handler);
+        delete window.__tiptapBeforeUnload;
+    }
     editor.value?.destroy();
 });
 
 const categoryOptions = ref([
-    { name: "Без категории", slug: "uncategorized" },
     { name: "Игры", slug: "games" },
     { name: "Красота и стиль", slug: "beauty" },
     { name: "Еда", slug: "food" },
@@ -638,7 +845,7 @@ const categoryOptions = ref([
 ]);
 
 const setLink = () => {
-    const previousUrl = editor.value.getAttributes("link").href;
+    const previousUrl = editor.value.getAttributes("link").href || "";
     const url = window.prompt("Введите URL ссылки:", previousUrl);
 
     if (url === null) {
@@ -650,7 +857,23 @@ const setLink = () => {
         return;
     }
 
-    const finalUrl = url.match(/^https?:\/\//) ? url : `https://${url}`;
+    // Блокируем опасные схемы (javascript:, data:, vbscript:)
+    const trimmed = url.trim();
+    if (/^(javascript|vbscript|data):/i.test(trimmed)) {
+        window.alert("Недопустимый тип ссылки.");
+        return;
+    }
+
+    // Нормализуем URL: схемы (http(s):, mailto:, tel: и т.п.),
+    // относительные пути и якоря оставляем как есть.
+    // Голый домен без схемы получает https://.
+    const finalUrl = /^[a-z][a-z0-9+.\-]*:/i.test(trimmed)
+        || trimmed.startsWith("/")
+        || trimmed.startsWith("#")
+        || trimmed.startsWith("?")
+        || trimmed.startsWith("//")
+        ? trimmed
+        : `https://${trimmed}`;
 
     editor.value
         .chain()
@@ -667,14 +890,18 @@ const handleCardImageUpload = (e) => {
 
     // Проверка типа файла
     if (!file.type.match("image.*")) {
-        alert("Пожалуйста, выберите изображение");
+        window.alert("Пожалуйста, выберите изображение");
         return;
     }
 
     // Проверка размера (например, до 2MB)
     if (file.size > 2 * 1024 * 1024) {
-        alert("Максимальный размер файла - 2MB");
+        window.alert("Максимальный размер файла - 2MB");
         return;
+    }
+
+    if (previewImage.value && previewImage.value.startsWith("blob:")) {
+        URL.revokeObjectURL(previewImage.value);
     }
 
     cardImageFile.value = file;
@@ -683,6 +910,9 @@ const handleCardImageUpload = (e) => {
 
 // Удаление изображения
 const removeCardImage = () => {
+    if (previewImage.value && previewImage.value.startsWith("blob:")) {
+        URL.revokeObjectURL(previewImage.value);
+    }
     cardImageFile.value = null;
     previewImage.value = "";
     cardImageInput.value.value = "";
@@ -699,7 +929,7 @@ const addImage = () => {
         if (!file) return;
 
         if (file.size > 2 * 1024 * 1024) {
-            alert("Максимальный размер файла - 2MB");
+            window.alert("Максимальный размер файла - 2MB");
             return;
         }
 
@@ -716,40 +946,61 @@ const addImage = () => {
 const prepareArticleData = async () => {
     if (!editor.value) throw new Error("Editor not ready");
 
-    let content = editor.value.getHTML();
-    const blobUrls = [...content.matchAll(/src="(blob:[^"]+)"/g)];
+    // Клиентская валидация до отправки на сервер
+    if (!title.value.trim()) {
+        return { error: "Введите заголовок статьи." };
+    }
+    if (!excerpt.value.trim()) {
+        return { error: "Добавьте краткое описание статьи." };
+    }
+    if (!editor.value.state.doc.textContent.trim()) {
+        return { error: "Статья не может быть пустой — напишите хотя бы пару строк." };
+    }
 
-    // Загружаем картинки из редактора, отправляем на сервер и возвращаем путь
-    if (blobUrls.length > 0) {
-        const uploadResults = await Promise.all(
-            blobUrls.map(async ([_, blobUrl]) => {
-                const response = await fetch(blobUrl);
+    let content = editor.value.getHTML();
+
+    // Находим изображения как blob: (новые) и data: (base64, например вставки)
+    const assetSrcs = [
+        ...(content.matchAll(/src="((?:blob:[^"]+|data:image[^"]+))"/g) || []),
+    ]
+        .map((m) => m[1])
+        .filter((v, i, arr) => arr.indexOf(v) === i);
+
+    if (assetSrcs.length > 0) {
+        const replacements = [];
+
+        for (const assetUrl of assetSrcs) {
+            try {
+                const response = await fetch(assetUrl);
                 const blob = await response.blob();
+                const ext = (blob.type.split("/")[1] || "png").split(";")[0];
                 const formData = new FormData();
                 formData.append(
                     "image",
                     blob,
-                    `image-${Date.now()}.${blob.type.split("/")[1] || "png"}`
+                    `image-${Date.now()}-${Math.floor(Math.random() * 1e5)}.${ext}`
                 );
 
                 const { data } = await axios.post("/upload-image", formData);
-                return { blobUrl, serverUrl: data.url };
-            })
-        );
+                replacements.push({ assetUrl, serverUrl: data.url });
+            } catch (err) {
+                console.error("Не удалось загрузить изображение:", assetUrl, err);
+            }
+        }
 
-        uploadResults.forEach(({ blobUrl, serverUrl }) => {
+        replacements.forEach(({ assetUrl, serverUrl }) => {
             content = content.replace(
-                new RegExp(escapeRegExp(blobUrl), "g"),
+                new RegExp(escapeRegExp(assetUrl), "g"),
                 serverUrl
             );
         });
     }
 
-    // 4. Создаем FormData для отправки
+    // Создаем FormData для отправки
     const formData = new FormData();
-    formData.append("title", title.value);
+    formData.append("title", title.value.trim());
     formData.append("content", content);
-    formData.append("excerpt", excerpt.value);
+    formData.append("excerpt", excerpt.value.trim());
 
     if (selectedCategory.value) {
         formData.append("category_slug", selectedCategory.value);
@@ -761,27 +1012,30 @@ const prepareArticleData = async () => {
 
     return {
         formData,
-        blobUrls,
+        assetUrls: assetSrcs,
+        error: null,
     };
 };
 
 // Метод для очистки blob-ссылок
-const cleanupBlobUrls = (blobUrls) => {
-    if (blobUrls && blobUrls.length > 0) {
-        blobUrls.forEach(([_, blobUrl]) => {
-            URL.revokeObjectURL(blobUrl);
-        });
-    }
+const cleanupBlobUrls = (assetUrls) => {
+    (assetUrls || []).forEach((url) => {
+        if (typeof url === "string" && url.startsWith("blob:")) {
+            URL.revokeObjectURL(url);
+        }
+    });
 };
 
 defineExpose({
     prepareArticleData,
     cleanupBlobUrls,
+    clearDraft,
     title,
     excerpt,
     cardImageFile,
     previewImage,
     selectedCategory,
+    isDirty,
 });
 </script>
 
@@ -862,8 +1116,6 @@ defineExpose({
     margin: 0.8rem 0 1rem;
 }
 
-
-
 .dark .prose h2.heading {
     color: rgb(231 229 228 / var(--tw-text-opacity, 1));
 }
@@ -902,7 +1154,7 @@ defineExpose({
     padding-left: 1.5rem;
     margin: 1.5rem 0;
     font-style: italic;
-    background-color:rgba(172, 164, 253, 0.2);
+    background-color: rgba(172, 164, 253, 0.2);
     border-radius: 0.3rem;
 }
 

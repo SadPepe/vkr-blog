@@ -37,15 +37,8 @@ class PopularArticleController extends Controller
         ]);
     }
 
-    public function getPopularArticles($limit = 5)
+    public function getPopularArticles($limit = 5, $period = 'week')
     {
-        return Article::query()
-            ->with(['user'])
-            ->where('created_at', '>=', now()->subMonth())
-            ->orderBy('views_count', 'desc')
-            ->orderBy('likes_count', 'desc')
-            ->orderBy('comments_count', 'desc')
-            ->limit($limit)
-            ->get(['id', 'title', 'slug', 'card_image_path', 'views_count', 'likes_count', 'comments_count', 'created_at', 'user_id']);
+        return Article::popularForPeriod((int) $limit, $period);
     }
 }

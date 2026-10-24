@@ -7,9 +7,10 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Gate;
-use App\Traits\HandlesArticles;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Traits\HandlesArticles;
+use App\Support\HtmlSanitizer;
+use Illuminate\Support\Facades\Storage;
 
 
 
@@ -25,13 +26,16 @@ class ArticleController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'excerpt' => 'required|string|max:200',
-            'content' => 'required|string',
+            'content' => 'required|string|max:200000',
             'card_image' => 'nullable|image|max:2048', // 2MB max
             'category_slug' => 'nullable|exists:categories,slug'
         ]);
 
         // Генерация уникального slug
         $slug = $this->generateUniqueSlug($validated['title']);
+
+        //Санитизация HTML от XSS (вырезаются script, on* , javascript: и т.п.)
+        $content = HtmlSanitizer::sanitize($validated['content']);
 
         //Сохраняем картинку карточки в Storage и сохраняем путь
         $cardImagePath = null;
@@ -44,10 +48,10 @@ class ArticleController extends Controller
             'title' => $validated['title'],
             'slug' => $slug,
             'excerpt' => $validated['excerpt'],
-            'content' => $validated['content'],
+            'content' => $content,
             'card_image_path' => $cardImagePath,
             'user_id' => auth()->id(),
-            'category_slug' => $validated['category_slug']
+            'category_slug' => $validated['category_slug'] ?? null
         ]);
 
         return redirect()->route('articles.show', $article->slug);
@@ -58,11 +62,14 @@ class ArticleController extends Controller
         Gate::authorize('delete', $article);
 
         try {
-            // Удаляем связанное изображение
+            // Удаляем связанное изображение карточки
             if ($article->card_image_path) {
                 $imagePath = str_replace('/storage/', '', $article->card_image_path);
                 Storage::delete('public/' . $imagePath);
             }
+
+            // Удаляем изображения, встроенные в контент
+            $this->deleteContentImages($article->content);
 
             // Удаляем статью
             $article->delete();
@@ -99,7 +106,7 @@ class ArticleController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'excerpt' => 'required|string|max:200',
-            'content' => 'required|string',
+            'content' => 'required|string|max:200000',
             'card_image' => 'nullable|image|max:2048',
             'remove_card_image' => 'nullable|boolean',
             'category_slug' => 'nullable|exists:categories,slug'
@@ -123,7 +130,13 @@ class ArticleController extends Controller
             $cardImagePath = '/storage/' . $path;
         }
 
-        $content = $validated['content'];
+        $oldContent = $article->content;
+
+        // Санитизация HTML от XSS
+        $content = HtmlSanitizer::sanitize($validated['content']);
+
+        // Удаляем изображения, которые убрали из контента редактором
+        $this->deleteRemovedContentImages($oldContent, $content);
 
         // Обновление slug только если изменился заголовок
         $slug = $article->slug;
@@ -137,7 +150,7 @@ class ArticleController extends Controller
             'excerpt' => $validated['excerpt'],
             'content' => $content,
             'card_image_path' => $cardImagePath,
-            'category_slug' => $validated['category_slug']
+            'category_slug' => $validated['category_slug'] ?? null
         ]);
 
         return redirect()->route('profile');
@@ -151,22 +164,44 @@ class ArticleController extends Controller
         $article->load([
             'user',
             'comments.user',
-            'comments.replies.user'
+            'comments.replies.user',
+            'comments.likes',
+            'comments.replies.likes',
         ]);
 
         $article->is_liked = auth()->check() ? $article->getIsLikedAttribute() : false;
-        $article->likes_count = $article->likes_count;
+
+        // Помечаем комментарии: лайкнул ли их текущий пользователь
+        $article->comments->each(function ($comment) {
+            $comment->markLikedByCurrentUser();
+            $comment->replies->each(fn ($reply) => $reply->markLikedByCurrentUser());
+        });
+
+        // Похожие статьи из той же категории
+        $relatedArticles = $article->category_slug
+            ? Article::where('category_slug', $article->category_slug)
+                ->whereKeyNot($article->id)
+                ->latest()
+                ->limit(4)
+                ->get()
+            : collect();
+
+        $popularArticleController = new \App\Http\Controllers\PopularArticleController();
 
         return Inertia::render('Articles/Show', [
-            'article' => $article
+            'article' => $article,
+            'popularArticles' => $popularArticleController->getPopularArticles(4),
+            'relatedArticles' => $relatedArticles,
         ]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $articles = Article::with(['user'])
-            ->latest()
-            ->paginate(12);
+        $sort = $this->resolveSort($request);
+
+        $articles = $this->applySort(Article::with(['user']), $sort)
+            ->paginate(12)
+            ->withQueryString();
 
         // Используем PopularArticleController для получения популярных статей
         $popularArticleController = new \App\Http\Controllers\PopularArticleController();
@@ -177,7 +212,8 @@ class ArticleController extends Controller
         return inertia('Home', [
             'articles' => $articles,
             'popularArticles' => $popularArticles,
-            'categories' => $categories
+            'categories' => $categories,
+            'sort' => $sort
         ]);
     }
 
@@ -188,17 +224,27 @@ class ArticleController extends Controller
             'query' => 'nullable|string|max:255'
         ]);
 
-        $search = $request->input('query');
+        $search = trim((string) $request->input('query'));
+
+        // PostgreSQL не поддерживает LIKE без учёта регистра для кириллицы,
+        // поэтому используем ILIKE на pgsql и LIKE на остальных драйверах
+        $likeOp = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+        $pattern = "%{$search}%";
 
         return inertia('SearchResults', [
             'articles' => Article::query()
-                ->when($search, function ($query) use ($search) {
-                    $query->where('title', 'like', "%{$search}%")
-                        ->orWhere('content', 'like', "%{$search}%");
-                })->with('user')
+                ->with('user')
+                ->when($search, function ($query) use ($pattern, $likeOp) {
+                    $query->where(function ($q) use ($pattern, $likeOp) {
+                        $q->where('title', $likeOp, $pattern)
+                            ->orWhere('excerpt', $likeOp, $pattern)
+                            ->orWhere('content', $likeOp, $pattern);
+                    });
+                })
                 ->latest()
-                ->paginate(12),
-            'searchQuery' => $search
+                ->paginate(12)
+                ->withQueryString(),
+            'searchQuery' => $search ?: null
         ]);
     }
 
@@ -211,43 +257,33 @@ class ArticleController extends Controller
     }
 
 
-    public function articlesByCategory($categorySlug = null)
+    public function articlesByCategory($category = null)
     {
         $categories = Category::orderBy('name')->get();
 
+        // При маршрутной привязке {category:slug} сюда приходит модель Category;
+        // извлекаем из неё slug, чтобы корректно фильтровать статьи
+        $categorySlug = $category instanceof Category ? $category->slug : $category;
+
         if ($categorySlug) {
-            $articles = Article::where('category_slug', $categorySlug)
-                ->with(['user'])
-                ->latest()
-                ->paginate(10);
+            $sort = $this->resolveSort(request());
+
+            $articles = $this->applySort(
+                Article::where('category_slug', $categorySlug)->with(['user']),
+                $sort
+            )
+                ->paginate(10)
+                ->withQueryString();
 
             // Для категорий тоже используем популярные статьи за неделю
-            $popularArticleController = new \App\Http\Controllers\PopularArticleController();
-            $popularArticles = Article::where('category_slug', $categorySlug)
-                ->with(['user'])
-                ->addSelect([
-                    'recent_views' => \App\Models\ArticleView::select(DB::raw('COUNT(*)'))
-                        ->whereColumn('article_views.article_id', 'articles.id')
-                        ->where('article_views.created_at', '>=', now()->subWeek()),
-
-                    'recent_likes' => \App\Models\Like::select(DB::raw('COUNT(*)'))
-                        ->whereColumn('likes.article_id', 'articles.id')
-                        ->where('likes.created_at', '>=', now()->subWeek()),
-
-                    'recent_comments' => \App\Models\Comment::select(DB::raw('COUNT(*)'))
-                        ->whereColumn('comments.article_id', 'articles.id')
-                        ->where('comments.created_at', '>=', now()->subWeek())
-                        ->whereNull('comments.parent_id')
-                ])
-                ->orderByRaw('(recent_views * 1 + recent_likes * 2 + recent_comments * 1.5) DESC')
-                ->limit(5)
-                ->get();
+            $popularArticles = Article::popularForPeriod(5, 'week', $categorySlug);
 
             return Inertia::render('Home', [
                 'articles' => $articles,
                 'categories' => $categories,
                 'popularArticles' => $popularArticles,
-                'activeCategory' => $categorySlug
+                'activeCategory' => $categorySlug,
+                'sort' => $sort
             ]);
         }
 

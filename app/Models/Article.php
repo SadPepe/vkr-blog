@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 class Article extends Model
 {
@@ -90,12 +91,29 @@ class Article extends Model
     // Метод для увеличения просмотров
     public function incrementViews()
     {
+        // Не накручиваем просмотры самому себе
+        if (auth()->check() && auth()->id() === $this->user_id) {
+            return;
+        }
+
+        $ip = request()->ip();
+
+        // Учитываем один просмотр с одного IP в сутки
+        $alreadyCounted = $this->views()
+            ->where('ip_address', $ip)
+            ->where('created_at', '>=', now()->startOfDay())
+            ->exists();
+
+        if ($alreadyCounted) {
+            return;
+        }
+
         $this->increment('views_count');
 
         // Также записываем в таблицу просмотров
         ArticleView::create([
             'article_id' => $this->id,
-            'ip_address' => request()->ip(),
+            'ip_address' => $ip,
             'user_agent' => request()->userAgent()
         ]);
     }
@@ -111,6 +129,45 @@ class Article extends Model
         };
 
         return $this->views()->where('created_at', '>=', $date)->count();
+    }
+
+    // Популярные статьи за период (взвешенный рейтинг активности за неделю/месяц)
+    public static function popularForPeriod(int $limit = 5, string $period = 'week', ?string $categorySlug = null)
+    {
+        $date = match ($period) {
+            'day' => now()->subDay(),
+            'week' => now()->subWeek(),
+            'month' => now()->subMonth(),
+            'all' => null,
+            default => now()->subWeek(),
+        };
+
+        $sub = static::query()
+            ->addSelect([
+                'recent_views' => ArticleView::select(DB::raw('COUNT(*)'))
+                    ->whereColumn('article_views.article_id', 'articles.id')
+                    ->when($date, fn ($query) => $query->where('article_views.created_at', '>=', $date)),
+
+                'recent_likes' => Like::select(DB::raw('COUNT(*)'))
+                    ->whereColumn('likes.article_id', 'articles.id')
+                    ->when($date, fn ($query) => $query->where('likes.created_at', '>=', $date)),
+
+                'recent_comments' => Comment::select(DB::raw('COUNT(*)'))
+                    ->whereColumn('comments.article_id', 'articles.id')
+                    ->when($date, fn ($query) => $query->where('comments.created_at', '>=', $date))
+                    ->whereNull('comments.parent_id'),
+            ])
+            ->getQuery();
+
+        return static::hydrate(
+            DB::table($sub, 'popular')
+                ->select('popular.*')
+                ->when($categorySlug, fn ($query) => $query->where('popular.category_slug', $categorySlug))
+                ->orderByRaw('(recent_views * 1 + recent_likes * 2 + recent_comments * 1.5) DESC')
+                ->limit($limit)
+                ->get()
+                ->all()
+        )->load('user');
     }
 
 }

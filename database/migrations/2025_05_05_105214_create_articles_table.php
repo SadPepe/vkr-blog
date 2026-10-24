@@ -14,11 +14,15 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('title');
+            $table->string('excerpt', 200)->after('title');
+            $table->string('category_slug')->nullable();
+            $table->foreign('category_slug')
+      ->references('slug')
+      ->on('categories')
+      ->nullOnDelete(); 
             $table->string('slug')->unique(); // ЧПУ для URL
             $table->text('content');
-            $table->string('excerpt', 200)->after('title');
             $table->string('card_image_path')->nullable()->after('content');
-
             $table->timestamps();
 
 

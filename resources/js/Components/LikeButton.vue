@@ -4,40 +4,33 @@
         @click="toggleLike"
         :disabled="loading"
         :class="[
-            'flex items-center space-x-2 px-4 py-2 rounded-lg border transition-all duration-300',
-            liked 
-                ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
-                : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400'
+            'inline-flex items-center gap-1.5 text-gray-500 transition-colors dark:text-stone-500',
+            liked
+                ? 'text-red-500 dark:text-red-400'
+                : 'hover:text-red-500 dark:hover:text-red-400'
         ]"
+        :aria-label="liked ? 'Убрать лайк' : 'Поставить лайк'"
     >
-        <svg 
-            class="w-5 h-5 transition-transform duration-300" 
+        <svg
+            class="h-4 w-4 transition-transform duration-300"
             :class="{ 'scale-110': liked, 'scale-100': !liked }"
-            fill="currentColor" 
-            viewBox="0 0 20 20"
+            :fill="liked ? 'currentColor' : 'none'"
+            stroke="currentColor"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
         >
-            <path 
-                v-if="liked"
-                fill-rule="evenodd" 
-                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" 
-                clip-rule="evenodd"
-            />
-            <path 
-                v-else
-                fill-rule="evenodd" 
-                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" 
-                clip-rule="evenodd"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
             />
         </svg>
-        <span class="font-medium">{{ likesCount }}</span>
+        <span>{{ likesCount }}</span>
     </button>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
@@ -65,7 +58,6 @@ const authUser = computed(() => page.props.auth.user);
 
 const toggleLike = async () => {
     if (!authUser.value) {
-        // Перенаправляем на страницу входа
         router.visit(route('login'));
         return;
     }
@@ -79,17 +71,20 @@ const toggleLike = async () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
             },
             body: JSON.stringify({})
         });
+
+        if (response.status === 401) {
+            router.visit(route('login'));
+            return;
+        }
 
         if (response.ok) {
             const data = await response.json();
             liked.value = data.liked;
             likesCount.value = data.likes_count;
-        } else {
-            console.error('Ошибка при обновлении лайка');
         }
     } catch (error) {
         console.error('Ошибка:', error);
@@ -97,20 +92,4 @@ const toggleLike = async () => {
         loading.value = false;
     }
 };
-
-// Загружаем статус лайка при монтировании
-onMounted(async () => {
-    if (authUser.value) {
-        try {
-            const response = await fetch(route('articles.like.status', props.article.slug));
-            if (response.ok) {
-                const data = await response.json();
-                liked.value = data.liked;
-                likesCount.value = data.likes_count;
-            }
-        } catch (error) {
-            console.error('Ошибка при загрузке статуса лайка:', error);
-        }
-    }
-});
 </script>

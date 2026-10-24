@@ -4,6 +4,7 @@
             <div class="relative group">
                 <div class="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-600 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                 <button
+                    type="button"
                     @click="updateArticle"
                     :disabled="isSaving"
                     :class="[
@@ -27,6 +28,7 @@
         </div>
         <TiptapEditor
              ref="editor"
+            :draft-key="draftKey"
             :initial-title="article.title"
             :initial-content="article.content"
             :initial-excerpt="article.excerpt"
@@ -38,7 +40,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import TiptapEditor from "@/Components/TipTapEditor.vue";
 import MainLayout from "@/Layouts/Layout.vue";
 import { router } from "@inertiajs/vue3";
@@ -48,31 +50,43 @@ const props = defineProps({
 });
 
 const editor = ref(null);
+const isSaving = ref(false);
+
+const draftKey = computed(() => `article-${props.article?.slug || 'edit'}`);
 
 const updateArticle = async () => {
-    if (!editor.value) {
-        console.error('Editor component is not ready');
+    if (isSaving.value || !editor.value) {
+        if (!editor.value) console.error('Editor component is not ready');
         return;
     }
 
-    try {
-        const { formData, blobUrls } = await editor.value.prepareArticleData();
-        
-        await router.post(route('articles.update', props.article.slug), {
-            _method: 'PUT',
-            ...Object.fromEntries(formData)
-        }, {
-            onSuccess: () => {
-                if (blobUrls) {
-                    editor.value.cleanupBlobUrls(blobUrls);
-                }
-            },
-            onError: (errors) => {
-                console.error('Ошибка обновления:', errors);
-            }
-        });
-    } catch (error) {
-        console.error('Ошибка:', error);
+    const { formData, assetUrls, error } = await editor.value.prepareArticleData();
+
+    if (error) {
+        window.alert(error);
+        return;
     }
+
+    if (!formData) return;
+
+    isSaving.value = true;
+
+    router.post(route('articles.update', props.article.slug), {
+        _method: 'PUT',
+        ...Object.fromEntries(formData),
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Очищаем blob-ссылки и черновик после успешного сохранения
+            editor.value.cleanupBlobUrls(assetUrls);
+            editor.value.clearDraft();
+        },
+        onError: (errors) => {
+            console.error('Ошибка обновления:', errors);
+        },
+        onFinish: () => {
+            isSaving.value = false;
+        },
+    });
 };
 </script>

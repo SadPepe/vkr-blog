@@ -1,98 +1,75 @@
 <!-- resources/js/Pages/SearchResults.vue -->
 <template>
     <Layout>
-        <h1 v-if="searchQuery" class="pt-2 pl-4 pr-2 font-bold text-gray-800 dark:text-stone-300 leading-tight text-4xl mb-9">
+        <h1
+            v-if="searchQuery"
+            class="pt-2 pl-4 pr-2 mb-1 text-4xl leading-tight font-bold text-gray-800 dark:text-stone-300"
+        >
             Результаты поиска: {{ searchQuery }}
         </h1>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:px-6 sm:px-4">
-            <div
-                class="bg-white dark:bg-[#252525] cursor-pointer shadow-md overflow-hidden hover:shadow-lg transit sm:rounded-lg"
+        <p
+            v-if="searchQuery && articles.total > 0"
+            class="mb-9 pl-4 text-sm text-gray-500 dark:text-stone-400"
+        >
+            Найдено: {{ articles.total }} {{ plural(articles.total, ['статья', 'статьи', 'статей']) }}
+        </p>
+
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 md:px-6 sm:px-4">
+            <ArticleCard
                 v-for="article in articles.data"
                 :key="article.id"
+                :article="article"
+            />
+        </div>
+
+        <!-- Пустое состояние -->
+        <div
+            v-if="!articles.data.length"
+            class="py-16 text-center"
+        >
+            <svg class="mx-auto mb-4 h-16 w-16 text-gray-400 dark:text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <h3 class="mb-2 text-xl font-semibold text-gray-600 dark:text-stone-400">
+                {{ searchQuery ? 'Ничего не найдено' : 'Поиск по блогу' }}
+            </h3>
+            <p v-if="searchQuery" class="mb-6 text-gray-500 dark:text-stone-500">
+                По запросу «{{ searchQuery }}» ничего не найдено. Попробуйте изменить запрос.
+            </p>
+            <p v-else class="mb-6 text-gray-500 dark:text-stone-500">
+                Введите в шапке сайта запрос, чтобы найти интересные статьи.
+            </p>
+            <Link
+                :href="route('home')"
+                class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
             >
-                <a :href="'/articles/' + article.slug" class="cursor-pointer block">
-                    <img
-                        :src="article.card_image_path"
-                        alt="Изображение статьи"
-                        class="w-full h-48 object-cover"
-                        loading="lazy"
-                        v-if="article.card_image_path"
-                    />
-
-                    <div class="p-4">
-                        <!-- Статистика в карточке -->
-                        <div class="flex items-center justify-between text-sm text-gray-500 dark:text-stone-400 mb-3">
-                            <div class="flex items-center space-x-4">
-                                <!-- Просмотры -->
-                                <span class="flex items-center space-x-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                    <span>{{ article.views_count || 0 }}</span>
-                                </span>
-                                
-                                <!-- Лайки -->
-                                <span class="flex items-center space-x-1">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span>{{ article.likes_count || 0 }}</span>
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Автор и дата -->
-                        <div class="flex items-center mb-3">
-                            <img
-                                class="w-8 h-8 rounded-full mr-3"
-                                src="/storage/avatars/altAvat.png"
-                                :alt="article.user.name"
-                            />
-                            <div>
-                                <p class="text-sm font-medium text-gray-800 dark:text-stone-300">
-                                    {{ article.user.name }}
-                                </p>
-                                <p class="text-xs text-gray-500 dark:text-stone-500">
-                                    {{ formatDate(article.created_at) }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Заголовок и описание -->
-                        <h2 class="text-lg font-bold text-gray-800 dark:text-stone-300 leading-tight mb-2 line-clamp-2">
-                            {{ article.title }}
-                        </h2>
-                        <p class="text-stone-600 dark:text-gray-400 text-sm leading-relaxed line-clamp-3">
-                            {{ article.excerpt }}
-                        </p>
-                    </div>
-                </a>
-            </div>
+                На главную
+            </Link>
         </div>
 
         <Pagination
-            v-if="articles"
-            :links="articles?.links"
+            v-if="articles && articles.links && articles.links.length > 3"
+            :links="articles.links"
         />
     </Layout>
 </template>
 
 <script setup>
+import { Link } from "@inertiajs/vue3";
 import Layout from "@/Layouts/Layout.vue";
 import Pagination from "@/Components/Pagination.vue";
+import ArticleCard from "@/Components/ArticleCard.vue";
 
-const props = defineProps({
+defineProps({
     articles: Object,
-    searchQuery: String 
+    searchQuery: String,
 });
 
-const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+const plural = (count, [one, few, many]) => {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
 };
 </script>

@@ -22,6 +22,11 @@ class CommentController extends Controller
             'parent_id' => $validated['parent_id'] ?? null
         ]);
 
+        // Счётчик считает только комментарии верхнего уровня (без ответов)
+        if (!$comment->isReply()) {
+            $article->increment('comments_count');
+        }
+
         // Загружаем отношения для ответа
         $comment->load('user', 'replies.user');
 
@@ -57,9 +62,33 @@ class CommentController extends Controller
 
         $comment->delete();
 
-        // Обновляем счетчик комментариев статьи
-        $article->decrement('comments_count');
+        // Обновляем счетчик комментариев статьи (только для верхнего уровня)
+        if (!$comment->isReply()) {
+            $article->decrement('comments_count');
+        }
 
         return back()->with('success', 'Комментарий удален');
+    }
+
+    public function toggleLike(Request $request, Comment $comment)
+    {
+        $user = auth()->user();
+
+        $like = $comment->likes()->where('user_id', $user->id)->first();
+
+        if ($like) {
+            $like->delete();
+            $comment->decrement('likes_count');
+            $liked = false;
+        } else {
+            $comment->likes()->create(['user_id' => $user->id]);
+            $comment->increment('likes_count');
+            $liked = true;
+        }
+
+        return response()->json([
+            'liked' => $liked,
+            'likes_count' => $comment->fresh()->likes_count
+        ]);
     }
 }

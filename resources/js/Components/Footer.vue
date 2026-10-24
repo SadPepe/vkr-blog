@@ -1,172 +1,110 @@
 <template>
-    <div
-        class="px-4 pt-16 mx-auto dark:text-stone-300 sm:max-w-xl md:max-w-full lg:max-w-screen-xl md:px-24 lg:px-8"
-    >
-        <div class="grid gap-10 row-gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="sm:col-span-2">
-                <a
-                    href="/"
-                    aria-label="Go home"
-                    title="MyBlog"
-                    class="inline-flex items-center"
-                >
-                    <svg
-                        class="w-8 text-deep-purple-accent-400"
-                        viewBox="0 0 24 24"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-miterlimit="10"
-                        stroke="currentColor"
-                        fill="none"
+    <footer lang="ru" class="mx-auto mt-12 border-t border-zinc-200 bg-[#FAF8F4] dark:border-zinc-800 dark:bg-[#1c1c1c] dark:text-stone-300">
+        <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
+            <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+                <!-- О блоге -->
+                <div class="lg:col-span-2">
+                    <Link
+                        href="/"
+                        aria-label="На главную"
+                        class="inline-flex items-center gap-2.5 rounded-md text-lg font-bold tracking-tight text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-white"
                     >
-                        <rect x="3" y="1" width="7" height="12"></rect>
-                        <rect x="3" y="17" width="7" height="6"></rect>
-                        <rect x="14" y="1" width="7" height="6"></rect>
-                        <rect x="14" y="11" width="7" height="12"></rect>
-                    </svg>
-                    <span
-                        class="ml-2 text-xl font-bold tracking-wide text-gray-800 dark:text-stone-300 uppercase"
-                        >MyBlog</span
-                    >
-                </a>
-                <div class="mt-6 lg:max-w-sm">
-                    <p class="text-sm text-gray-800 dark:text-stone-300">
-                        Sed ut perspiciatis unde omnis iste natus error sit
-                        voluptatem accusantium doloremque laudantium, totam rem
-                        aperiam.
+                        <span
+                            class="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/30"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"/>
+                            </svg>
+                        </span>
+                        <span>
+                            МОЙ.<span class="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent dark:from-emerald-400 dark:to-teal-400">БЛОГ</span>
+                        </span>
+                    </Link>
+                    <p class="mt-4 max-w-md text-sm text-zinc-600 dark:text-stone-400">
+                        Площадка, где каждый может поделиться знаниями, опытом и историями.
+                        Пишите статьи о путешествиях, технологиях, науке и всём, что вас вдохновляет.
                     </p>
-                    <p class="mt-4 text-sm text-gray-800 dark:text-stone-300">
-                        Eaque ipsa quae ab illo inventore veritatis et quasi
-                        architecto beatae vitae dicta sunt explicabo.
+                </div>
+
+                <!-- Разделы -->
+                <div>
+                    <p class="mb-4 text-base font-bold text-gray-900 dark:text-stone-300">Разделы</p>
+                    <ul class="space-y-2 text-sm">
+                        <li>
+                            <Link href="/" class="text-zinc-600 transition-colors hover:text-emerald-600 dark:text-stone-400 dark:hover:text-emerald-300">
+                                Главная
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/search" class="text-zinc-600 transition-colors hover:text-emerald-600 dark:text-stone-400 dark:hover:text-emerald-300">
+                                Поиск
+                            </Link>
+                        </li>
+                        <li v-if="$page.props.auth.user">
+                            <Link href="/create" class="text-zinc-600 transition-colors hover:text-emerald-600 dark:text-stone-400 dark:hover:text-emerald-300">
+                                Создать статью
+                            </Link>
+                        </li>
+                        <li v-else>
+                            <Link href="/register" class="text-zinc-600 transition-colors hover:text-emerald-600 dark:text-stone-400 dark:hover:text-emerald-300">
+                                Регистрация
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Соцсети -->
+                <div>
+                    <p class="mb-4 text-base font-bold text-gray-900 dark:text-stone-300">Мы в сети</p>
+                    <div class="flex items-center space-x-3">
+                        <a
+                            href="#"
+                            aria-label="Telegram"
+                            class="text-zinc-500 transition-colors hover:text-emerald-600 dark:text-stone-400 dark:hover:text-emerald-300"
+                        >
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                            </svg>
+                        </a>
+                        <a
+                            href="#"
+                            aria-label="ВКонтакте"
+                            class="text-zinc-500 transition-colors hover:text-emerald-600 dark:text-stone-400 dark:hover:text-emerald-300"
+                        >
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19.915 8.268c.11-.372 0-.634-.53-.634h-1.74c-.448 0-.653.233-.765.49 0 0-.886 2.129-2.15 3.514-.412.407-.603.539-.832.539-.11 0-.29-.133-.29-.51V8.268c0-.447-.13-.634-.51-.634h-2.73c-.289 0-.447.204-.447.397 0 .412.63.507.696 1.665v2.512c0 .446-.08.528-.27.528-.613 0-2.083-2.205-2.955-4.727-.168-.501-.345-.667-.797-.667H7.35c-.501 0-.601.237-.601.49 0 .473.619 2.951 2.881 6.202 1.507 2.14 3.672 3.312 5.645 3.312 1.18 0 1.326-.26 1.326-.708v-1.63c0-.497.107-.596.461-.596.262 0 .712.133 1.76 1.16 1.26 1.25 1.469 1.81 2.15 1.81h1.74c.501 0 .746-.26.603-.742-.155-.49-.748-1.21-1.52-2.05-.387-.446-.973-1.017-1.144-1.25-.26-.338-.186-.491 0-.791.003-.04.87-1.25 1.332-2.06z"/>
+                            </svg>
+                        </a>
+                        <a
+                            href="#"
+                            aria-label="YouTube"
+                            class="text-zinc-500 transition-colors hover:text-emerald-600 dark:text-stone-400 dark:hover:text-emerald-300"
+                        >
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                        </a>
+                    </div>
+                    <p class="mt-4 text-sm text-zinc-500 dark:text-stone-500">
+                        Подписывайтесь, чтобы не пропускать новые статьи.
                     </p>
                 </div>
             </div>
-            <div class="space-y-2 text-sm">
-                <p class="text-base font-bold tracking-wide text-gray-900 dark:text-stone-300">
-                    Contacts
+
+            <div class="mt-10 flex flex-col justify-between gap-4 border-t border-zinc-200 pt-6 sm:flex-row dark:border-zinc-800">
+                <p class="text-sm text-zinc-600 dark:text-stone-400">
+                    © {{ year }} МОЙ.БЛОГ. Все права защищены.
                 </p>
-                <div class="flex">
-                    <p class="mr-1 text-gray-800 dark:text-stone-300">Phone:</p>
-                    <a
-                        href="tel:850-123-5021"
-                        aria-label="Our phone"
-                        title="Our phone"
-                        class="transition-colors duration-300 text-deep-purple-accent-400 hover:text-deep-purple-800 dark:text-stone-300"
-                        >850-123-5021</a
-                    >
-                </div>
-                <div class="flex">
-                    <p class="mr-1 text-gray-800 dark:text-stone-300">Email:</p>
-                    <a
-                        href="mailto:info@lorem.mail"
-                        aria-label="Our email"
-                        title="Our email"
-                        class="transition-colors duration-300 text-deep-purple-accent-400 hover:text-deep-purple-800 dark:text-stone-300"
-                        >info@lorem.mail</a
-                    >
-                </div>
-                <div class="flex">
-                    <p class="mr-1 text-gray-800 dark:text-stone-300">Address:</p>
-                    <a
-                        href="https://www.google.com/maps"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Our address"
-                        title="Our address"
-                        class="transition-colors duration-300 text-deep-purple-accent-400 hover:text-deep-purple-800 dark:text-stone-300"
-                    >
-                        312 Lovely Street, NY
-                    </a>
-                </div>
-            </div>
-            <div>
-                <span class="text-base font-bold tracking-wide text-gray-900 dark:text-stone-300"
-                    >Social</span
-                >
-                <div class="flex items-center mt-1 space-x-3">
-                    <a
-                        href="/"
-                        class="text-gray-500 transition-colors duration-300 hover:text-deep-purple-accent-400 dark:text-stone-300"
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            class="h-5"
-                        >
-                            <path
-                                d="M24,4.6c-0.9,0.4-1.8,0.7-2.8,0.8c1-0.6,1.8-1.6,2.2-2.7c-1,0.6-2,1-3.1,1.2c-0.9-1-2.2-1.6-3.6-1.6 c-2.7,0-4.9,2.2-4.9,4.9c0,0.4,0,0.8,0.1,1.1C7.7,8.1,4.1,6.1,1.7,3.1C1.2,3.9,1,4.7,1,5.6c0,1.7,0.9,3.2,2.2,4.1 C2.4,9.7,1.6,9.5,1,9.1c0,0,0,0,0,0.1c0,2.4,1.7,4.4,3.9,4.8c-0.4,0.1-0.8,0.2-1.3,0.2c-0.3,0-0.6,0-0.9-0.1c0.6,2,2.4,3.4,4.6,3.4 c-1.7,1.3-3.8,2.1-6.1,2.1c-0.4,0-0.8,0-1.2-0.1c2.2,1.4,4.8,2.2,7.5,2.2c9.1,0,14-7.5,14-14c0-0.2,0-0.4,0-0.6 C22.5,6.4,23.3,5.5,24,4.6z"
-                            ></path>
-                        </svg>
-                    </a>
-                    <a
-                        href="/"
-                        class="text-gray-500 transition-colors duration-300 hover:text-deep-purple-accent-400 dark:text-stone-300"
-                    >
-                        <svg
-                            viewBox="0 0 30 30"
-                            fill="currentColor"
-                            class="h-6"
-                        >
-                            <circle cx="15" cy="15" r="4"></circle>
-                            <path
-                                d="M19.999,3h-10C6.14,3,3,6.141,3,10.001v10C3,23.86,6.141,27,10.001,27h10C23.86,27,27,23.859,27,19.999v-10   C27,6.14,23.859,3,19.999,3z M15,21c-3.309,0-6-2.691-6-6s2.691-6,6-6s6,2.691,6,6S18.309,21,15,21z M22,9c-0.552,0-1-0.448-1-1   c0-0.552,0.448-1,1-1s1,0.448,1,1C23,8.552,22.552,9,22,9z"
-                            ></path>
-                        </svg>
-                    </a>
-                    <a
-                        href="/"
-                        class="text-gray-500 transition-colors duration-300 hover:text-deep-purple-accent-400 dark:text-stone-300"
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            class="h-5"
-                        >
-                            <path
-                                d="M22,0H2C0.895,0,0,0.895,0,2v20c0,1.105,0.895,2,2,2h11v-9h-3v-4h3V8.413c0-3.1,1.893-4.788,4.659-4.788 c1.325,0,2.463,0.099,2.795,0.143v3.24l-1.918,0.001c-1.504,0-1.795,0.715-1.795,1.763V11h4.44l-1,4h-3.44v9H22c1.105,0,2-0.895,2-2 V2C24,0.895,23.105,0,22,0z"
-                            ></path>
-                        </svg>
-                    </a>
-                </div>
-                <p class="mt-4 text-sm text-gray-500 dark:text-stone-300">
-                    Bacon ipsum dolor amet short ribs pig sausage prosciutto
-                    chicken spare ribs salami.
+                <p class="text-sm text-zinc-500 dark:text-stone-500">
+                    Сделано с любовью к текстам
                 </p>
             </div>
         </div>
-        <div
-            class="flex flex-col-reverse justify-between pt-5 pb-10 border-t lg:flex-row"
-        >
-            <p class="text-sm text-gray-600 dark:text-stone-300">
-                © Copyright 2020 Lorem Inc. All rights reserved.
-            </p>
-            <ul
-                class="flex flex-col mb-3 space-y-2 lg:mb-0 sm:space-y-0 sm:space-x-5 sm:flex-row"
-            >
-                <li>
-                    <a
-                        href="/"
-                        class="dark:text-stone-300 text-sm text-gray-600 transition-colors duration-300 hover:text-deep-purple-accent-400"
-                        >F.A.Q</a
-                    >
-                </li>
-                <li>
-                    <a
-                        href="/"
-                        class="dark:text-stone-300 text-sm text-gray-600 transition-colors duration-300 hover:text-deep-purple-accent-400"
-                        >Privacy Policy</a
-                    >
-                </li>
-                <li>
-                    <a
-                        href="/"
-                        class="dark:text-stone-300 text-sm text-gray-600 transition-colors duration-300 hover:text-deep-purple-accent-400"
-                        >Terms &amp; Conditions</a
-                    >
-                </li>
-            </ul>
-        </div>
-    </div>
+    </footer>
 </template>
-<script setup></script>
+
+<script setup>
+import { Link } from "@inertiajs/vue3";
+
+const year = new Date().getFullYear();
+</script>
