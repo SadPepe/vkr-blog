@@ -23,3 +23,6 @@ db:
 
 restart:
 	docker compose restart app
+
+test:
+	docker compose --profile test run --rm tests

@@ -1,20 +1,32 @@
 # syntax=docker/dockerfile:1.7
 
 ############################################################
-# 1. PHP-зависимости: composer install без dev-пакетов
+# 1. PHP-зависимости
+#    COMPOSER_NO_DEV=0 собирает образ с phpunit/pint для тестов
 ############################################################
 FROM composer:2 AS vendor
+
+ARG COMPOSER_NO_DEV=1
 
 WORKDIR /build
 
 COPY composer.json composer.lock ./
-RUN composer install \
-    --no-dev \
-    --no-scripts \
-    --no-interaction \
-    --no-progress \
-    --prefer-dist \
-    --optimize-autoloader
+RUN if [ "$COMPOSER_NO_DEV" = "1" ]; then \
+        composer install \
+            --no-dev \
+            --no-scripts \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist \
+            --optimize-autoloader; \
+    else \
+        composer install \
+            --no-scripts \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist \
+            --optimize-autoloader; \
+    fi
 
 ############################################################
 # 2. Фронтенд: собираем resources/js + resources/css -> public/build

@@ -59,6 +59,21 @@ services:
       timeout: 5s
       retries: 10
 
+  # Одноразовый прогон тестов: образ с dev-пакетами (phpunit), sqlite :memory:.
+  # Запуск: docker compose --profile test run --rm tests
+  tests:
+    profiles: ["test"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        COMPOSER_NO_DEV: "0"
+    image: vkr-blog/app:test
+    container_name: vkr-blog-tests
+    entrypoint: ["php", "artisan", "test"]
+    environment:
+      APP_ENV: testing
+
 volumes:
   storage:
   db:

@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, bcmath, pdo_sqlite, pdo_pgsql
+          coverage: none
+
+      - name: Composer
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Зависимости фронтенда
+        run: npm ci
+
+      - name: Сборка фронтенда
+        run: npm run build
+
+      # Тесты идут на sqlite :memory: (phpunit.xml + .env.testing),
+      # PostgreSQL в CI не нужен
+      - name: Тесты
+        run: php artisan test

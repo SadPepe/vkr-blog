@@ -84,6 +84,20 @@ docker compose down                        # остановить (без уда
 и задайте `SEEDER_IMAGES_DIR=/images` (или `/images/Подпапка`) при запуске с `DB_SEED=true`.
 Без этого статьи создадутся без изображений — сайт работает, но карточки будут без обложек.
 
+## Тесты
+
+Образ приложения собирается без dev-пакетов, поэтому phpunit в нём нет. Для тестов — отдельный
+образ (`COMPOSER_NO_DEV=0`) и профиль compose:
+
+```bash
+make test                                                   # или:
+docker compose --profile test run --rm tests                # весь набор
+docker compose --profile test run --rm tests --filter=ProfileTest
+```
+
+Тесты идут на sqlite `:memory:` (`.env.testing` + `phpunit.xml`), PostgreSQL и `.env` для них
+не нужны. В образе есть `pdo_sqlite`, поэтому `php artisan test` работает так же, как в CI.
+
 ## Разработка
 
 Для активной разработки удобнее по-прежнему запускать на хосте:
@@ -98,9 +112,6 @@ npm run dev           # :5173, HMR
 
 ## Ограничения и известные места
 
-- phpunit в образ не ставится (`composer install --no-dev`, `php artisan test` недоступен).
-  Для тестов на хосте по-прежнему нужен `pdo_sqlite` (см. `docs/roadmap.md`, п.1);
-  в контейнере расширение есть, но dev-пакеты — нет.
 - Ключ `APP_KEY` передаётся из локального `.env`. Если `.env` нет, ключ генерируется при каждом
   старте контейнера: пользователи разлогинятся после перезапуска.
 - PHP-настройки (лимиты загрузки, opcache) — `docker/php.ini`; конфиг nginx — `docker/nginx-app.conf`.

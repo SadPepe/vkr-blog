@@ -109,17 +109,19 @@ Laravel 12 + Inertia 2 + Vue 3 + Tailwind 3 + PostgreSQL.
 
 ```bash
 npm run build                                  # синтаксис Vue + сборка
-php artisan test --filter=LocalizationTest     # 3 теста: локаль, валидация, пагинация
+php artisan test                               # 28 тестов (Breeze + локализация), sqlite :memory:
+make test                                      # то же в контейнере: docker compose --profile test run --rm tests
 php -l app/Http/Controllers/File.php           # синтаксис PHP
 node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматирование (.prettierrc.json)
 ```
 
-`php artisan test` целиком падает: `phpunit.xml` требует sqlite `:memory:`,
-а расширения `pdo_sqlite` в PHP нет (см. roadmap).
+`php artisan test` работает без PostgreSQL: `phpunit.xml` + `.env.testing` переводят тесты
+на sqlite `:memory:`. На хосте нужен `pdo_sqlite` (иначе — `make test` в контейнере,
+там расширение есть).
 
 ## Известные ограничения / долги
 
-- Нет Feature-тестов блога; тестовая БД не настроена.
+- Нет Feature-тестов блога (статьи/лайки/комментарии) — инфраструктура тестов готова.
 - Аватары: аксессор `avatar_url` есть, загрузить аватар нельзя.
 - Обложка и фон профиля: поля `users.cover_image` / `users.background_image`, файлы
   в `profile/covers`, `profile/backgrounds` (диск `public`), до 5 МБ, JPG/PNG/WebP;
@@ -139,4 +141,6 @@ node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматир�
 - Dev: `php artisan serve` (порт может отличаться, проверяй фактический), `npm run dev`
   (Vite, `public/hot`).
 - БД: PostgreSQL `blog` (см. `.env`), демо-данные — `php artisan migrate --seed`.
+- Docker: `docker compose up -d --build` → http://localhost:8080, демо-данные —
+  `DB_SEED=true docker compose up -d --build`; подробности в `docs/docker.md`.
 - Симлинк картинок: `php artisan storage:link` (уже создан).
