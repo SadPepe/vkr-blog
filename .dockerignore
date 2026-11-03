@@ -1,0 +1,35 @@
+.git
+.gitignore
+.github
+.idea
+.vscode
+.nova
+.zed
+
+node_modules
+vendor
+
+# Собирается внутри образа
+public/build
+public/hot
+public/storage
+
+# Локальные артефакты рантайма
+storage/app/public/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+bootstrap/cache/*.php
+database/*.sqlite
+
+# Секреты и локальное окружение
+.env
+.env.*
+!.env.example
+
+# Документация и конфиги хоста не нужны в образе
+docs
+*.md
+docker-compose*.yml
+Makefile

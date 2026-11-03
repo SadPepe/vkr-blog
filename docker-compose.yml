@@ -1,0 +1,64 @@
+name: vkr-blog
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vkr-blog/app:latest
+    container_name: vkr-blog-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    # Локальный .env (в git не попадает) даёт APP_KEY и остальные настройки.
+    # Переменные из блока environment имеют приоритет над .env.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_KEY: ${APP_KEY:-}
+      APP_LOCALE: ${APP_LOCALE:-ru}
+      APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE:-ru}
+      APP_URL: ${APP_DOCKER_URL:-http://localhost:8080}
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-blog}
+      DB_USERNAME: ${DB_USERNAME:-blog}
+      DB_PASSWORD: ${DB_PASSWORD:-blog}
+      DB_SEED: ${DB_SEED:-false}
+      LOG_CHANNEL: stderr
+    volumes:
+      - storage:/var/www/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  db:
+    image: postgres:16-alpine
+    container_name: vkr-blog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-blog}
+      POSTGRES_USER: ${DB_USERNAME:-blog}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-blog}
+      TZ: Europe/Moscow
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-blog} -d ${DB_DATABASE:-blog}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  storage:
+  db:

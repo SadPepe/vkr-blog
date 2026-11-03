@@ -59,3 +59,16 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Запуск в Docker
+
+Проект собирается в два контейнера — `app` (PHP 8.4 FPM + nginx) и `db` (PostgreSQL 16);
+фронтенд и composer-зависимости ставятся на этапе сборки образа.
+
+```bash
+cp .env.example .env && php artisan key:generate   # один раз, локально
+docker compose up -d --build                       # http://localhost:8080
+DB_SEED=true docker compose up -d --build          # + демо-данные (40 статей)
+```
+
+Подробности, переменные окружения, тома и ограничения — в [docs/docker.md](docs/docker.md).
