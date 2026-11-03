@@ -1,9 +1,9 @@
 <template>
     <MainLayout>
-        <Head :title="article.title">
+        <Head :title="displayTitle">
             <meta name="description" :content="description" />
             <meta property="og:type" content="article" />
-            <meta property="og:title" :content="article.title" />
+            <meta property="og:title" :content="displayTitle" />
             <meta property="og:description" :content="description" />
             <meta v-if="article.card_image_path" property="og:image" :content="shareImage" />
             <meta property="article:published_time" :content="article.created_at" />
@@ -58,6 +58,7 @@
                     </div>
 
                     <h1
+                        v-if="article.title"
                         class="mt-3 text-2xl font-extrabold leading-snug tracking-tight text-content sm:text-3xl lg:text-4xl"
                     >
                         {{ article.title }}
@@ -80,7 +81,7 @@
                     >
                         <img
                             :src="article.card_image_path"
-                            :alt="article.title"
+                            :alt="article.title || displayTitle"
                             class="aspect-video max-h-[400px] w-full cursor-zoom-in object-cover shadow-sm transition-opacity duration-300"
                             :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
                             fetchpriority="high"
@@ -198,7 +199,7 @@
                     class="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-6 backdrop-blur-md sm:p-10"
                     role="dialog"
                     aria-modal="true"
-                    :aria-label="`Просмотр изображения: ${article.title}`"
+                    :aria-label="`Просмотр изображения: ${displayTitle}`"
                     @click="closeLightbox"
                 >
                     <button
@@ -215,7 +216,7 @@
                     <figure class="flex max-h-full max-w-[min(1100px,92vw)] flex-col items-center gap-3" @click.stop>
                         <img
                             :src="lightboxSrc"
-                            :alt="article.title"
+                            :alt="article.title || displayTitle"
                             class="max-h-[78vh] w-auto max-w-full rounded-md object-contain shadow-2xl"
                         />
                         <figcaption class="text-xs text-white/60">
@@ -253,6 +254,14 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+});
+
+// Заголовок необязателен: для <title>/шаринга берём текст поста
+const displayTitle = computed(() => {
+    const title = (props.article.title || "").trim();
+    if (title) return title;
+    const excerpt = (props.article.excerpt || "").trim();
+    return excerpt ? excerpt.slice(0, 70) : "Пост";
 });
 
 const category = computed(() => {
@@ -310,11 +319,11 @@ const shareImage = computed(() =>
 );
 
 const telegramShareUrl = computed(
-    () => `https://t.me/share/url?url=${encodeURIComponent(absoluteUrl.value)}&text=${encodeURIComponent(props.article.title)}`,
+    () => `https://t.me/share/url?url=${encodeURIComponent(absoluteUrl.value)}&text=${encodeURIComponent(displayTitle.value)}`,
 );
 
 const vkShareUrl = computed(
-    () => `https://vk.com/share.php?url=${encodeURIComponent(absoluteUrl.value)}&title=${encodeURIComponent(props.article.title)}`,
+    () => `https://vk.com/share.php?url=${encodeURIComponent(absoluteUrl.value)}&title=${encodeURIComponent(displayTitle.value)}`,
 );
 
 const copied = ref(false);

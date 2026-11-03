@@ -7,7 +7,7 @@
             :href="`/articles/${article.slug}`"
             prefetch="hover"
             class="absolute inset-0 z-10 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-            :aria-label="`Читать статью: ${article.title}`"
+            :aria-label="article.title ? `Читать пост: ${article.title}` : 'Читать пост'"
         />
 
         <!-- Действия владельца (редактировать/удалить) -->
@@ -40,39 +40,27 @@
 
             <!-- Заголовок -->
             <h2
+                v-if="article.title"
                 class="line-clamp-2 text-xl font-bold leading-snug tracking-tight text-content transition-colors group-hover:text-accent md:text-2xl dark:group-hover:text-accent"
             >
                 {{ article.title }}
             </h2>
 
-            <!-- Превью: между заголовком и описанием -->
-            <div class="overflow-hidden rounded-md bg-surface-muted" :class="{ 'animate-pulse': article.card_image_path && !imageLoaded }">
-                <img
-                    v-if="article.card_image_path"
-                    :src="article.card_image_path"
-                    :alt="article.title"
-                    class="aspect-video w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
-                    loading="lazy"
-                    decoding="async"
-                    @load="imageLoaded = true"
-                />
-                <div v-else class="flex aspect-video w-full items-center justify-center">
-                    <svg class="h-10 w-10 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.5"
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                    </svg>
-                </div>
-            </div>
-
             <!-- Первые строки статьи -->
             <p class="line-clamp-3 text-sm leading-7 text-muted md:text-[15px]">
                 {{ plainText }}
             </p>
+
+            <!-- Картинка из текста поста (она же превью карточки) -->
+            <div v-if="article.card_image_path" class="overflow-hidden rounded-md bg-surface-muted">
+                <img
+                    :src="article.card_image_path"
+                    :alt="article.title || article.excerpt || 'Изображение поста'"
+                    class="aspect-video w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
+                />
+            </div>
 
             <!-- Статистика -->
             <div class="flex items-center gap-5 text-xs text-muted">
@@ -104,7 +92,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { Link } from "@inertiajs/vue3";
 import UserAvatar from "./UserAvatar.vue";
 
@@ -118,8 +106,6 @@ const props = defineProps({
         default: () => [],
     },
 });
-
-const imageLoaded = ref(false);
 
 const categoryName = computed(() => {
     const slug = props.article.category_slug;

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Traits\HandlesArticles;
 use App\Support\HtmlSanitizer;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 
 
@@ -24,39 +25,37 @@ class ArticleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'excerpt' => 'required|string|max:200',
+            'title' => 'nullable|string|max:255',
             'content' => 'required|string|max:200000',
-            'card_image' => 'nullable|image|max:2048', // 2MB max
-            'category_slug' => 'nullable|exists:categories,slug'
+            'category_slug' => 'nullable|exists:categories,slug',
         ]);
 
-        // Генерация уникального slug
-        $slug = $this->generateUniqueSlug($validated['title']);
-
-        //Санитизация HTML от XSS (вырезаются script, on* , javascript: и т.п.)
+        // Санитизация HTML от XSS (вырезаются script, on* , javascript: и т.п.)
         $content = HtmlSanitizer::sanitize($validated['content']);
 
-        //Сохраняем картинку карточки в Storage и сохраняем путь
-        $cardImagePath = null;
-        if ($request->hasFile('card_image')) {
-            $path = $request->file('card_image')->store('article-cards', 'public');
-            $cardImagePath = '/storage/' . $path;
+        if ($this->contentIsEmpty($content)) {
+            throw ValidationException::withMessages([
+                'content' => 'Добавьте текст или изображение — пустой пост опубликовать нельзя.',
+            ]);
         }
 
+        $title = $this->normalizeTitle($validated['title'] ?? null);
+        $excerpt = $this->makeExcerpt($content);
+
         $article = Article::create([
-            'title' => $validated['title'],
-            'slug' => $slug,
-            'excerpt' => $validated['excerpt'],
+            'title' => $title,
+            'slug' => $this->generatePostSlug($title, $excerpt),
+            'excerpt' => $excerpt,
             'content' => $content,
-            'card_image_path' => $cardImagePath,
+            // Отдельной обложки больше нет: превью — первая картинка из текста
+            'card_image_path' => $this->firstContentImage($content),
             'user_id' => auth()->id(),
-            'category_slug' => $validated['category_slug'] ?? null
+            'category_slug' => $validated['category_slug'] ?? null,
         ]);
 
         return redirect()
             ->route('articles.show', $article->slug)
-            ->with('success', 'Статья опубликована');
+            ->with('success', 'Пост опубликован');
     }
 
     public function destroy(Article $article)
@@ -78,7 +77,7 @@ class ArticleController extends Controller
 
             return redirect()
                 ->route('profile')
-                ->with('success', 'Статья удалена');
+                ->with('success', 'Пост удалён');
         } catch (\Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
@@ -94,9 +93,7 @@ class ArticleController extends Controller
             'article' => [
                 'id' => $article->id,
                 'title' => $article->title,
-                'excerpt' => $article->excerpt,
                 'content' => $article->content,
-                'card_image_url' => $article->card_image_path, // Уже содержит '/storage/'
                 'slug' => $article->slug,
                 'category_slug' => $article->category_slug,
             ]
@@ -109,58 +106,51 @@ class ArticleController extends Controller
         Gate::authorize('update', $article);
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'excerpt' => 'required|string|max:200',
+            'title' => 'nullable|string|max:255',
             'content' => 'required|string|max:200000',
-            'card_image' => 'nullable|image|max:2048',
-            'remove_card_image' => 'nullable|boolean',
-            'category_slug' => 'nullable|exists:categories,slug'
+            'category_slug' => 'nullable|exists:categories,slug',
         ]);
-
-        // Обработка изображения карточки
-        $cardImagePath = $article->card_image_path;
-
-        if ($request->has('remove_card_image') && $request->remove_card_image) {
-            // Удаляем текущее изображение если есть
-            if ($cardImagePath) {
-                $this->deleteImage($cardImagePath);
-                $cardImagePath = null;
-            }
-        } elseif ($request->hasFile('card_image')) {
-            if ($cardImagePath) {
-                $this->deleteImage($cardImagePath);
-            }
-            // Сохраняем новое изображение
-            $path = $request->file('card_image')->store('article-cards', 'public');
-            $cardImagePath = '/storage/' . $path;
-        }
 
         $oldContent = $article->content;
 
         // Санитизация HTML от XSS
         $content = HtmlSanitizer::sanitize($validated['content']);
 
+        if ($this->contentIsEmpty($content)) {
+            throw ValidationException::withMessages([
+                'content' => 'Добавьте текст или изображение — пустой пост сохранить нельзя.',
+            ]);
+        }
+
         // Удаляем изображения, которые убрали из контента редактором
         $this->deleteRemovedContentImages($oldContent, $content);
 
-        // Обновление slug только если изменился заголовок
+        $title = $this->normalizeTitle($validated['title'] ?? null);
+        $excerpt = $this->makeExcerpt($content);
+
+        // Slug меняется вместе с заголовком (или текстом, из которого он собран)
         $slug = $article->slug;
-        if ($article->title !== $validated['title']) {
-            $slug = $this->generateUniqueSlug($validated['title']);
+        if ($article->title !== $title) {
+            $slug = $this->generatePostSlug($title, $excerpt);
         }
 
+        // Превью — первая картинка из текста; старую обложку сохраняем,
+        // только если её файл ещё существует
+        $cardImagePath = $this->firstContentImage($content)
+            ?? $this->existingImagePath($article->card_image_path);
+
         $article->update([
-            'title' => $validated['title'],
+            'title' => $title,
             'slug' => $slug,
-            'excerpt' => $validated['excerpt'],
+            'excerpt' => $excerpt,
             'content' => $content,
             'card_image_path' => $cardImagePath,
-            'category_slug' => $validated['category_slug'] ?? null
+            'category_slug' => $validated['category_slug'] ?? null,
         ]);
 
         return redirect()
             ->route('profile')
-            ->with('success', 'Статья обновлена');
+            ->with('success', 'Пост обновлён');
     }
 
     public function show(Article $article)

@@ -138,4 +138,51 @@ class ArticleTest extends TestCase
 
         $this->assertDatabaseHas('articles', ['id' => $article->id]);
     }
+
+    public function test_post_without_title_is_allowed(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post('/articles', [
+            'content' => '<p>Просто короткая мысль без заголовка</p>',
+        ]);
+
+        $article = Article::firstOrFail();
+
+        $this->assertNull($article->title);
+        $this->assertSame('Просто короткая мысль без заголовка', $article->excerpt);
+        // Slug собирается из текста: только латиница, цифры и дефисы
+        $this->assertMatchesRegularExpression('/^[a-z0-9-]+$/', $article->slug);
+
+        $this->get(route('articles.show', $article->slug))->assertOk();
+    }
+
+    public function test_image_only_post_uses_first_image_as_preview(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post('/articles', [
+            'content' => '<p><img src="/storage/images/picture.jpg" alt="Фото"></p>',
+        ]);
+
+        $article = Article::firstOrFail();
+
+        $this->assertNull($article->title);
+        $this->assertSame('', $article->excerpt);
+        $this->assertSame('/storage/images/picture.jpg', $article->card_image_path);
+        $this->assertStringStartsWith('post-', $article->slug);
+
+        $this->get(route('articles.show', $article->slug))->assertOk();
+    }
+
+    public function test_empty_post_is_rejected(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/articles', ['content' => '<p>   </p>'])
+            ->assertSessionHasErrors('content');
+
+        $this->assertDatabaseCount('articles', 0);
+    }
 }

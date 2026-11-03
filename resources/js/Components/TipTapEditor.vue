@@ -45,98 +45,12 @@
         >
             <input
                 v-model="title"
-                aria-label="Заголовок статьи"
-                placeholder="Введите заголовок статьи..."
+                aria-label="Заголовок (необязательно)"
+                placeholder="Заголовок (необязательно — можно просто текст)"
                 class="mb-6 w-full rounded-t-md border-b border-line bg-surface-muted px-6 py-4 text-xl font-semibold text-content placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-colors duration-200"
             />
-            <div class="mb-6 px-6">
-                <label for="article-excerpt" class="text-lg font-semibold text-content mb-3 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    Краткое описание
-                </label>
-                <textarea
-                    id="article-excerpt"
-                    v-model="excerpt"
-                    placeholder="Опишите суть статьи в нескольких предложениях..."
-                    class="w-full resize-none rounded-md border border-line-strong bg-surface-muted px-4 py-3 text-content placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-colors duration-200"
-                    maxlength="200"
-                    rows="3"
-                ></textarea>
-                <div class="flex justify-between items-center mt-2">
-                    <span class="text-xs text-muted">Будет отображаться в карточке статьи</span>
-                    <span
-                        class="text-xs font-medium"
-                        :class="excerpt.length >= 190 ? 'text-red-500' : 'text-muted'"
-                    >
-                        {{ excerpt.length }}/200
-                    </span>
-                </div>
-            </div>
-            <div class="flex justify-between p-6 border-t border-line">
-                <div class="w-[55%]">
-                    <label class="text-lg font-semibold text-content mb-3 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                        </svg>
-                        Изображение для карточки
-                    </label>
-                    <div v-if="previewImage" class="mb-4 relative group">
-                        <img
-                            :src="previewImage"
-                            alt="Предпросмотр"
-                            class="w-full max-h-[300px] object-cover rounded-md shadow-md transition-transform duration-300"
-                        />
-                        <div
-                            class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-md flex items-center justify-center"
-                        >
-                            <button
-                                type="button"
-                                @click="removeCardImage"
-                                class="opacity-0 group-hover:opacity-100 bg-red-500 text-white p-2 rounded-full transform scale-0 group-hover:scale-100 transition-all duration-300"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="flex gap-3">
-                        <button
-                            type="button"
-                            @click="$refs.cardImageInput.click()"
-                            class="flex items-center px-4 py-2 bg-accent hover:bg-accent-hover text-accent-contrast rounded-md text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
-                        >
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                                />
-                            </svg>
-                            {{ previewImage ? "Заменить" : "Загрузить" }}
-                        </button>
-                        <input type="file" ref="cardImageInput" accept="image/*" @change="handleCardImageUpload" class="hidden" />
-                    </div>
-                </div>
-                <div class="w-[40%]">
+            <div class="p-6 border-t border-line">
+                <div class="w-full">
                     <label class="text-lg font-semibold text-content mb-3 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -429,8 +343,6 @@ import { MAX_DRAFT_SIZE, readDraft, removeDraft, writeDraft } from "@/Utilities/
 const props = defineProps({
     initialTitle: String,
     initialContent: String,
-    initialExcerpt: String,
-    initialCardImage: String,
     initialCardCategory: String,
     draftKey: {
         type: String,
@@ -443,10 +355,6 @@ const emit = defineEmits(["save"]);
 // Реактивные переменные
 const title = ref(props.initialTitle || "");
 const editor = ref(null);
-const excerpt = ref(props.initialExcerpt || "");
-const cardImageFile = ref(null);
-const previewImage = ref(props.initialCardImage || "");
-const cardImageInput = ref(null);
 const selectedCategory = ref(props.initialCardCategory || "");
 
 const hasContent = ref(false);
@@ -487,7 +395,6 @@ const clearDraft = () => {
 const currentSnapshot = () =>
     JSON.stringify({
         title: title.value || "",
-        excerpt: excerpt.value || "",
         category: selectedCategory.value || "",
         content: editor.value ? editor.value.getHTML() : props.initialContent || "",
     });
@@ -495,7 +402,6 @@ const currentSnapshot = () =>
 const initialSnapshot = () =>
     JSON.stringify({
         title: props.initialTitle || "",
-        excerpt: props.initialExcerpt || "",
         category: props.initialCardCategory || "",
         content: props.initialContent || "",
     });
@@ -517,7 +423,6 @@ const saveDraft = debounce(700, () => {
 
     writeDraft(props.draftKey, {
         title: title.value,
-        excerpt: excerpt.value,
         category: selectedCategory.value,
         content: html,
         savedAt: Date.now(),
@@ -534,11 +439,7 @@ const queueDraftSave = () => {
 // (для новой статьи — к пустым, для редактирования — к сохранённой версии).
 const resetDraft = () => {
     title.value = props.initialTitle || "";
-    excerpt.value = props.initialExcerpt || "";
     selectedCategory.value = props.initialCardCategory || "";
-    cardImageFile.value = null;
-    previewImage.value = props.initialCardImage || "";
-    if (cardImageInput.value) cardImageInput.value.value = "";
     editor.value?.commands.setContent(props.initialContent || "", false);
     syncHasContent();
     clearDraft();
@@ -555,7 +456,7 @@ const formatSavedTime = (ts) =>
     });
 
 // Следим за полями — любое изменение помечаем «изменено» и сохраняем черновик
-watch([title, excerpt, selectedCategory], () => {
+watch([title, selectedCategory], () => {
     queueDraftSave();
 });
 
@@ -625,7 +526,6 @@ onMounted(() => {
 
     // Восстанавливаем значения полей
     title.value = (draft?.title !== undefined ? draft.title : "") || props.initialTitle || "";
-    excerpt.value = (draft?.excerpt !== undefined ? draft.excerpt : "") || props.initialExcerpt || "";
     selectedCategory.value = (draft?.category !== undefined ? draft.category : "") || props.initialCardCategory || "";
 
     if (draft?.content) {
@@ -714,41 +614,6 @@ const setLink = () => {
     editor.value.chain().focus().extendMarkRange("link").setLink({ href: finalUrl }).run();
 };
 
-//Загрузка превью
-const handleCardImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Проверка типа файла
-    if (!file.type.match("image.*")) {
-        showError("Пожалуйста, выберите изображение");
-        return;
-    }
-
-    // Проверка размера (например, до 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-        showError("Максимальный размер файла - 2MB");
-        return;
-    }
-
-    if (previewImage.value && previewImage.value.startsWith("blob:")) {
-        URL.revokeObjectURL(previewImage.value);
-    }
-
-    cardImageFile.value = file;
-    previewImage.value = URL.createObjectURL(file);
-};
-
-// Удаление изображения
-const removeCardImage = () => {
-    if (previewImage.value && previewImage.value.startsWith("blob:")) {
-        URL.revokeObjectURL(previewImage.value);
-    }
-    cardImageFile.value = null;
-    previewImage.value = "";
-    cardImageInput.value.value = "";
-};
-
 // Добавление изображения в content
 const addImage = () => {
     const input = document.createElement("input");
@@ -777,18 +642,11 @@ const addImage = () => {
 const prepareArticleData = async () => {
     if (!editor.value) throw new Error("Editor not ready");
 
-    // Клиентская валидация до отправки на сервер
-    if (!title.value.trim()) {
-        return { error: "Введите заголовок статьи." };
-    }
-    if (!excerpt.value.trim()) {
-        return { error: "Добавьте краткое описание статьи." };
-    }
-    if (!editor.value.state.doc.textContent.trim()) {
-        return { error: "Статья не может быть пустой — напишите хотя бы пару строк." };
-    }
-
+    // Клиентская валидация: пустой пост (ни текста, ни картинки) не отправляем
     let content = editor.value.getHTML();
+    if (!editor.value.state.doc.textContent.trim() && !content.includes("<img")) {
+        return { error: "Добавьте текст или изображение — пустой пост опубликовать нельзя." };
+    }
 
     // Находим изображения как blob: (новые) и data: (base64, например вставки)
     const assetSrcs = [...(content.matchAll(/src="((?:blob:[^"]+|data:image[^"]+))"/g) || [])]
@@ -822,14 +680,9 @@ const prepareArticleData = async () => {
     const formData = new FormData();
     formData.append("title", title.value.trim());
     formData.append("content", content);
-    formData.append("excerpt", excerpt.value.trim());
 
     if (selectedCategory.value) {
         formData.append("category_slug", selectedCategory.value);
-    }
-
-    if (cardImageFile.value) {
-        formData.append("card_image", cardImageFile.value);
     }
 
     return {
@@ -854,9 +707,6 @@ defineExpose({
     clearDraft,
     resetDraft,
     title,
-    excerpt,
-    cardImageFile,
-    previewImage,
     selectedCategory,
     isDirty,
 });

@@ -25,7 +25,6 @@
             draft-key="article-create"
             :initial-title="''"
             :initial-content="''"
-            :initial-excerpt="''"
             @save="saveArticle"
         />
 

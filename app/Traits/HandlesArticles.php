@@ -97,4 +97,75 @@ trait HandlesArticles
             Storage::disk('public')->delete('images/' . $file);
         }
     }
+
+    /**
+     * Заголовок необязателен: пустая строка превращается в null.
+     */
+    protected function normalizeTitle(?string $title): ?string
+    {
+        $title = trim(preg_replace('/\s+/u', ' ', (string) $title));
+
+        return $title === '' ? null : $title;
+    }
+
+    /**
+     * Короткий анонс для ленты: текст без HTML, до 200 символов.
+     */
+    protected function makeExcerpt(string $html, int $limit = 200): string
+    {
+        $text = trim(preg_replace('/\s+/u', ' ', strip_tags($html)));
+
+        return Str::limit($text, $limit, '');
+    }
+
+    /**
+     * Пост считается пустым, если в нём нет ни текста, ни изображения.
+     */
+    protected function contentIsEmpty(string $html): bool
+    {
+        $text = trim(preg_replace('/\s+/u', ' ', strip_tags($html)));
+
+        return $text === '' && $this->firstContentImage($html) === null;
+    }
+
+    /**
+     * Первая картинка из текста поста — она же превью карточки в ленте.
+     */
+    protected function firstContentImage(string $html): ?string
+    {
+        if (preg_match('#/storage/images/[^"\'\s>]+#i', $html, $matches)) {
+            return $matches[0];
+        }
+
+        return null;
+    }
+
+    /**
+     * Slug: из заголовка, иначе из текста, иначе случайный.
+     */
+    protected function generatePostSlug(?string $title, string $excerpt): string
+    {
+        $base = trim((string) ($title ?: $excerpt));
+
+        if ($base === '') {
+            return 'post-' . Str::lower(Str::random(8));
+        }
+
+        return $this->generateUniqueSlug(Str::limit($base, 60, ''));
+    }
+
+    /**
+     * Старая обложка остаётся, только если файл ещё существует.
+     */
+    protected function existingImagePath(?string $path): ?string
+    {
+        if (!$path) {
+            return null;
+        }
+
+        $relative = ltrim(str_replace('/storage/', '', $path), '/');
+
+        return Storage::disk('public')->exists($relative) ? $path : null;
+    }
+
 }

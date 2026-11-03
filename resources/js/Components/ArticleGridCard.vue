@@ -11,7 +11,7 @@
             <img
                 v-if="article.card_image_path"
                 :src="article.card_image_path"
-                :alt="article.title"
+                :alt="article.title || article.excerpt || 'Изображение поста'"
                 class="h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
                 :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
                 loading="lazy"
@@ -46,6 +46,7 @@
             </div>
 
             <h3
+                v-if="article.title"
                 class="line-clamp-3 text-base font-bold leading-snug text-content transition-colors group-hover:text-accent dark:group-hover:text-accent"
             >
                 {{ article.title }}

@@ -25,8 +25,6 @@
             :draft-key="draftKey"
             :initial-title="article.title"
             :initial-content="article.content"
-            :initial-excerpt="article.excerpt"
-            :initial-card-image="article.card_image_url"
             :initial-card-category="article.category_slug"
             @save="updateArticle"
         />
