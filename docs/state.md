@@ -109,7 +109,7 @@ Laravel 12 + Inertia 2 + Vue 3 + Tailwind 3 + PostgreSQL.
 
 ```bash
 npm run build                                  # синтаксис Vue + сборка
-php artisan test                               # 48 тестов, sqlite :memory: (1 пропуск на sqlite)
+php artisan test                               # 50 тестов, sqlite :memory: (1 пропуск на sqlite)
 make test                                      # то же в контейнере: docker compose --profile test run --rm tests
 php -l app/Http/Controllers/File.php           # синтаксис PHP
 node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматирование (.prettierrc.json)
@@ -126,11 +126,11 @@ node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматир�
 - Обложка и фон профиля: поля `users.cover_image` / `users.background_image`, файлы
   в `profile/covers`, `profile/backgrounds` (диск `public`), до 5 МБ, JPG/PNG/WebP;
   выводятся в `Profile/Show` и `Authors/Show`.
-- Профиль: все статьи одним списком (у демо-пользователя 80 → ~130 КБ props).
-- Комментарии без пагинации.
+- Комментарии без пагинации: все верхнеуровневые и ответы приходят одним списком.
 - Нет черновиков/статусов публикации, тегов, RSS, sitemap, уведомлений.
 - `MustVerifyEmail` отключён, почта в `log`.
-- Rate limit только на auth и загрузку изображений; комментарии/лайки без лимита.
+- Rate limit: 10 комментариев/мин, 20 правок и удалений комментариев/мин,
+  30 лайков (статьи и комментарии)/мин.
 - Нет `srcset`/ресайза обложек; 500/403 — стандартные страницы Laravel.
 - `PopularArticleController::index()` рендерит несуществующий `Pages/Popular/Index.vue`
   и не подключён в маршрутах (используется только `getPopularArticles()`).

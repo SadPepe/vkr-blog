@@ -22,15 +22,23 @@ Route::get('/categories/{category:slug}', [ArticleController::class, 'articlesBy
 
 Route::middleware('auth')->group(function () {
 
-    Route::post('/articles/{article:slug}/like', [LikeController::class, 'toggle'])->name('articles.like.toggle');
+    Route::post('/articles/{article:slug}/like', [LikeController::class, 'toggle'])
+        ->middleware('throttle:30,1')
+        ->name('articles.like.toggle');
     Route::get('/articles/{article:slug}/like/status', [LikeController::class, 'status'])->name('articles.like.status');
 
     Route::post('/articles/{article:slug}/comments', [CommentController::class, 'store'])
         ->middleware('throttle:10,1')
         ->name('comments.store');
-    Route::put('/comments/{comment}', [CommentController::class, 'update'])->name('comments.update');
-    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
-    Route::post('/comments/{comment}/like', [CommentController::class, 'toggleLike'])->name('comments.like.toggle');
+    Route::put('/comments/{comment}', [CommentController::class, 'update'])
+        ->middleware('throttle:20,1')
+        ->name('comments.update');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])
+        ->middleware('throttle:20,1')
+        ->name('comments.destroy');
+    Route::post('/comments/{comment}/like', [CommentController::class, 'toggleLike'])
+        ->middleware('throttle:30,1')
+        ->name('comments.like.toggle');
 
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
