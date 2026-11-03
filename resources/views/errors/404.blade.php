@@ -1,29 +1,18 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>404 — Страница не найдена</title>
+    <title>Страница не найдена — МОЙ.БЛОГ</title>
     <style>
         :root {
-            --bg: #f8fafc;
-            --fg: #1f2937;
-            --muted: #6b7280;
-            --card: #ffffff;
-            --border: #e5e7eb;
+            color-scheme: light;
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #1c1c1c;
-                --fg: #d6d3d1;
-                --muted: #a8a29e;
-                --card: #252525;
-                --border: #3f3f46;
-            }
+        * {
+            box-sizing: border-box;
         }
-
-        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -31,91 +20,179 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--bg);
-            color: var(--fg);
-            font-family: Figtree, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
             padding: 24px;
+            background: #F5F1E8;
+            color: #1c1917;
+            font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
 
         .card {
-            max-width: 440px;
+            max-width: 520px;
             width: 100%;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 40px 32px;
             text-align: center;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(17, 24, 39, .08);
+            border-radius: 12px;
+            background: #fff;
+            padding: 40px 28px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, .06);
         }
 
-        .code {
-            font-size: 84px;
-            font-weight: 800;
-            line-height: 1;
-            background: linear-gradient(90deg, #4f46e5, #9333ea);
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -.01em;
+            text-decoration: none;
+            color: inherit;
+            margin-bottom: 24px;
+        }
+
+        .logo span.mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #059669, #0d9488);
+            color: #fff;
+        }
+
+        .logo em {
+            font-style: normal;
+            background: linear-gradient(90deg, #059669, #0d9488);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
         }
 
         h1 {
-            margin: 16px 0 8px;
-            font-size: 22px;
+            margin: 0 0 8px;
+            font-size: 56px;
+            line-height: 1;
+            color: #059669;
+        }
+
+        h2 {
+            margin: 0 0 12px;
+            font-size: 20px;
         }
 
         p {
-            margin: 0 0 24px;
-            color: var(--muted);
+            margin: 0 0 28px;
+            color: #6b7280;
+            font-size: 15px;
             line-height: 1.6;
-        }
-
-        a {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: linear-gradient(90deg, #4f46e5, #9333ea);
-            color: #fff;
-            text-decoration: none;
-            font-weight: 600;
-            padding: 12px 24px;
-            border-radius: 12px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        a:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
-        }
-
-        a.secondary {
-            background: transparent;
-            color: var(--fg);
-            border: 1px solid var(--border);
-            box-shadow: none;
-        }
-
-        a.secondary:hover {
-            box-shadow: none;
-            background: rgba(79, 70, 229, 0.06);
         }
 
         .actions {
             display: flex;
-            gap: 12px;
-            justify-content: center;
             flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            font: inherit;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: box-shadow .2s, transform .2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #059669, #0d9488);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, .25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(5, 150, 105, .3);
+        }
+
+        .btn-secondary {
+            border: 1px solid #d1d5db;
+            color: #374151;
+            background: #ffffff;
+        }
+
+        .btn-secondary:hover {
+            border-color: #6ee7b7;
+            color: #047857;
+        }
+
+        .btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, .35);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+            }
+
+            body {
+                background: #151515;
+                color: #e7e5e4;
+            }
+
+            .card {
+                background: #252525;
+                border-color: rgba(255, 255, 255, .06);
+            }
+
+            h2 {
+                color: #e7e5e4;
+            }
+
+            p {
+                color: #a8a29e;
+            }
+
+            .btn-secondary {
+                background: rgba(255, 255, 255, .05);
+                border-color: rgba(255, 255, 255, .12);
+                color: #e7e5e4;
+            }
         }
     </style>
 </head>
+
 <body>
     <main class="card">
-        <div class="code">404</div>
-        <h1>Страница не найдена</h1>
-        <p>Возможно, статья была удалена или ссылка устарела.</p>
+        <a class="logo" href="/">
+            <span class="mark">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" />
+                </svg>
+            </span>
+            МОЙ.<em>БЛОГ</em>
+        </a>
+
+        <h1>404</h1>
+        <h2>Страница не найдена</h2>
+        <p>
+            Возможно, статья была удалена или адрес набран с ошибкой.
+            Вернитесь в ленту — там точно есть что почитать.
+        </p>
+
         <div class="actions">
-            <a href="/">На главную</a>
-            <a class="secondary" href="javascript:history.back()">Назад</a>
+            <a class="btn btn-primary" href="/">На главную</a>
+            <a class="btn btn-secondary" href="/search">Поиск по блогу</a>
+            <button class="btn btn-secondary" type="button" onclick="history.back()">Назад</button>
         </div>
     </main>
 </body>
+
 </html>

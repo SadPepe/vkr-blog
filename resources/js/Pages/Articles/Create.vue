@@ -1,30 +1,22 @@
 <template>
     <MainLayout>
-        <div class="fixed bottom-6 right-6 z-40">
-            <div class="relative group">
-                <div class="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-600 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                
+        <Head title="Новая статья" />
+
+        <div v-if="saveError" class="mx-auto mt-4 max-w-4xl px-4" role="alert">
+            <div
+                class="flex items-start justify-between gap-3 rounded-md border border-red-300 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-dark:hover:bg-red-500/10"
+            >
+                <p class="text-sm text-red-800 dark:text-red-200">{{ saveError }}</p>
                 <button
                     type="button"
-                    @click="saveArticle"
-                    :disabled="isSaving"
-                    :class="[
-                        'relative px-6 py-3 text-white font-semibold rounded-xl shadow-2xl',
-                        'transition-all duration-300 transform',
-                        'flex items-center space-x-2',
-                        isSaving 
-                            ? 'bg-gray-500 cursor-not-allowed' 
-                            : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700',
-                        !isSaving && 'hover:scale-110 hover:shadow-3xl'
-                    ]"
+                    class="rounded p-0.5 text-red-700 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-300 red-500/20"
+                    aria-label="Скрыть сообщение"
+                    @click="saveError = ''"
                 >
-                    <svg v-if="!isSaving" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    <div v-else class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>{{ isSaving ? 'Сохранение...' : 'Сохранить' }}</span>
                 </button>
-            
             </div>
         </div>
 
@@ -36,17 +28,70 @@
             :initial-excerpt="''"
             @save="saveArticle"
         />
+
+        <DraftsPanel current-key="article-create" @reset-current="resetCurrentDraft" />
+
+        <div class="fixed bottom-6 right-6 z-40 flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <button
+                v-if="editor?.isDirty"
+                type="button"
+                class="inline-flex items-center gap-2 rounded-md border border-line-strong bg-surface px-4 py-3 text-sm font-semibold text-content shadow-md transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                @click="showClearConfirm = true"
+            >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                </svg>
+                <span class="hidden sm:inline">Очистить черновик</span>
+                <span class="sm:hidden">Очистить</span>
+            </button>
+
+            <button
+                type="button"
+                class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 text-sm font-semibold text-accent-contrast shadow-md transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="isSaving"
+                @click="saveArticle"
+            >
+                <svg v-if="!isSaving" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span v-else class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                {{ isSaving ? "Сохранение..." : "Сохранить" }}
+            </button>
+        </div>
+
+        <ConfirmDialog
+            :show="showClearConfirm"
+            title="Очистить черновик?"
+            text="Несохранённые изменения будут удалены, а форма вернётся к пустой. Это действие нельзя отменить."
+            confirm-text="Очистить"
+            cancel-text="Отмена"
+            @confirm="resetCurrentDraft"
+            @cancel="showClearConfirm = false"
+        />
     </MainLayout>
 </template>
 
 <script setup>
 import { ref } from "vue";
+import { Head, router } from "@inertiajs/vue3";
+import ConfirmDialog from "@/Components/ConfirmDialog.vue";
+import DraftsPanel from "@/Components/DraftsPanel.vue";
 import TiptapEditor from "@/Components/TipTapEditor.vue";
 import MainLayout from "@/Layouts/Layout.vue";
-import { router } from "@inertiajs/vue3";
 
 const editor = ref(null);
 const isSaving = ref(false);
+const saveError = ref("");
+const showClearConfirm = ref(false);
+
+const resetCurrentDraft = () => {
+    showClearConfirm.value = false;
+    editor.value?.resetDraft();
+};
 
 const saveArticle = async () => {
     if (isSaving.value || !editor.value) return;
@@ -54,7 +99,7 @@ const saveArticle = async () => {
     const { formData, assetUrls, error } = await editor.value.prepareArticleData();
 
     if (error) {
-        window.alert(error);
+        saveError.value = error;
         return;
     }
 
@@ -67,35 +112,16 @@ const saveArticle = async () => {
     router.post(route("articles.store"), formData, {
         preserveScroll: true,
         onSuccess: () => {
-            // Очищаем blob-ссылки и черновик после успешного сохранения
+            // Очищаем blob-ссылки черновик после успешного сохранения
             editor.value.cleanupBlobUrls(assetUrls);
             editor.value.clearDraft();
-            lastSaved.value = new Date().toLocaleTimeString("ru-RU");
         },
         onError: (errors) => {
-            console.error("Ошибка сохранения:", errors);
-            window.alert("Ошибка при сохранении статьи");
+            saveError.value = Object.values(errors).flat().join(" ") || "Не удалось сохранить статью. Проверьте поля и попробуйте ещё раз.";
         },
         onFinish: () => {
             isSaving.value = false;
         },
     });
 };
-
-const lastSaved = ref(null);
 </script>
-
-<style scoped>
-.shadow-3xl {
-    box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.25);
-}
-
-.group:hover button:not(:disabled) {
-    animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.transition-all {
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-</style>

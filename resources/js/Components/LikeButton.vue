@@ -3,12 +3,7 @@
     <button
         @click="toggleLike"
         :disabled="loading"
-        :class="[
-            'inline-flex items-center gap-1.5 text-gray-500 transition-colors dark:text-stone-500',
-            liked
-                ? 'text-red-500 dark:text-red-400'
-                : 'hover:text-red-500 dark:hover:text-red-400'
-        ]"
+        :class="[ 'inline-flex items-center gap-1.5 text-muted transition-colors ', liked ? 'text-red-500 dark:text-red-400' : 'hover:text-red-500 dark:hover:text-red-400', ]"
         :aria-label="liked ? 'Убрать лайк' : 'Поставить лайк'"
     >
         <svg
@@ -30,24 +25,24 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { ref, computed } from "vue";
+import { router, usePage } from "@inertiajs/vue3";
 
 const page = usePage();
 
 const props = defineProps({
     article: {
         type: Object,
-        required: true
+        required: true,
     },
     initialLiked: {
         type: Boolean,
-        default: false
+        default: false,
     },
     initialLikesCount: {
         type: Number,
-        default: 0
-    }
+        default: 0,
+    },
 });
 
 const liked = ref(props.initialLiked);
@@ -58,7 +53,7 @@ const authUser = computed(() => page.props.auth.user);
 
 const toggleLike = async () => {
     if (!authUser.value) {
-        router.visit(route('login'));
+        router.visit(route("login"));
         return;
     }
 
@@ -67,17 +62,17 @@ const toggleLike = async () => {
     loading.value = true;
 
     try {
-        const response = await fetch(route('articles.like.toggle', props.article.slug), {
-            method: 'POST',
+        const response = await fetch(route("articles.like.toggle", props.article.slug), {
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content"),
             },
-            body: JSON.stringify({})
+            body: JSON.stringify({}),
         });
 
         if (response.status === 401) {
-            router.visit(route('login'));
+            router.visit(route("login"));
             return;
         }
 
@@ -87,7 +82,7 @@ const toggleLike = async () => {
             likesCount.value = data.likes_count;
         }
     } catch (error) {
-        console.error('Ошибка:', error);
+        console.error("Ошибка:", error);
     } finally {
         loading.value = false;
     }

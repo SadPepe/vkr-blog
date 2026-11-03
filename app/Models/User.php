@@ -22,7 +22,9 @@ class User extends Authenticatable
         'email',
         'password',
         'about',
-
+        'avatar',
+        'cover_image',
+        'background_image',
     ];
 
     /**
@@ -50,13 +52,34 @@ class User extends Authenticatable
 
     public function getAvatarUrlAttribute()
     {
-        if (!$this->avatar) {
+        return $this->profileImageUrl($this->avatar);
+    }
+
+    /**
+     * Фото-обложка в шапке профиля.
+     */
+    public function getCoverUrlAttribute(): ?string
+    {
+        return $this->profileImageUrl($this->cover_image);
+    }
+
+    /**
+     * Фон страницы профиля.
+     */
+    public function getBackgroundUrlAttribute(): ?string
+    {
+        return $this->profileImageUrl($this->background_image);
+    }
+
+    private function profileImageUrl(?string $path): ?string
+    {
+        if (!$path) {
             return null;
         }
 
-        return str_starts_with($this->avatar, 'http')
-            ? $this->avatar
-            : asset('storage/' . $this->avatar);
+        return str_starts_with($path, 'http')
+            ? $path
+            : asset('storage/' . $path);
     }
 
     public function articles()

@@ -1,36 +1,35 @@
 <template>
-  <div v-if="links && links.length > 3" class="mt-9 flex flex-wrap items-center justify-center">
-    <template v-for="(link, index) in links" :key="index">
-      <Link
-        :href="link.url || '#'"
-        :aria-label="getAriaLabel(link, index, links)"
-        :aria-current="link.active ? 'page' : undefined"
-        :class="[
-          'mx-1 my-0.5 rounded px-4 py-2 transition',
-          link.active ? 'flex w-10 h-10 justify-center items-center rounded-md bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white pointer-events-none' : 'flex h-10 justify-center items-center rounded-md bg-[#FAF8F4] dark:bg-[#303030] text-gray-900 dark:text-stone-300',
-          !link.url ? 'cursor-not-allowed opacity-50' : ''
-        ]"
-        v-html="link.label"
-        preserve-scroll
-      />
-    </template>
-  </div>
+    <div v-if="links && links.length > 3" class="mt-9 flex flex-wrap items-center justify-center">
+        <template v-for="(link, index) in links" :key="index">
+            <Link
+                :href="link.url || '#'"
+                :aria-label="getAriaLabel(link, index, links)"
+                :aria-current="link.active ? 'page' : undefined"
+                :class="[
+                    'mx-1 my-0.5 rounded px-4 py-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
+                    link.active
+                        ? 'flex h-10 w-10 items-center justify-center rounded-md bg-accent text-accent-contrast pointer-events-none'
+                        : 'flex h-10 items-center justify-center rounded-md bg-surface text-content transition-colors hover:bg-accent-soft',
+                    !link.url ? 'cursor-not-allowed opacity-50' : '',
+                ]"
+                v-html="link.label"
+            />
+        </template>
+    </div>
 </template>
 
-
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link } from "@inertiajs/vue3";
 
 const props = defineProps({
     links: {
         type: Array,
         required: true,
         validator: (value) => {
-            return Array.isArray(value) && 
-                   value.every(link => 'url' in link && 'label' in link)
-        }
-    }
-})
+            return Array.isArray(value) && value.every((link) => "url" in link && "label" in link);
+        },
+    },
+});
 
 const getAriaLabel = (link, index, links) => {
     if (index === 0) return "Предыдущая страница";

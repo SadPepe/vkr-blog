@@ -54,7 +54,9 @@ class ArticleController extends Controller
             'category_slug' => $validated['category_slug'] ?? null
         ]);
 
-        return redirect()->route('articles.show', $article->slug);
+        return redirect()
+            ->route('articles.show', $article->slug)
+            ->with('success', 'Статья опубликована');
     }
 
     public function destroy(Article $article)
@@ -73,7 +75,10 @@ class ArticleController extends Controller
 
             // Удаляем статью
             $article->delete();
-            return redirect()->route('profile');
+
+            return redirect()
+                ->route('profile')
+                ->with('success', 'Статья удалена');
         } catch (\Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
@@ -153,7 +158,9 @@ class ArticleController extends Controller
             'category_slug' => $validated['category_slug'] ?? null
         ]);
 
-        return redirect()->route('profile');
+        return redirect()
+            ->route('profile')
+            ->with('success', 'Статья обновлена');
     }
 
     public function show(Article $article)
@@ -162,9 +169,9 @@ class ArticleController extends Controller
         $article->incrementViews();
 
         $article->load([
-            'user',
-            'comments.user',
-            'comments.replies.user',
+            'user:id,name,about,avatar',
+            'comments.user:id,name,avatar',
+            'comments.replies.user:id,name,avatar',
             'comments.likes',
             'comments.replies.likes',
         ]);
@@ -183,6 +190,7 @@ class ArticleController extends Controller
                 ->whereKeyNot($article->id)
                 ->latest()
                 ->limit(4)
+                ->select(Article::CARD_COLUMNS)
                 ->get()
             : collect();
 
@@ -199,7 +207,10 @@ class ArticleController extends Controller
     {
         $sort = $this->resolveSort($request);
 
-        $articles = $this->applySort(Article::with(['user']), $sort)
+        $articles = $this->applySort(
+            Article::with(['user:id,name,avatar'])->select(Article::CARD_COLUMNS),
+            $sort
+        )
             ->paginate(12)
             ->withQueryString();
 
@@ -207,7 +218,7 @@ class ArticleController extends Controller
         $popularArticleController = new \App\Http\Controllers\PopularArticleController();
         $popularArticles = $popularArticleController->getPopularArticles(5, 'week');
 
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::withCount('articles')->orderBy('name')->get();
 
         return inertia('Home', [
             'articles' => $articles,
@@ -233,7 +244,7 @@ class ArticleController extends Controller
 
         return inertia('SearchResults', [
             'articles' => Article::query()
-                ->with('user')
+                ->with('user:id,name,avatar')
                 ->when($search, function ($query) use ($pattern, $likeOp) {
                     $query->where(function ($q) use ($pattern, $likeOp) {
                         $q->where('title', $likeOp, $pattern)
@@ -241,6 +252,7 @@ class ArticleController extends Controller
                             ->orWhere('content', $likeOp, $pattern);
                     });
                 })
+                ->select(Article::CARD_COLUMNS)
                 ->latest()
                 ->paginate(12)
                 ->withQueryString(),
@@ -259,7 +271,7 @@ class ArticleController extends Controller
 
     public function articlesByCategory($category = null)
     {
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::withCount('articles')->orderBy('name')->get();
 
         // При маршрутной привязке {category:slug} сюда приходит модель Category;
         // извлекаем из неё slug, чтобы корректно фильтровать статьи
@@ -269,7 +281,9 @@ class ArticleController extends Controller
             $sort = $this->resolveSort(request());
 
             $articles = $this->applySort(
-                Article::where('category_slug', $categorySlug)->with(['user']),
+                Article::where('category_slug', $categorySlug)
+                    ->with(['user:id,name,avatar'])
+                    ->select(Article::CARD_COLUMNS),
                 $sort
             )
                 ->paginate(10)

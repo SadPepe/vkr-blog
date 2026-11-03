@@ -10,7 +10,8 @@ class AuthorController extends Controller
     public function show(User $user)
     {
         $articles = $user->articles()
-            ->with('user')
+            ->with('user:id,name,avatar')
+            ->select(\App\Models\Article::CARD_COLUMNS)
             ->latest()
             ->paginate(12);
 
@@ -29,9 +30,16 @@ class AuthorController extends Controller
                 'name' => $user->name,
                 'about' => $user->about,
                 'avatar_url' => $user->avatar_url,
+                'cover_url' => $user->cover_url,
+                'background_url' => $user->background_url,
                 'created_at' => $user->created_at,
             ],
             'articles' => $articles,
+            'media' => $user->articles()
+                ->whereNotNull('card_image_path')
+                ->latest()
+                ->take(6)
+                ->get(['id', 'slug', 'title', 'card_image_path']),
             'stats' => $stats,
         ]);
     }

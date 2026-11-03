@@ -1,27 +1,36 @@
 <template>
     <article
-        class="border-b border-gray-200/70 py-8 first:pt-0 last:border-b-0 md:py-10 dark:border-white/10"
+        class="group relative rounded-md border border-line bg-surface p-5 shadow-sm transition-all duration-200 hover:border-accent hover:shadow-md /30"
     >
+        <!-- Одна ссылка на статью: прозрачный оверлей на всю карточку -->
+        <Link
+            :href="`/articles/${article.slug}`"
+            prefetch="hover"
+            class="absolute inset-0 z-10 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            :aria-label="`Читать статью: ${article.title}`"
+        />
+
+        <!-- Действия владельца (редактировать/удалить) -->
+        <div v-if="$slots.actions" class="absolute right-3 top-3 z-20 flex items-center gap-1">
+            <slot name="actions" />
+        </div>
+
         <div class="flex flex-col gap-4 md:gap-5">
             <!-- Автор: аватар, имя, категория и дата -->
             <Link
                 :href="route('authors.show', article.user.id)"
-                class="group inline-flex items-center gap-3"
+                class="relative z-20 inline-flex items-center gap-3 self-start rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                :class="{ 'pr-20': $slots.actions }"
             >
                 <UserAvatar :user="article.user" :size="40" />
                 <span class="min-w-0">
                     <span
-                        class="block truncate text-sm font-semibold text-gray-900 transition-colors group-hover:text-emerald-700 dark:text-stone-100 dark:group-hover:text-emerald-300"
+                        class="block truncate text-sm font-semibold text-content transition-colors group-hover:text-accent dark:group-hover:text-accent"
                     >
                         {{ article.user.name }}
                     </span>
-                    <span
-                        class="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-500 dark:text-stone-500"
-                    >
-                        <span
-                            v-if="categoryName"
-                            class="font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400"
-                        >
+                    <span class="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
+                        <span v-if="categoryName" class="font-medium uppercase tracking-wide text-accent">
                             {{ categoryName }}
                         </span>
                         <time>{{ formatDate(article.created_at) }}</time>
@@ -30,37 +39,26 @@
             </Link>
 
             <!-- Заголовок -->
-            <Link :href="`/articles/${article.slug}`" class="group inline-block">
-                <h2
-                    class="line-clamp-2 text-xl font-bold leading-snug tracking-tight text-gray-900 transition-colors group-hover:text-emerald-700 md:text-2xl dark:text-stone-100 dark:group-hover:text-emerald-300"
-                >
-                    {{ article.title }}
-                </h2>
-            </Link>
+            <h2
+                class="line-clamp-2 text-xl font-bold leading-snug tracking-tight text-content transition-colors group-hover:text-accent md:text-2xl dark:group-hover:text-accent"
+            >
+                {{ article.title }}
+            </h2>
 
             <!-- Превью: между заголовком и описанием -->
-            <Link
-                :href="`/articles/${article.slug}`"
-                class="block overflow-hidden rounded-md bg-zinc-100 dark:bg-zinc-800"
-                aria-label="Читать статью"
-            >
+            <div class="overflow-hidden rounded-md bg-surface-muted" :class="{ 'animate-pulse': article.card_image_path && !imageLoaded }">
                 <img
                     v-if="article.card_image_path"
                     :src="article.card_image_path"
-                    alt="Обложка статьи"
-                    class="aspect-video w-full object-cover transition-transform duration-500 hover:scale-105"
+                    :alt="article.title"
+                    class="aspect-video w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
                     loading="lazy"
+                    decoding="async"
+                    @load="imageLoaded = true"
                 />
-                <div
-                    v-else
-                    class="flex aspect-video w-full items-center justify-center"
-                >
-                    <svg
-                        class="h-10 w-10 text-zinc-300 dark:text-zinc-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
+                <div v-else class="flex aspect-video w-full items-center justify-center">
+                    <svg class="h-10 w-10 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                             stroke-linecap="round"
                             stroke-linejoin="round"
@@ -69,53 +67,18 @@
                         />
                     </svg>
                 </div>
-            </Link>
-
-            <!-- Первые строки статьи -->
-            <div class="flex flex-col gap-1.5">
-                <p
-                    class="line-clamp-3 text-sm leading-7 text-stone-500 md:text-[15px] dark:text-stone-400"
-                >
-                    {{ plainText }}
-                </p>
-                <Link
-                    :href="`/articles/${article.slug}`"
-                    class="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 transition-colors hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
-                >
-                    Читать дальше
-                    <svg
-                        class="h-3.5 w-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                    </svg>
-                </Link>
             </div>
 
+            <!-- Первые строки статьи -->
+            <p class="line-clamp-3 text-sm leading-7 text-muted md:text-[15px]">
+                {{ plainText }}
+            </p>
+
             <!-- Статистика -->
-            <div
-                class="flex items-center gap-5 pt-1 text-xs text-gray-500 dark:text-stone-500"
-            >
+            <div class="flex items-center gap-5 text-xs text-muted">
                 <span class="inline-flex items-center gap-1.5">
-                    <svg
-                        class="h-3.5 w-3.5 text-gray-400 dark:text-stone-500"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path
                             stroke-linecap="round"
                             stroke-linejoin="round"
@@ -126,13 +89,7 @@
                 </span>
 
                 <span class="inline-flex items-center gap-1.5">
-                    <svg
-                        class="h-3.5 w-3.5 text-gray-400 dark:text-stone-500"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        viewBox="0 0 24 24"
-                    >
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                         <path
                             stroke-linecap="round"
                             stroke-linejoin="round"
@@ -147,7 +104,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { Link } from "@inertiajs/vue3";
 import UserAvatar from "./UserAvatar.vue";
 
@@ -162,33 +119,24 @@ const props = defineProps({
     },
 });
 
+const imageLoaded = ref(false);
+
 const categoryName = computed(() => {
     const slug = props.article.category_slug;
     const found = props.categories.find((c) => c.slug === slug);
     return found ? found.name : "";
 });
 
-const plainText = computed(() => {
-    const html = props.article.content || "";
-    if (!html) return (props.article.excerpt || "").trim();
-
-    const div = document.createElement("div");
-    div.innerHTML = html;
-    return (div.textContent || "").replace(/\s+/g, " ").trim();
-});
+// Текст превью берём из готового excerpt — не парсим полный HTML статьи в каждой карточке
+const plainText = computed(() => (props.article.excerpt || "").trim());
 
 const formatDate = (dateString) => {
     const date = new Date(dateString);
-    const day = date.toLocaleDateString("ru-RU", {
+    return date.toLocaleDateString("ru-RU", {
         year: "numeric",
         month: "long",
         day: "numeric",
     });
-    const time = date.toLocaleTimeString("ru-RU", {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-    return `${day}, ${time}`;
 };
 </script>
 

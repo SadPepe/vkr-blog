@@ -1,25 +1,39 @@
 <template>
     <MainLayout>
+        <Head :title="article.title">
+            <meta name="description" :content="description" />
+            <meta property="og:type" content="article" />
+            <meta property="og:title" :content="article.title" />
+            <meta property="og:description" :content="description" />
+            <meta v-if="article.card_image_path" property="og:image" :content="shareImage" />
+            <meta property="article:published_time" :content="article.created_at" />
+        </Head>
+
         <!-- Прогресс чтения -->
-        <div class="pointer-events-none fixed inset-x-0 top-0 z-40 h-1 bg-emerald-600/10">
-            <div class="h-full bg-gradient-to-r from-emerald-600 to-teal-600 transition-[width] duration-150 ease-out"
-                :style="{ width: `${progress}%` }"></div>
+        <div class="pointer-events-none fixed inset-x-0 top-0 z-40 h-1 bg-accent/10">
+            <div class="h-full bg-accent transition-[width] duration-150 ease-out" :style="{ width: `${progress}%` }"></div>
         </div>
 
         <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
             <div class="mx-auto max-w-2xl lg:mx-0">
                 <!-- Хлебные крошки -->
-                <nav class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-stone-500" aria-label="Хлебные крошки">
-                    <Link :href="route('home')" class="inline-flex items-center gap-1 transition-colors hover:text-emerald-600 dark:hover:text-emerald-400">
+                <nav class="flex items-center gap-1.5 text-xs text-muted" aria-label="Хлебные крошки">
+                    <Link
+                        :href="route('home')"
+                        class="inline-flex items-center gap-1 transition-colors hover:text-accent dark:hover:text-accent"
+                    >
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         Все статьи
                     </Link>
 
                     <template v-if="category">
-                        <span class="text-gray-300 dark:text-stone-600" aria-hidden="true">/</span>
-                        <Link :href="`/categories/${category.slug}`" class="transition-colors hover:text-emerald-600 dark:hover:text-emerald-400">
+                        <span class="text-muted" aria-hidden="true">/</span>
+                        <Link
+                            :href="`/categories/${category.slug}`"
+                            class="transition-colors hover:text-accent dark:hover:text-accent"
+                        >
                             {{ category.name }}
                         </Link>
                     </template>
@@ -27,24 +41,24 @@
 
                 <div class="article-container px-2 pt-6 md:px-0">
                     <!-- Метаданные: автор · дата · время чтения -->
-                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-stone-500">
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
                         <span class="inline-flex items-center gap-2">
                             <UserAvatar :user="article.user" :size="24" />
                             <Link
                                 :href="route('authors.show', article.user.id)"
-                                class="font-semibold text-gray-700 transition-colors hover:text-emerald-600 dark:text-stone-300 dark:hover:text-emerald-400"
+                                class="font-semibold text-content transition-colors hover:text-accent dark:hover:text-accent"
                             >
                                 {{ article.user.name }}
                             </Link>
                         </span>
-                        <span class="text-gray-300 dark:text-stone-600" aria-hidden="true">·</span>
+                        <span class="text-muted" aria-hidden="true">·</span>
                         <time :datetime="article.created_at">{{ formatDate(article.created_at) }}</time>
-                        <span class="text-gray-300 dark:text-stone-600" aria-hidden="true">·</span>
+                        <span class="text-muted" aria-hidden="true">·</span>
                         <span>{{ readingMinutes }} мин чтения</span>
                     </div>
 
                     <h1
-                        class="mt-3 text-2xl font-extrabold leading-snug tracking-tight text-gray-900 sm:text-3xl lg:text-4xl dark:text-stone-100"
+                        class="mt-3 text-2xl font-extrabold leading-snug tracking-tight text-content sm:text-3xl lg:text-4xl"
                     >
                         {{ article.title }}
                     </h1>
@@ -59,68 +73,155 @@
                     />
 
                     <!-- Главное изображение -->
-                    <div class="mt-10">
+                    <div
+                        v-if="article.card_image_path"
+                        class="mt-10 overflow-hidden rounded-md bg-surface-muted"
+                        :class="{ 'animate-pulse': !imageLoaded }"
+                    >
                         <img
-                            v-if="article.card_image_path"
                             :src="article.card_image_path"
                             :alt="article.title"
-                            class="max-h-[400px] w-full cursor-zoom-in rounded-md object-cover shadow-sm"
-                            loading="lazy"
+                            class="aspect-video max-h-[400px] w-full cursor-zoom-in object-cover shadow-sm transition-opacity duration-300"
+                            :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
+                            fetchpriority="high"
+                            @load="imageLoaded = true"
                             @error="onImageError"
                             @click="openLightbox(article.card_image_path)"
                         />
                     </div>
 
-                    <div ref="contentRef" class="article-content text-gray-800 dark:text-stone-300" v-html="article.content"></div>
+                    <div ref="contentRef" class="article-content text-content" v-html="article.content"></div>
+                </div>
+
+                <!-- Автор статьи -->
+                <div
+                    class="mt-12 flex flex-col gap-4 rounded-md border border-line bg-surface p-5 shadow-sm sm:flex-row sm:items-center"
+                >
+                    <UserAvatar :user="article.user" :size="56" class="shrink-0" />
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Автор</p>
+                        <Link
+                            :href="route('authors.show', article.user.id)"
+                            class="mt-1 inline-block rounded text-base font-semibold text-content transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:text-accent"
+                        >
+                            {{ article.user.name }}
+                        </Link>
+                        <p v-if="article.user.about" class="mt-1 line-clamp-2 text-sm text-muted">
+                            {{ article.user.about }}
+                        </p>
+                    </div>
+                    <Link
+                        :href="route('authors.show', article.user.id)"
+                        class="inline-flex shrink-0 items-center justify-center rounded border border-line-strong px-4 py-2 text-sm font-semibold text-content transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:border-accent dark:hover:text-accent"
+                    >
+                        Все статьи автора
+                    </Link>
+                </div>
+
+                <!-- Поделиться -->
+                <div class="mt-6 flex flex-wrap items-center gap-2">
+                    <span class="mr-1 text-sm text-muted">Поделиться:</span>
+
+                    <button
+                        type="button"
+                        @click="copyLink"
+                        class="inline-flex items-center gap-1.5 rounded border border-line-strong px-3 py-1.5 text-sm font-medium text-content transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:border-accent dark:hover:text-accent"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M13.828 10.172a4 0 010 5.656l-2.828 2.829a4 0 01-5.657-5.657l1.414-1.414M10.172 13.828a4 0 010-5.656l2.828-2.829a4 0 015.657 5.657l-1.414"
+                            />
+                        </svg>
+                        {{ copied ? "Ссылка скопирована" : "Скопировать ссылку" }}
+                    </button>
+
+                    <a
+                        :href="telegramShareUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 rounded border border-line-strong px-3 py-1.5 text-sm font-medium text-content transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:border-accent dark:hover:text-accent"
+                    >
+                        Telegram
+                    </a>
+
+                    <a
+                        :href="vkShareUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 rounded border border-line-strong px-3 py-1.5 text-sm font-medium text-content transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:border-accent dark:hover:text-accent"
+                    >
+                        ВКонтакте
+                    </a>
                 </div>
 
                 <CommentSection :comments="article.comments" :article="article" :article-slug="article.slug" />
             </div>
 
             <!-- Похожие и рекомендуемые статьи -->
-            <aside
-                class="mx-auto mt-10 w-full max-w-2xl lg:mt-0 lg:max-w-none lg:self-start lg:sticky lg:top-24"
-            >
-                <div class="space-y-6 scrollbar-slim lg:max-h-[calc(100vh_-_8rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1 lg:-mr-1 lg:py-1">
-                    <RelatedArticles
-                        v-if="relatedArticles && relatedArticles.length > 0"
-                        :articles="relatedArticles"
-                    />
-                    <PopularArticles
-                        v-if="popularArticles && popularArticles.length > 0"
-                        :articles="popularArticles"
-                    />
+            <aside class="mx-auto mt-10 w-full max-w-2xl lg:mt-0 lg:max-w-none lg:self-start lg:sticky lg:top-24">
+                <div class="space-y-6">
+                    <RelatedArticles v-if="relatedArticles && relatedArticles.length > 0" :articles="relatedArticles" />
+                    <PopularArticles v-if="popularArticles && popularArticles.length > 0" :articles="popularArticles" />
                 </div>
             </aside>
         </div>
+
+        <!-- Наверх -->
+        <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="opacity-0 translate-y-2"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 translate-y-2"
+        >
+            <button
+                v-if="showTopButton"
+                type="button"
+                @click="scrollToTop"
+                class="fixed bottom-6 right-6 z-30 inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-muted shadow-lg transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:text-accent"
+                aria-label="Наверх"
+            >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5M5 12l7-7 7 7" />
+                </svg>
+            </button>
+        </Transition>
 
         <!-- Лайтбокс: картинка на полный экран -->
         <Teleport to="body">
             <Transition name="lightbox">
                 <div
                     v-if="lightboxOpen"
-                    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+                    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-6 backdrop-blur-md sm:p-10"
                     role="dialog"
                     aria-modal="true"
-                    :aria-label="`Изображение: ${article.title}`"
+                    :aria-label="`Просмотр изображения: ${article.title}`"
                     @click="closeLightbox"
                 >
                     <button
                         @click="closeLightbox"
-                        class="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/25"
+                        class="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2.5 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-6 sm:top-6"
                         aria-label="Закрыть"
                         title="Закрыть (Esc)"
                     >
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
-                    <img
-                        :src="lightboxSrc"
-                        :alt="article.title"
-                        class="max-h-[90vh] max-w-full rounded-lg object-contain shadow-2xl"
-                        @click.stop
-                    />
+
+                    <figure class="flex max-h-full max-w-[min(1100px,92vw)] flex-col items-center gap-3" @click.stop>
+                        <img
+                            :src="lightboxSrc"
+                            :alt="article.title"
+                            class="max-h-[78vh] w-auto max-w-full rounded-md object-contain shadow-2xl"
+                        />
+                        <figcaption class="text-xs text-white/60">
+                            Esc или клик вне изображения — закрыть
+                        </figcaption>
+                    </figure>
                 </div>
             </Transition>
         </Teleport>
@@ -128,30 +229,30 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
-import MainLayout from '@/Layouts/Layout.vue';
-import CommentSection from '@/Components/Comments/CommentSection.vue';
-import ArticleStats from '@/Components/ArticleStats.vue';
-import UserAvatar from '@/Components/UserAvatar.vue';
-import PopularArticles from '@/Components/PopularArticles.vue';
-import RelatedArticles from '@/Components/RelatedArticles.vue';
+import { computed, onMounted, onBeforeUnmount, ref } from "vue";
+import { Head, Link, usePage } from "@inertiajs/vue3";
+import MainLayout from "@/Layouts/Layout.vue";
+import CommentSection from "@/Components/Comments/CommentSection.vue";
+import ArticleStats from "@/Components/ArticleStats.vue";
+import UserAvatar from "@/Components/UserAvatar.vue";
+import PopularArticles from "@/Components/PopularArticles.vue";
+import RelatedArticles from "@/Components/RelatedArticles.vue";
 
 const page = usePage();
 
 const props = defineProps({
     article: {
         type: Object,
-        required: true
+        required: true,
     },
     popularArticles: {
         type: Array,
-        default: () => []
+        default: () => [],
     },
     relatedArticles: {
         type: Array,
-        default: () => []
-    }
+        default: () => [],
+    },
 });
 
 const category = computed(() => {
@@ -183,33 +284,95 @@ const readingMinutes = computed(() => {
     return Math.max(1, Math.round(words / 200));
 });
 
+const imageLoaded = ref(false);
+
 const onImageError = (event) => {
-    event.target.style.display = 'none';
+    event.target.style.display = "none";
+};
+
+const description = computed(() => {
+    const text = (props.article.excerpt || "").trim();
+    if (text) return text;
+
+    return String(props.article.content || "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 200);
+});
+
+const absoluteUrl = computed(() => (typeof window === "undefined" ? "" : window.location.href));
+
+const shareImage = computed(() =>
+    typeof window === "undefined" || !props.article.card_image_path
+        ? ""
+        : new URL(props.article.card_image_path, window.location.origin).href,
+);
+
+const telegramShareUrl = computed(
+    () => `https://t.me/share/url?url=${encodeURIComponent(absoluteUrl.value)}&text=${encodeURIComponent(props.article.title)}`,
+);
+
+const vkShareUrl = computed(
+    () => `https://vk.com/share.php?url=${encodeURIComponent(absoluteUrl.value)}&title=${encodeURIComponent(props.article.title)}`,
+);
+
+const copied = ref(false);
+let copiedTimer = null;
+
+const copyLink = async () => {
+    const url = window.location.href;
+
+    try {
+        await navigator.clipboard.writeText(url);
+    } catch {
+        // Резервный путь для браузеров без Clipboard API (http, старые движки)
+        const input = document.createElement("textarea");
+        input.value = url;
+        input.setAttribute("readonly", "");
+        input.style.position = "absolute";
+        input.style.left = "-9999px";
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
+    }
+
+    copied.value = true;
+    clearTimeout(copiedTimer);
+    copiedTimer = setTimeout(() => {
+        copied.value = false;
+    }, 2500);
 };
 
 const progress = ref(0);
+const showTopButton = ref(false);
+
+const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+};
 const lightboxOpen = ref(false);
-const lightboxSrc = ref('');
+const lightboxSrc = ref("");
 const contentRef = ref(null);
 
 const openLightbox = (src) => {
     lightboxSrc.value = src;
     lightboxOpen.value = true;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
 };
 
 const closeLightbox = () => {
     lightboxOpen.value = false;
-    document.body.style.overflow = '';
+    document.body.style.overflow = "";
 };
 
 const onKeydown = (e) => {
-    if (e.key === 'Escape') closeLightbox();
+    if (e.key === "Escape") closeLightbox();
 };
 
 const handleContentImageClick = (event) => {
     const target = event.target;
-    if (target && target.tagName === 'IMG') {
+    if (target && target.tagName === "IMG") {
         event.preventDefault();
         event.stopPropagation();
         openLightbox(target.currentSrc || target.src);
@@ -220,35 +383,63 @@ const updateProgress = () => {
     const doc = document.documentElement;
     const max = doc.scrollHeight - window.innerHeight;
     progress.value = max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0;
+    showTopButton.value = window.scrollY > 700;
 };
 
 onMounted(() => {
-    document.title = (props.article.title ? `${props.article.title} — ` : '') + 'Блог';
-
     updateProgress();
-    window.addEventListener('scroll', updateProgress, { passive: true });
-    window.addEventListener('keydown', onKeydown);
-    contentRef.value?.addEventListener('click', handleContentImageClick);
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("keydown", onKeydown);
+    contentRef.value?.addEventListener("click", handleContentImageClick);
+
+    // Картинки в тексте: ленивая загрузка и декодирование в фоне
+    contentRef.value?.querySelectorAll("img").forEach((img) => {
+        img.setAttribute("loading", "lazy");
+        img.setAttribute("decoding", "async");
+    });
 });
 
 onBeforeUnmount(() => {
-    window.removeEventListener('scroll', updateProgress);
-    window.removeEventListener('keydown', onKeydown);
-    contentRef.value?.removeEventListener('click', handleContentImageClick);
-    document.body.style.overflow = '';
+    window.removeEventListener("scroll", updateProgress);
+    window.removeEventListener("keydown", onKeydown);
+    contentRef.value?.removeEventListener("click", handleContentImageClick);
+    document.body.style.overflow = "";
 });
 </script>
 
 <style scoped>
 .article-content :deep(ul),
 .article-content :deep(ol) {
-    padding: 0 1rem;
-    margin: 1.25rem 0;
+    margin: 1.1rem 0;
+    padding-inline-start: 1.5rem;
+    list-style-position: outside;
+}
 
-    li p {
-        margin-top: 0.25em;
-        margin-bottom: 0.25em;
-    }
+.article-content :deep(li > p) {
+    margin: 0.25rem 0;
+}
+
+/* Вложенные уровни: свой шаг отступа и свои маркеры */
+.article-content :deep(li > ul),
+.article-content :deep(li > ol) {
+    margin: 0.5rem 0 0.5rem 0.25rem;
+    padding-inline-start: 1.4rem;
+}
+
+.article-content :deep(ul ul) {
+    list-style-type: circle;
+}
+
+.article-content :deep(ul ul ul) {
+    list-style-type: square;
+}
+
+.article-content :deep(ol ol) {
+    list-style-type: lower-alpha;
+}
+
+.article-content :deep(ol ol ol) {
+    list-style-type: lower-roman;
 }
 
 .article-content :deep(p) {
@@ -275,7 +466,8 @@ onBeforeUnmount(() => {
 }
 
 .article-content :deep(blockquote) {
-    border-left: 3px solid rgba(179, 179, 179, 0.6);
+    border-left: 3px solid rgb(var(--c-line-strong));
+    color: rgb(var(--c-muted));
     margin: 1.5rem 0;
     padding-left: 1rem;
 }
@@ -309,13 +501,70 @@ onBeforeUnmount(() => {
 .article-content :deep(h5),
 .article-content :deep(h6) {
     font-size: 1rem;
+    margin: 1.25rem 0 0.5rem;
 }
 
 .article-content :deep(img) {
+    display: block;
+    margin: 1.5rem auto;
     border-radius: 0.75rem;
     max-width: 100%;
+    max-height: 70vh;
     height: auto;
     cursor: zoom-in;
+}
+
+/* внутри figure отступы задаёт сама фигура */
+.article-content :deep(figure img) {
+    margin-block: 0;
+}
+
+.article-content :deep(a) {
+    color: rgb(var(--c-accent));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.article-content :deep(code) {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    background: rgba(15, 23, 42, 0.06);
+    padding: 0.15em 0.35em;
+    border-radius: 0.3rem;
+}
+
+.article-content :deep(pre) {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgb(var(--c-surface));
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.article-content :deep(pre code) {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+    white-space: pre;
+}
+
+.article-content :deep(figure) {
+    margin: 1.75rem 0;
+}
+
+.article-content :deep(figcaption) {
+    margin-top: 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: rgb(var(--c-muted));
+}
+
+.article-content :deep(li) {
+    margin: 0.35rem 0;
 }
 
 .lightbox-enter-active,

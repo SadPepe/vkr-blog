@@ -38,7 +38,7 @@ const props = defineProps({
 
 const palettes = [
     "bg-gradient-to-br from-indigo-500 to-blue-500",
-    "bg-gradient-to-br from-emerald-500 to-teal-500",
+    "bg-gradient-to-br from-accent to-accent-2",
     "bg-gradient-to-br from-orange-400 to-amber-500",
     "bg-gradient-to-br from-rose-400 to-pink-500",
     "bg-gradient-to-br from-violet-500 to-purple-500",

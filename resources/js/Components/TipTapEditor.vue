@@ -3,46 +3,55 @@
         <!-- Баннер восстановленного черновика -->
         <div
             v-if="restoredDraft"
-            class="mb-4 flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-500/30 dark:bg-amber-500/10"
+            class="mb-4 flex items-center justify-between gap-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-500/30 dark:bg-amber-500/10"
         >
             <div class="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
                 <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>
-                    Восстановлен черновик{{
-                        restoredDraft.savedAt
-                            ? ` от ${formatSavedTime(restoredDraft.savedAt)}`
-                            : ''
-                    }}
-                </span>
+                <span> Восстановлен черновик{{ restoredDraft.savedAt ? ` от ${formatSavedTime(restoredDraft.savedAt)}` : "" }} </span>
             </div>
-            <button type="button" @click="discardRestoredDraft"
-                class="rounded-lg px-3 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/20">
+            <button
+                type="button"
+                @click="discardRestoredDraft"
+                class="rounded-md px-3 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:text-amber-300 amber-500/20"
+            >
                 Отменить
+            </button>
+        </div>
+
+        <!-- Ошибка загрузки/ссылки -->
+        <div
+            v-if="editorError"
+            class="mb-4 flex items-start justify-between gap-3 rounded-md border border-red-300 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-dark:hover:bg-red-500/10"
+            role="alert"
+        >
+            <p class="text-sm text-red-800 dark:text-red-200">{{ editorError }}</p>
+            <button
+                type="button"
+                class="rounded p-0.5 text-red-700 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-300 red-500/20"
+                aria-label="Скрыть сообщение"
+                @click="editorError = ''"
+            >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
             </button>
         </div>
 
         <!-- ФОРМА -->
         <div
-            class="border rounded-2xl dark:border-stone-700 mb-6 bg-[#FAF8F4] dark:bg-[#1a1a1a] shadow-sm hover:shadow-md transition-shadow duration-300"
+            class="border rounded-md mb-6 bg-surface shadow-sm hover:shadow-md transition-shadow duration-300"
         >
             <input
                 v-model="title"
+                aria-label="Заголовок статьи"
                 placeholder="Введите заголовок статьи..."
-                class="dark:bg-[#2a2a2a] dark:border-stone-600 dark:text-stone-300 mb-6 w-full px-6 py-4 text-xl font-semibold border-b border-gray-200 rounded-t-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors duration-200"
+                class="mb-6 w-full rounded-t-md border-b border-line bg-surface-muted px-6 py-4 text-xl font-semibold text-content placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-colors duration-200"
             />
             <div class="mb-6 px-6">
-                <label
-                    class="text-lg font-semibold text-gray-800 mb-3 dark:text-stone-200 flex items-center"
-                >
-                    <svg
-                        class="w-5 h-5 mr-2 text-gray-600 dark:text-stone-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
+                <label for="article-excerpt" class="text-lg font-semibold text-content mb-3 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                             stroke-linecap="round"
                             stroke-linejoin="round"
@@ -53,41 +62,27 @@
                     Краткое описание
                 </label>
                 <textarea
+                    id="article-excerpt"
                     v-model="excerpt"
                     placeholder="Опишите суть статьи в нескольких предложениях..."
-                    class="dark:bg-[#2a2a2a] dark:border-stone-600 dark:text-stone-300 w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors duration-200 resize-none"
+                    class="w-full resize-none rounded-md border border-line-strong bg-surface-muted px-4 py-3 text-content placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-colors duration-200"
                     maxlength="200"
                     rows="3"
                 ></textarea>
                 <div class="flex justify-between items-center mt-2">
-                    <span class="text-xs text-gray-500 dark:text-stone-400"
-                        >Будет отображаться в карточке статьи</span
-                    >
+                    <span class="text-xs text-muted">Будет отображаться в карточке статьи</span>
                     <span
                         class="text-xs font-medium"
-                        :class="
-                            excerpt.length >= 190
-                                ? 'text-red-500'
-                                : 'text-gray-500 dark:text-stone-400'
-                        "
+                        :class="excerpt.length >= 190 ? 'text-red-500' : 'text-muted'"
                     >
                         {{ excerpt.length }}/200
                     </span>
                 </div>
             </div>
-            <div
-                class="flex justify-between p-6 border-t border-gray-100 dark:border-stone-700"
-            >
+            <div class="flex justify-between p-6 border-t border-line">
                 <div class="w-[55%]">
-                    <label
-                        class="text-lg font-semibold text-gray-800 mb-3 dark:text-stone-200 flex items-center"
-                    >
-                        <svg
-                            class="w-5 h-5 mr-2 text-gray-600 dark:text-stone-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
+                    <label class="text-lg font-semibold text-content mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
@@ -101,22 +96,17 @@
                         <img
                             :src="previewImage"
                             alt="Предпросмотр"
-                            class="w-full max-h-[300px] object-cover rounded-lg shadow-md transition-transform duration-300"
+                            class="w-full max-h-[300px] object-cover rounded-md shadow-md transition-transform duration-300"
                         />
                         <div
-                            class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-lg flex items-center justify-center"
+                            class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-md flex items-center justify-center"
                         >
                             <button
                                 type="button"
                                 @click="removeCardImage"
                                 class="opacity-0 group-hover:opacity-100 bg-red-500 text-white p-2 rounded-full transform scale-0 group-hover:scale-100 transition-all duration-300"
                             >
-                                <svg
-                                    class="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
@@ -131,14 +121,9 @@
                         <button
                             type="button"
                             @click="$refs.cardImageInput.click()"
-                            class="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+                            class="flex items-center px-4 py-2 bg-accent hover:bg-accent-hover text-accent-contrast rounded-md text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
                         >
-                            <svg
-                                class="w-4 h-4 mr-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
@@ -148,25 +133,12 @@
                             </svg>
                             {{ previewImage ? "Заменить" : "Загрузить" }}
                         </button>
-                        <input
-                            type="file"
-                            ref="cardImageInput"
-                            accept="image/*"
-                            @change="handleCardImageUpload"
-                            class="hidden"
-                        />
+                        <input type="file" ref="cardImageInput" accept="image/*" @change="handleCardImageUpload" class="hidden" />
                     </div>
                 </div>
                 <div class="w-[40%]">
-                    <label
-                        class="text-lg font-semibold text-gray-800 mb-3 dark:text-stone-200 flex items-center"
-                    >
-                        <svg
-                            class="w-5 h-5 mr-2 text-gray-600 dark:text-stone-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
+                    <label class="text-lg font-semibold text-content mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
@@ -178,16 +150,14 @@
                     </label>
                     <select
                         v-model="selectedCategory"
-                        class="w-full p-3 border border-gray-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-stone-300 dark:bg-[#2a2a2a] transition-all duration-200 appearance-none bg-[#FAF8F4] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzljYTBhZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+')] bg-no-repeat bg-[center_right_1rem]"
+                        class="w-full p-3 border border-line-strong rounded-md focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-200 appearance-none bg-surface-muted bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzljYTBhZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+')] bg-no-repeat bg-[center_right_1rem]"
                     >
-                        <option disabled :value="null" class="text-gray-400">
-                            Выберите категорию
-                        </option>
+                        <option disabled :value="null" class="text-muted">Выберите категорию</option>
                         <option
                             v-for="categoryOption in categoryOptions"
                             :key="categoryOption.slug"
                             :value="categoryOption.slug"
-                            class="dark:bg-[#2a2a2a] dark:text-stone-300"
+                            class=""
                         >
                             {{ categoryOption.name }}
                         </option>
@@ -199,22 +169,15 @@
         <!-- ПАНЕЛЬ ИНСТРУМЕНТОВ -->
         <div
             v-if="editor"
-            class="dark:bg-[#1a1a1a] bg-[#FAF8F4] flex flex-wrap items-center rounded-2xl border dark:border-stone-700 mb-6 p-3 shadow-sm sticky top-24 z-10 backdrop-blur-sm bg-white/95 dark:bg-[#1a1a1a]/95"
+            class="bg-surface flex flex-wrap items-center rounded-md border mb-6 p-3 shadow-sm sticky top-24 z-10 backdrop-blur-sm bg-surface/95"
         >
             <!-- Группа форматирования текста -->
-            <div
-                class="flex items-center border-r border-gray-200 dark:border-stone-600 pr-3 mr-3"
-            >
+            <div class="flex items-center border-r border-line pr-3 mr-3">
                 <button
                     type="button"
                     @click="editor.chain().focus().toggleBold().run()"
                     :disabled="!editor.can().chain().focus().toggleBold().run()"
-                    :class="[
-                        editor.isActive('bold')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    :class="[ editor.isActive('bold') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Жирный (Ctrl+B)"
                 >
@@ -226,12 +189,7 @@
                     :disabled="
                         !editor.can().chain().focus().toggleItalic().run()
                     "
-                    :class="[
-                        editor.isActive('italic')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    :class="[ editor.isActive('italic') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Курсив (Ctrl+I)"
                 >
@@ -240,12 +198,7 @@
                 <button
                     type="button"
                     @click="editor.chain().focus().toggleUnderline().run()"
-                    :class="[
-                        editor.isActive('underline')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    :class="[ editor.isActive('underline') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Подчеркивание"
                 >
@@ -254,20 +207,11 @@
             </div>
 
             <!-- Группа заголовков -->
-            <div
-                class="flex items-center border-r border-gray-200 dark:border-stone-600 pr-3 mr-3"
-            >
+            <div class="flex items-center border-r border-line pr-3 mr-3">
                 <button
                     type="button"
-                    @click="
-                        editor.chain().focus().toggleHeading({ level: 1 }).run()
-                    "
-                    :class="[
-                        editor.isActive('heading', { level: 1 })
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'px-3 py-2 rounded-lg font-bold transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+                    :class="[ editor.isActive('heading', { level: 1 }) ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'px-3 py-2 rounded-md font-bold', ]"
                     class="tooltip"
                     data-tooltip="Заголовок 1"
                 >
@@ -275,15 +219,8 @@
                 </button>
                 <button
                     type="button"
-                    @click="
-                        editor.chain().focus().toggleHeading({ level: 2 }).run()
-                    "
-                    :class="[
-                        editor.isActive('heading', { level: 2 })
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'px-3 py-2 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+                    :class="[ editor.isActive('heading', { level: 2 }) ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'px-3 py-2 rounded-md font-semibold', ]"
                     class="tooltip"
                     data-tooltip="Заголовок 2"
                 >
@@ -291,15 +228,8 @@
                 </button>
                 <button
                     type="button"
-                    @click="
-                        editor.chain().focus().toggleHeading({ level: 3 }).run()
-                    "
-                    :class="[
-                        editor.isActive('heading', { level: 3 })
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'px-3 py-2 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
+                    :class="[ editor.isActive('heading', { level: 3 }) ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'px-3 py-2 rounded-md font-semibold', ]"
                     class="tooltip"
                     data-tooltip="Заголовок 3"
                 >
@@ -308,20 +238,11 @@
             </div>
 
             <!-- Группа выравнивания -->
-            <div
-                class="flex items-center border-r border-gray-200 dark:border-stone-600 pr-3 mr-3"
-            >
+            <div class="flex items-center border-r border-line pr-3 mr-3">
                 <button
                     type="button"
-                    @click="
-                        editor.chain().focus().toggleTextAlign('left').run()
-                    "
-                    :class="[
-                        editor.isActive({ textAlign: 'left' })
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    @click="editor.chain().focus().toggleTextAlign('left').run()"
+                    :class="[ editor.isActive({ textAlign: 'left' }) ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Выровнять по левому краю"
                 >
@@ -329,15 +250,8 @@
                 </button>
                 <button
                     type="button"
-                    @click="
-                        editor.chain().focus().toggleTextAlign('center').run()
-                    "
-                    :class="[
-                        editor.isActive({ textAlign: 'center' })
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    @click="editor.chain().focus().toggleTextAlign('center').run()"
+                    :class="[ editor.isActive({ textAlign: 'center' }) ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Выровнять по центру"
                 >
@@ -345,15 +259,8 @@
                 </button>
                 <button
                     type="button"
-                    @click="
-                        editor.chain().focus().toggleTextAlign('right').run()
-                    "
-                    :class="[
-                        editor.isActive({ textAlign: 'right' })
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    @click="editor.chain().focus().toggleTextAlign('right').run()"
+                    :class="[ editor.isActive({ textAlign: 'right' }) ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Выровнять по правому краю"
                 >
@@ -361,15 +268,8 @@
                 </button>
                 <button
                     type="button"
-                    @click="
-                        editor.chain().focus().toggleTextAlign('justify').run()
-                    "
-                    :class="[
-                        editor.isActive({ textAlign: 'justify' })
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    @click="editor.chain().focus().toggleTextAlign('justify').run()"
+                    :class="[ editor.isActive({ textAlign: 'justify' }) ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Выровнять по ширине"
                 >
@@ -378,18 +278,11 @@
             </div>
 
             <!-- Группа списков -->
-            <div
-                class="flex items-center border-r border-gray-200 dark:border-stone-600 pr-3 mr-3"
-            >
+            <div class="flex items-center border-r border-line pr-3 mr-3">
                 <button
                     type="button"
                     @click="editor.chain().focus().toggleBulletList().run()"
-                    :class="[
-                        editor.isActive('bulletList')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    :class="[ editor.isActive('bulletList') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Маркированный список"
                 >
@@ -398,12 +291,7 @@
                 <button
                     type="button"
                     @click="editor.chain().focus().toggleOrderedList().run()"
-                    :class="[
-                        editor.isActive('orderedList')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    :class="[ editor.isActive('orderedList') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Нумерованный список"
                 >
@@ -416,12 +304,7 @@
                 <button
                     type="button"
                     @click="setLink"
-                    :class="[
-                        editor.isActive('link')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    :class="[ editor.isActive('link') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Добавить ссылку"
                 >
@@ -430,12 +313,7 @@
                 <button
                     type="button"
                     @click="editor.chain().focus().toggleBlockquote().run()"
-                    :class="[
-                        editor.isActive('blockquote')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    :class="[ editor.isActive('blockquote') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Цитата"
                 >
@@ -444,12 +322,7 @@
                 <button
                     type="button"
                     @click="editor.chain().focus().toggleCodeBlock().run()"
-                    :class="[
-                        editor.isActive('codeBlock')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200 transform hover:scale-105',
-                    ]"
+                    :class="[ editor.isActive('codeBlock') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md', ]"
                     class="tooltip"
                     data-tooltip="Блок кода"
                 >
@@ -458,7 +331,7 @@
                 <button
                     type="button"
                     @click="editor.chain().focus().setHorizontalRule().run()"
-                    :class="'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300 p-2 rounded-lg transition-all duration-200 transform hover:scale-105'"
+                    :class="'hover:bg-surface-muted text-content p-2 rounded-md'"
                     class="tooltip"
                     data-tooltip="Горизонтальная линия"
                 >
@@ -467,7 +340,7 @@
                 <button
                     type="button"
                     @click="addImage"
-                    :class="'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300 p-2 rounded-lg transition-all duration-200 transform hover:scale-105'"
+                    :class="'hover:bg-surface-muted text-content p-2 rounded-md'"
                     class="tooltip"
                     data-tooltip="Добавить изображение"
                 >
@@ -475,69 +348,42 @@
                 </button>
             </div>
 
-            <span
-                class="ml-auto hidden text-[11px] font-normal text-gray-400 md:inline dark:text-stone-500"
-            >
+            <span class="ml-auto hidden text-[11px] font-normal text-muted md:inline">
                 Черновик сохраняется автоматически (Ctrl+S)
             </span>
         </div>
 
         <!-- BUBBLE МЕНЮ -->
-        <bubble-menu
-            :editor="editor"
-            :tippy-options="{ duration: 100, maxWidth: 'none' }"
-            v-if="editor"
-            class="bubble-menu"
-        >
+        <bubble-menu :editor="editor" :tippy-options="{ duration: 100, maxWidth: 'none' }" v-if="editor" class="bubble-menu">
             <div
-                class="flex items-center bg-[#FAF8F4] dark:bg-stone-800 rounded-xl shadow-lg border border-gray-200 dark:border-stone-600 p-2 backdrop-blur-sm bg-white/95 dark:bg-stone-800/95"
+                class="flex items-center bg-surface rounded-md shadow-lg border border-line p-2 backdrop-blur-sm bg-surface/95"
             >
                 <button
                     type="button"
                     @click="editor.chain().focus().toggleBold().run()"
-                    :class="[
-                        editor.isActive('bold')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200',
-                    ]"
+                    :class="[ editor.isActive('bold') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md transition-all duration-200', ]"
                 >
                     <BoldIcon class="w-4 h-4" />
                 </button>
                 <button
                     type="button"
                     @click="editor.chain().focus().toggleItalic().run()"
-                    :class="[
-                        editor.isActive('italic')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200',
-                    ]"
+                    :class="[ editor.isActive('italic') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md transition-all duration-200', ]"
                 >
                     <ItalicIcon class="w-4 h-4" />
                 </button>
                 <button
                     type="button"
                     @click="editor.chain().focus().toggleUnderline().run()"
-                    :class="[
-                        editor.isActive('underline')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200',
-                    ]"
+                    :class="[ editor.isActive('underline') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md transition-all duration-200', ]"
                 >
                     <UnderlineIcon class="w-4 h-4" />
                 </button>
-                <div class="w-px h-6 bg-gray-200 dark:bg-stone-600 mx-1"></div>
+                <div class="w-px h-6 bg-surface-muted mx-1"></div>
                 <button
                     type="button"
                     @click="setLink"
-                    :class="[
-                        editor.isActive('link')
-                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                            : 'hover:bg-gray-100 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300',
-                        'p-2 rounded-lg transition-all duration-200',
-                    ]"
+                    :class="[ editor.isActive('link') ? 'bg-accent-soft text-accent ' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md transition-all duration-200', ]"
                 >
                     <LinkIcon class="w-4 h-4" />
                 </button>
@@ -547,10 +393,7 @@
         <!-- РЕДАКТОР -->
         <div class="relative">
             <editor-content :editor="editor" class="editor-content" />
-            <div
-                v-if="editor && !hasContent"
-                class="absolute top-4 left-4 pointer-events-none text-gray-400 dark:text-stone-500 text-lg"
-            >
+            <div v-if="editor && !hasContent" class="absolute top-4 left-4 pointer-events-none text-muted text-lg">
                 Начните писать вашу статью...
             </div>
         </div>
@@ -581,6 +424,7 @@ import AligRightIcon from "vue-material-design-icons/FormatAlignRight.vue";
 import ImageIcon from "vue-material-design-icons/Image.vue";
 import LinkIcon from "vue-material-design-icons/LinkVariant.vue";
 import { onMounted, onBeforeUnmount, ref, watch } from "vue";
+import { MAX_DRAFT_SIZE, readDraft, removeDraft, writeDraft } from "@/Utilities/drafts";
 
 const props = defineProps({
     initialTitle: String,
@@ -608,6 +452,16 @@ const selectedCategory = ref(props.initialCardCategory || "");
 const hasContent = ref(false);
 const isDirty = ref(false);
 const restoredDraft = ref(null);
+const editorError = ref("");
+let editorErrorTimer = null;
+
+const showError = (message) => {
+    editorError.value = message;
+    clearTimeout(editorErrorTimer);
+    editorErrorTimer = setTimeout(() => {
+        editorError.value = "";
+    }, 6000);
+};
 
 function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -622,29 +476,10 @@ function debounce(ms, fn) {
 }
 
 // ---------- Черновики (LocalStorage) ----------
-const DRAFT_PREFIX = "blog_draft_";
-const MAX_DRAFT_SIZE = 400 * 1024; // 400KB — меньше лимита localStorage
-
-const draftStorageKey = () => DRAFT_PREFIX + (props.draftKey || "default");
-
-const loadDraft = () => {
-    try {
-        const raw = localStorage.getItem(draftStorageKey());
-        if (!raw) return null;
-        const data = JSON.parse(raw);
-        if (!data || typeof data !== "object") return null;
-        return data;
-    } catch {
-        return null;
-    }
-};
+const loadDraft = () => readDraft(props.draftKey);
 
 const clearDraft = () => {
-    try {
-        localStorage.removeItem(draftStorageKey());
-    } catch {
-        /* localStorage недоступен */
-    }
+    removeDraft(props.draftKey);
     isDirty.value = false;
     restoredDraft.value = null;
 };
@@ -680,20 +515,13 @@ const saveDraft = debounce(700, () => {
         return;
     }
 
-    try {
-        localStorage.setItem(
-            draftStorageKey(),
-            JSON.stringify({
-                title: title.value,
-                excerpt: excerpt.value,
-                category: selectedCategory.value,
-                content: html,
-                savedAt: Date.now(),
-            })
-        );
-    } catch {
-        // Квота переполнена — черновик не сохраняется, но редактор жив.
-    }
+    writeDraft(props.draftKey, {
+        title: title.value,
+        excerpt: excerpt.value,
+        category: selectedCategory.value,
+        content: html,
+        savedAt: Date.now(),
+    });
 });
 
 const queueDraftSave = () => {
@@ -702,13 +530,22 @@ const queueDraftSave = () => {
     saveDraft();
 };
 
-const discardRestoredDraft = () => {
-    clearDraft();
+// Полный сброс: удаляем сохранённый черновик и возвращаем поля к исходным
+// (для новой статьи — к пустым, для редактирования — к сохранённой версии).
+const resetDraft = () => {
     title.value = props.initialTitle || "";
     excerpt.value = props.initialExcerpt || "";
     selectedCategory.value = props.initialCardCategory || "";
+    cardImageFile.value = null;
+    previewImage.value = props.initialCardImage || "";
+    if (cardImageInput.value) cardImageInput.value.value = "";
     editor.value?.commands.setContent(props.initialContent || "", false);
     syncHasContent();
+    clearDraft();
+};
+
+const discardRestoredDraft = () => {
+    resetDraft();
 };
 
 const formatSavedTime = (ts) =>
@@ -724,8 +561,7 @@ watch([title, excerpt, selectedCategory], () => {
 
 // ---------- Инициализация редактора ----------
 const syncHasContent = () => {
-    hasContent.value =
-        !!editor.value && editor.value.state.doc.textContent.trim().length > 0;
+    hasContent.value = !!editor.value && editor.value.state.doc.textContent.trim().length > 0;
 };
 
 const handleKeyDown = (_view, event) => {
@@ -749,12 +585,12 @@ onMounted(() => {
             Heading.configure({
                 levels: [1, 2, 3],
                 HTMLAttributes: {
-                    class: "heading text-stone-800 dark:text-stone-200",
+                    class: "heading text-content",
                 },
             }),
             Paragraph.configure({
                 HTMLAttributes: {
-                    class: "text-stone-800 dark:text-stone-200 font-[Inter] leading-relaxed text-base",
+                    class: "text-content font-[Inter] leading-relaxed text-base",
                 },
             }),
             Underline,
@@ -765,7 +601,7 @@ onMounted(() => {
                 HTMLAttributes: {
                     target: "_blank",
                     rel: "noopener noreferrer",
-                    class: "text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 cursor-pointer underline",
+                    class: "text-accent hover:text-accent-hover dark:hover:text-accent cursor-pointer underline",
                 },
             }),
             TextAlign.configure({
@@ -781,7 +617,7 @@ onMounted(() => {
         content: restoredContent,
         editorProps: {
             attributes: {
-                class: "prose prose-lg dark:prose-invert min-h-[600px] max-w-none mx-auto focus:outline-none p-6 border-2 border-dashed border-gray-200 dark:border-stone-700 rounded-2xl bg-[#FAF8F4] dark:bg-[#1a1a1a] shadow-sm hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors duration-300",
+                class: "prose prose-lg dark:prose-invert min-h-[600px] max-w-none mx-auto focus:outline-none p-6 border-2 border-dashed border-line  rounded-md bg-surface  shadow-sm hover:border-accent transition-colors duration-300",
             },
             handleKeyDown,
         },
@@ -790,8 +626,7 @@ onMounted(() => {
     // Восстанавливаем значения полей
     title.value = (draft?.title !== undefined ? draft.title : "") || props.initialTitle || "";
     excerpt.value = (draft?.excerpt !== undefined ? draft.excerpt : "") || props.initialExcerpt || "";
-    selectedCategory.value =
-        (draft?.category !== undefined ? draft.category : "") || props.initialCardCategory || "";
+    selectedCategory.value = (draft?.category !== undefined ? draft.category : "") || props.initialCardCategory || "";
 
     if (draft?.content) {
         restoredDraft.value = { savedAt: draft.savedAt || Date.now() };
@@ -804,7 +639,7 @@ onMounted(() => {
     });
 
     // Упрощаем вставку из Word/PDF: сбрасываем скрытое форматирование,
-    // оставляя только осмысленные структуры (заголовки, списки и т.п.)
+    // оставляя только осмысленные структуры (заголовки, списки т.п.)
     editor.value.on("paste", (_event, _slice, marksInRange) => {
         // Tiptap контролирует пастинг через schema — Word-мусор уже отсекается.
         // Здесь ничего не делаем, но оставляем обработчик для будущих проверок.
@@ -860,27 +695,23 @@ const setLink = () => {
     // Блокируем опасные схемы (javascript:, data:, vbscript:)
     const trimmed = url.trim();
     if (/^(javascript|vbscript|data):/i.test(trimmed)) {
-        window.alert("Недопустимый тип ссылки.");
+        showError("Недопустимый тип ссылки.");
         return;
     }
 
     // Нормализуем URL: схемы (http(s):, mailto:, tel: и т.п.),
-    // относительные пути и якоря оставляем как есть.
+    // относительные пути якоря оставляем как есть.
     // Голый домен без схемы получает https://.
-    const finalUrl = /^[a-z][a-z0-9+.\-]*:/i.test(trimmed)
-        || trimmed.startsWith("/")
-        || trimmed.startsWith("#")
-        || trimmed.startsWith("?")
-        || trimmed.startsWith("//")
-        ? trimmed
-        : `https://${trimmed}`;
+    const finalUrl =
+        /^[a-z][a-z0-9+.\-]*:/i.test(trimmed) ||
+        trimmed.startsWith("/") ||
+        trimmed.startsWith("#") ||
+        trimmed.startsWith("?") ||
+        trimmed.startsWith("//")
+            ? trimmed
+            : `https://${trimmed}`;
 
-    editor.value
-        .chain()
-        .focus()
-        .extendMarkRange("link")
-        .setLink({ href: finalUrl })
-        .run();
+    editor.value.chain().focus().extendMarkRange("link").setLink({ href: finalUrl }).run();
 };
 
 //Загрузка превью
@@ -890,13 +721,13 @@ const handleCardImageUpload = (e) => {
 
     // Проверка типа файла
     if (!file.type.match("image.*")) {
-        window.alert("Пожалуйста, выберите изображение");
+        showError("Пожалуйста, выберите изображение");
         return;
     }
 
     // Проверка размера (например, до 2MB)
     if (file.size > 2 * 1024 * 1024) {
-        window.alert("Максимальный размер файла - 2MB");
+        showError("Максимальный размер файла - 2MB");
         return;
     }
 
@@ -929,7 +760,7 @@ const addImage = () => {
         if (!file) return;
 
         if (file.size > 2 * 1024 * 1024) {
-            window.alert("Максимальный размер файла - 2MB");
+            showError("Максимальный размер файла - 2MB");
             return;
         }
 
@@ -960,9 +791,7 @@ const prepareArticleData = async () => {
     let content = editor.value.getHTML();
 
     // Находим изображения как blob: (новые) и data: (base64, например вставки)
-    const assetSrcs = [
-        ...(content.matchAll(/src="((?:blob:[^"]+|data:image[^"]+))"/g) || []),
-    ]
+    const assetSrcs = [...(content.matchAll(/src="((?:blob:[^"]+|data:image[^"]+))"/g) || [])]
         .map((m) => m[1])
         .filter((v, i, arr) => arr.indexOf(v) === i);
 
@@ -975,11 +804,7 @@ const prepareArticleData = async () => {
                 const blob = await response.blob();
                 const ext = (blob.type.split("/")[1] || "png").split(";")[0];
                 const formData = new FormData();
-                formData.append(
-                    "image",
-                    blob,
-                    `image-${Date.now()}-${Math.floor(Math.random() * 1e5)}.${ext}`
-                );
+                formData.append("image", blob, `image-${Date.now()}-${Math.floor(Math.random() * 1e5)}.${ext}`);
 
                 const { data } = await axios.post("/upload-image", formData);
                 replacements.push({ assetUrl, serverUrl: data.url });
@@ -989,10 +814,7 @@ const prepareArticleData = async () => {
         }
 
         replacements.forEach(({ assetUrl, serverUrl }) => {
-            content = content.replace(
-                new RegExp(escapeRegExp(assetUrl), "g"),
-                serverUrl
-            );
+            content = content.replace(new RegExp(escapeRegExp(assetUrl), "g"), serverUrl);
         });
     }
 
@@ -1030,6 +852,7 @@ defineExpose({
     prepareArticleData,
     cleanupBlobUrls,
     clearDraft,
+    resetDraft,
     title,
     excerpt,
     cardImageFile,
@@ -1050,8 +873,8 @@ defineExpose({
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: #1f2937;
-    color: white;
+    background: rgb(var(--c-content));
+    color: rgb(var(--c-page));
     padding: 0.5rem 0.75rem;
     border-radius: 0.375rem;
     font-size: 0.75rem;
@@ -1069,7 +892,7 @@ defineExpose({
     left: 50%;
     transform: translateX(-50%);
     border: 5px solid transparent;
-    border-top-color: #1f2937;
+    border-top-color: rgb(var(--c-content));
     opacity: 0;
     visibility: hidden;
     transition: all 0.2s ease-in-out;
@@ -1080,10 +903,6 @@ defineExpose({
     opacity: 1;
     visibility: visible;
     bottom: calc(100% + 5px);
-}
-
-.dark .tooltip::after {
-    border-top-color: #374151;
 }
 </style>
 
@@ -1116,11 +935,11 @@ defineExpose({
     margin: 0.8rem 0 1rem;
 }
 
-.dark .prose h2.heading {
+[data-mode="dark"] .prose h2.heading {
     color: rgb(231 229 228 / var(--tw-text-opacity, 1));
 }
 
-.dark .prose h3.heading {
+[data-mode="dark"] .prose h3.heading {
     color: rgb(231 229 228 / var(--tw-text-opacity, 1));
 }
 
@@ -1131,14 +950,40 @@ defineExpose({
 
 .prose ul,
 .prose ol {
-    padding: 0 1rem;
-    margin: 1.25rem 1rem 1.25rem 0.4rem;
-    color: rgb(231 229 228 / var(--tw-text-opacity, 1));
+    margin: 1.1rem 0;
+    padding-inline-start: 1.5rem;
+    list-style-position: outside;
+    color: rgb(var(--c-content));
+}
 
-    li p {
-        margin-top: 0.25em;
-        margin-bottom: 0.25em;
-    }
+.prose li {
+    margin: 0.35rem 0;
+}
+
+.prose li > p {
+    margin: 0.25rem 0;
+}
+
+.prose li > ul,
+.prose li > ol {
+    margin: 0.5rem 0 0.5rem 0.25rem;
+    padding-inline-start: 1.4rem;
+}
+
+.prose ul ul {
+    list-style-type: circle;
+}
+
+.prose ul ul ul {
+    list-style-type: square;
+}
+
+.prose ol ol {
+    list-style-type: lower-alpha;
+}
+
+.prose ol ol ol {
+    list-style-type: lower-roman;
 }
 
 .prose ol {
@@ -1150,41 +995,31 @@ defineExpose({
 }
 
 .prose blockquote {
-    border-left: 5px solid #444;
+    border-left: 5px solid rgb(var(--c-line-strong));
     padding-left: 1.5rem;
     margin: 1.5rem 0;
     font-style: italic;
-    background-color: rgba(172, 164, 253, 0.2);
+    background-color: rgb(var(--c-accent-soft));
     border-radius: 0.3rem;
 }
 
-.dark .prose blockquote {
-    border-left-color: #4b5563;
-    color: #9ca3af;
-}
-
 .prose pre {
-    background: #1f2937;
+    background: rgb(var(--c-surface-muted));
     border-radius: 0.75rem;
-    color: #e5e7eb;
+    color: rgb(var(--c-content));
     font-family: "JetBrains Mono", monospace;
     margin: 1.5rem 0;
     padding: 1.5rem;
     overflow-x: auto;
-    border: 1px solid #374151;
+    border: 1px solid rgb(var(--c-line));
 }
 
 .prose code {
-    background: #f3f4f6;
-    color: #dc2626;
+    background: rgb(var(--c-surface-muted));
+    color: rgb(var(--c-accent));
     padding: 0.25rem 0.5rem;
     border-radius: 0.375rem;
     font-size: 0.875rem;
-}
-
-.dark .prose code {
-    background: #374151;
-    color: #f87171;
 }
 
 .prose pre code {
@@ -1199,12 +1034,23 @@ defineExpose({
     margin: 2rem 0;
 }
 
-.dark .prose hr {
-    border-top-color: #374151;
+[data-mode="dark"] .prose hr {
+    border-top-color: rgb(var(--c-page));
+}
+
+.prose img {
+    display: block;
+    margin: 1.5rem auto;
+    max-width: 100%;
+    height: auto;
+}
+
+.prose figure img {
+    margin-block: 0;
 }
 
 .prose .my-image {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    box-shadow: 0 4px 6px -1px rgb(0 / 0.1);
     transition: transform 0.3s ease;
 }
 
@@ -1227,12 +1073,7 @@ defineExpose({
 /* Фокус состояния */
 .ProseMirror:focus {
     outline: none;
-    border-color: #8b5cf6 !important;
-    box-shadow: 0 0 0 3px rgb(139 92 246 / 0.1);
-}
-
-.dark .ProseMirror:focus {
-    border-color: #a78bfa !important;
-    box-shadow: 0 0 0 3px rgb(167 139 250 / 0.2);
+    border-color: rgb(var(--c-accent)) !important;
+    box-shadow: 0 3px rgb(var(--c-accent) / 0.1);
 }
 </style>

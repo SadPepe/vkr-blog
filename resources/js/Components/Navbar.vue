@@ -1,37 +1,52 @@
 <template>
-    <div class="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-screen-xl border border-gray-100/80 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl supports-[backdrop-filter]:bg-white/70 dark:border-white/5 dark:bg-[#202020]/80 dark:supports-[backdrop-filter]:bg-[#1c1c1c]/60 md:top-2.5 xl:rounded-md">
-        <div
-            class="relative z-20 border-b border-gray-100/80 dark:border-white/5">
+    <div
+        class="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-screen-xl border border-line bg-surface/80 shadow-lg shadow-black/5 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/70 dark:supports-[backdrop-filter]:bg-[#1c1c1c]/60 md:top-2.5 xl:rounded-md"
+    >
+        <div class="relative z-20 border-b border-line">
             <div class="px-4 py-3.5 sm:px-6">
                 <div class="flex items-center justify-between gap-4">
                     <!-- Логотип -->
-                    <a href="/" aria-label="На главную"
-                        class="group inline-flex shrink-0 items-center gap-2.5 rounded text-lg font-bold tracking-tight text-gray-900 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-white dark:focus-visible:ring-offset-[#202020]">
+                    <Link
+                        :href="route('home')"
+                        aria-label="На главную"
+                        class="group inline-flex shrink-0 items-center gap-2.5 rounded text-lg font-bold tracking-tight text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page dark:text-white"
+                    >
                         <span
-                            class="flex h-9 w-9 items-center justify-center rounded-md bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/30 transition-transform duration-200 group-hover:rotate-6 group-hover:scale-110">
+                            class="flex h-9 w-9 items-center justify-center rounded-md bg-gradient-to-br from-accent to-accent-2 text-accent-contrast shadow-md"
+                        >
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" />
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"
+                                />
                             </svg>
                         </span>
-                        <span class="text-gray-900 dark:text-white">
-                            МОЙ.<span
-                                class="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent dark:from-emerald-400 dark:to-teal-400">БЛОГ</span>
+                        <span class="text-content dark:text-white">
+                            МОЙ.<span class="bg-accent hover:bg-accent-hover bg-clip-text text-transparent">БЛОГ</span>
                         </span>
-                    </a>
+                    </Link>
 
                     <!-- Десктопный поиск -->
                     <div class="hidden flex-1 sm:flex sm:items-center sm:justify-center">
-                        <form @submit.prevent="performSearch"
-                            class="group flex w-full max-w-xs items-center gap-2 rounded border border-gray-200/80 bg-gray-50/80 px-4 py-2 transition-all duration-200 focus-within:border-emerald-400 focus-within:bg-[#FAF8F4] focus-within:ring-2 focus-within:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5 dark:focus-within:bg-white/10 lg:max-w-sm">
-                            <SearchIcon
-                                class="h-4 w-4 shrink-0 text-gray-400 transition-colors duration-200 group-focus-within:text-emerald-500 dark:text-stone-400 dark:group-focus-within:text-emerald-300" />
-                            <input v-model="searchQuery" type="text" placeholder="Поиск по блогу..."
-                                class="w-full border-0 bg-transparent p-0 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0 dark:text-stone-200 dark:placeholder-stone-500" />
-                            <button type="submit" aria-label="Найти"
-                                class="shrink-0 rounded p-1 text-gray-400 transition-all duration-200 hover:scale-110 hover:text-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-stone-400 dark:hover:text-emerald-300">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"
-                                    viewBox="0 0 24 24">
+                        <form
+                            @submit.prevent="performSearch"
+                            class="group flex w-full max-w-xs items-center gap-2 rounded border border-line bg-surface-muted/80 px-4 py-2 transition-all duration-200 focus-within:border-accent focus-within:bg-surface focus-within:ring-2 focus-within:ring-accent/20 dark:focus-within:bg-surface/10 lg:max-w-sm"
+                        >
+                            <SearchIcon class="h-4 w-4 shrink-0 text-muted transition-colors duration-200 group-focus-within:text-accent" />
+                            <input
+                                v-model="searchQuery"
+                                type="text"
+                                placeholder="Поиск по блогу..."
+                                aria-label="Поиск по блогу"
+                                class="w-full border-0 bg-transparent p-0 text-sm text-content placeholder:text-muted focus:outline-none focus:ring-0"
+                            />
+                            <button
+                                type="submit"
+                                aria-label="Найти"
+                                class="shrink-0 rounded p-1 text-muted transition-all duration-200 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:hover:text-accent"
+                            >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
                                 </svg>
                             </button>
@@ -40,99 +55,235 @@
 
                     <!-- Правая панель действий -->
                     <div class="flex shrink-0 items-center gap-2">
-                        <!-- Переключатель темы -->
-                        <button @click="toggleTheme"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded text-slate-600 transition-all duration-200 hover:scale-110 hover:bg-slate-100 hover:text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-stone-300 dark:hover:bg-white/10 dark:hover:text-emerald-300 dark:focus-visible:ring-offset-[#202020]"
-                            :title="isDark ? 'Переключить на светлую тему' : 'Переключить на темную тему'"
-                            :aria-label="isDark ? 'Переключить на светлую тему' : 'Переключить на темную тему'">
-                            <svg v-if="isDark" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
-                            <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                            </svg>
-                        </button>
+                        <!-- Выбор темы оформления -->
+                        <div class="relative" ref="themeDropdown">
+                            <button
+                                type="button"
+                                @click="isThemeOpen = !isThemeOpen"
+                                class="inline-flex h-9 w-9 items-center justify-center rounded text-muted transition-colors hover:bg-surface-muted hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page"
+                                title="Оформление"
+                                aria-label="Выбрать тему оформления"
+                                aria-haspopup="true"
+                                :aria-expanded="isThemeOpen"
+                            >
+                                <svg
+                                    class="h-5 w-5"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M12 3a9 9 0 0 0 0 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+                                    />
+                                </svg>
+                            </button>
+
+                            <transition
+                                enter-active-class="transition ease-out duration-100"
+                                enter-from-class="transform opacity-0 scale-95 -translate-y-2"
+                                enter-to-class="transform opacity-100 scale-100 translate-y-0"
+                                leave-active-class="transition ease-in duration-75"
+                                leave-from-class="transform opacity-100 scale-100 translate-y-0"
+                                leave-to-class="transform opacity-0 scale-95 -translate-y-2"
+                            >
+                                <div
+                                    v-show="isThemeOpen"
+                                    class="absolute right-0 top-full z-30 mt-2 grid max-h-[70vh] w-[min(92vw,24rem)] grid-cols-2 gap-1 overflow-y-auto rounded-md border border-line bg-surface p-1.5 shadow-xl"
+                                >
+                                    <div v-for="group in themeGroups" :key="group.label" class="min-w-0">
+                                        <p class="px-2 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+                                            {{ group.label }}
+                                        </p>
+
+                                        <button
+                                            v-for="theme in group.items"
+                                            :key="theme.id"
+                                            type="button"
+                                            @click="applyTheme(theme.id)"
+                                            class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                                            :class="
+                                                activeTheme === theme.id
+                                                    ? 'bg-accent-soft text-accent'
+                                                    : 'text-content hover:bg-surface-muted'
+                                            "
+                                        >
+                                            <span
+                                                class="h-3 w-3 shrink-0 rounded-full border border-line"
+                                                :style="{ backgroundColor: theme.swatch }"
+                                            />
+                                            <span class="min-w-0 flex-1 truncate">{{ theme.label }}</span>
+                                            <svg
+                                                v-if="activeTheme === theme.id"
+                                                class="h-3.5 w-3.5 shrink-0"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2.5"
+                                                viewBox="0 0 24 24"
+                                                aria-hidden="true"
+                                            >
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </transition>
+                        </div>
 
                         <!-- Десктопные кнопки авторизации -->
                         <div v-if="!$page.props.auth.user" class="hidden sm:flex items-center gap-2.5">
-                            <a :href="route('login')"
-                                class="inline-flex items-center justify-center rounded border border-gray-200 bg-[#FAF8F4] px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:border-emerald-400/40 dark:hover:text-emerald-300 dark:focus-visible:ring-offset-[#202020]">
+                            <a
+                                :href="route('login')"
+                                class="inline-flex items-center justify-center rounded border border-line bg-surface px-4 py-2 text-sm font-semibold text-content shadow-sm transition-all duration-200 hover:border-accent hover:text-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page dark:hover:border-accent dark:hover:text-accent"
+                            >
                                 Войти
                             </a>
-                            <a :href="route('register')"
-                                class="inline-flex items-center justify-center rounded bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#202020]">
+                            <a
+                                :href="route('register')"
+                                class="inline-flex items-center justify-center rounded bg-accent hover:bg-accent-hover px-4 py-2 text-sm font-semibold text-accent-contrast shadow-md transition-all duration-200 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page"
+                            >
                                 Регистрация
                             </a>
                         </div>
 
                         <!-- Десктопный профиль -->
                         <div v-if="$page.props.auth.user" class="relative hidden sm:flex">
-                            <button @click="toggleMenu"
-                                class="rounded-full p-0.5 ring-2 ring-transparent transition-all duration-200 hover:ring-emerald-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#202020]"
-                                aria-label="Меню профиля" aria-expanded="isOpen">
-                                <UserAvatar :user="$page.props.auth.user" :size="36"
-                                    class="transition-transform duration-200 hover:scale-105" />
+                            <button
+                                @click="toggleMenu"
+                                class="rounded-full p-0.5 ring-2 ring-transparent transition-all duration-200 hover:ring-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page"
+                                aria-label="Меню профиля"
+                                :aria-expanded="isOpen"
+                            >
+                                <UserAvatar
+                                    :user="$page.props.auth.user"
+                                    :size="36"
+                                    class="transition-transform duration-200 hover:scale-105"
+                                />
                             </button>
 
-                            <transition enter-active-class="transition ease-out duration-100"
+                            <transition
+                                enter-active-class="transition ease-out duration-100"
                                 enter-from-class="transform opacity-0 scale-95 -translate-y-2"
                                 enter-to-class="transform opacity-100 scale-100 translate-y-0"
                                 leave-active-class="transition ease-in duration-75"
                                 leave-from-class="transform opacity-100 scale-100 translate-y-0"
-                                leave-to-class="transform opacity-0 scale-95 -translate-y-2">
-                                <div v-show="isOpen" @click.away="closeMenu" ref="dropdown"
-                                    class="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-md border border-gray-100 bg-[#FAF8F4] p-1.5 shadow-xl shadow-slate-900/10 ring-1 ring-black/5 dark:border-white/10 dark:bg-[#252525] dark:ring-white/5">
-                                    <a href="#"
-                                        class="flex items-center rounded px-3.5 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-stone-200 dark:hover:bg-white/10 dark:hover:text-white"
-                                        @click.prevent="router.get(route('profile'))">
+                                leave-to-class="transform opacity-0 scale-95 -translate-y-2"
+                            >
+                                <div
+                                    v-show="isOpen"
+                                    @click.away="closeMenu"
+                                    ref="dropdown"
+                                    class="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-md border border-line bg-surface p-1.5 shadow-xl shadow-black/10 ring-1 ring-black/5"
+                                >
+                                    <a
+                                        href="#"
+                                        class="flex items-center rounded px-3.5 py-2.5 text-sm font-medium text-content transition-colors duration-150 hover:bg-surface-muted hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:hover:text-white"
+                                        @click.prevent="router.get(route('profile'))"
+                                    >
                                         Профиль
                                     </a>
-                                    <a href="#"
-                                        class="flex items-center rounded px-3.5 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-stone-200 dark:hover:bg-white/10 dark:hover:text-white"
-                                        @click.prevent="router.get(route('profile.edit'))">
+                                    <a
+                                        href="#"
+                                        class="flex items-center rounded px-3.5 py-2.5 text-sm font-medium text-content transition-colors duration-150 hover:bg-surface-muted hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:hover:text-white"
+                                        @click.prevent="router.get(route('profile.edit'))"
+                                    >
                                         Настройки
                                     </a>
-                                    <div class="my-1.5 h-px bg-gray-100 dark:bg-white/10"></div>
-                                    <a href="#"
+                                    <div class="my-1.5 h-px bg-surface-muted dark:bg-surface/10"></div>
+                                    <a
+                                        href="#"
                                         class="flex items-center rounded px-3.5 py-2.5 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-400 dark:hover:bg-red-500/10"
-                                        @click.prevent="logout">
+                                        @click.prevent="logout"
+                                    >
                                         Выйти
                                     </a>
                                 </div>
                             </transition>
                         </div>
 
+                        <!-- Поиск для мобильных -->
+                        <button
+                            @click="toggleSearch"
+                            type="button"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded text-muted transition-all duration-200 hover:bg-surface-muted hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page sm:hidden dark:hover:text-accent"
+                            :aria-label="isSearchOpen ? 'Скрыть поиск' : 'Открыть поиск'"
+                            :aria-expanded="isSearchOpen"
+                        >
+                            <svg
+                                v-if="!isSearchOpen"
+                                class="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                            </svg>
+                            <svg
+                                v-else
+                                class="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
                         <!-- Бургер-кнопка для мобильных -->
-                        <button @click="toggleMobileMenu"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded text-gray-700 transition-all duration-200 hover:scale-110 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:hidden dark:text-stone-300 dark:hover:bg-white/10"
-                            aria-label="Открыть меню" aria-expanded="isMobileMenuOpen">
-                            <svg class="h-6 w-6 transition-transform duration-200" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="isMobileMenuOpen
-                                        ? 'M6 18L18 6M6 6l12 12'
-                                        : 'M4 6h16M4 12h16M4 18h16'
-                                    " />
+                        <button
+                            @click="toggleMobileMenu"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded text-content transition-all duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:hidden"
+                            aria-label="Меню"
+                            :aria-expanded="isMobileMenuOpen"
+                        >
+                            <svg
+                                class="h-6 w-6 transition-transform duration-200"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    :d="isMobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'"
+                                />
                             </svg>
                         </button>
                     </div>
                 </div>
 
                 <!-- Поисковая строка для мобильных (в шапке) -->
-                <transition enter-active-class="transition ease-out duration-200"
-                    enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0"
-                    leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 translate-y-0"
-                    leave-to-class="opacity-0 -translate-y-2">
+                <transition
+                    enter-active-class="transition ease-out duration-200"
+                    enter-from-class="opacity-0 -translate-y-2"
+                    enter-to-class="opacity-100 translate-y-0"
+                    leave-active-class="transition ease-in duration-150"
+                    leave-from-class="opacity-100 translate-y-0"
+                    leave-to-class="opacity-0 -translate-y-2"
+                >
                     <div v-show="isSearchOpen" class="sm:hidden mt-3">
-                        <form @submit.prevent="performSearch"
-class="flex items-center gap-2 rounded border border-gray-200 bg-gray-50 px-3 py-2 transition-all duration-200 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5">
-                            <input v-model="searchQuery" type="text" placeholder="Поиск по блогу..."
-                                class="flex-1 border-0 bg-transparent p-0 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0 dark:text-stone-200 dark:placeholder-stone-500" />
-                            <button type="submit" aria-label="Найти"
-                                class="rounded bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#202020]">
+                        <form
+                            @submit.prevent="performSearch"
+                            class="flex items-center gap-2 rounded border border-line bg-surface-muted px-3 py-2 transition-all duration-200 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20"
+                        >
+                            <input
+                                ref="mobileSearchInput"
+                                v-model="searchQuery"
+                                type="text"
+                                placeholder="Поиск по блогу..."
+                                aria-label="Поиск по блогу"
+                                class="flex-1 border-0 bg-transparent p-0 text-sm text-content placeholder:text-muted focus:outline-none focus:ring-0"
+                            />
+                            <button
+                                type="submit"
+                                aria-label="Найти"
+                                class="rounded bg-accent hover:bg-accent-hover px-4 py-1.5 text-sm font-semibold text-accent-contrast shadow-sm transition-all duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page"
+                            >
                                 Найти
                             </button>
                         </form>
@@ -142,73 +293,60 @@ class="flex items-center gap-2 rounded border border-gray-200 bg-gray-50 px-3 py
         </div>
 
         <!-- Мобильное меню -->
-        <transition enter-active-class="transition-all duration-300 ease-out"
-            enter-from-class="opacity-0 -translate-y-3" enter-to-class="opacity-100 translate-y-0"
-            leave-active-class="transition-all duration-200 ease-in" leave-from-class="opacity-100 translate-y-0"
-            leave-to-class="opacity-0 -translate-y-3">
-            <div v-show="isMobileMenuOpen"
-                class="sm:hidden mt-2 overflow-hidden rounded-md border border-gray-100 bg-white/95 p-4 shadow-xl shadow-slate-900/10 backdrop-blur-xl dark:border-white/10 dark:bg-[#202020]/95">
+        <transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 -translate-y-3"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 -translate-y-3"
+        >
+            <div
+                v-show="isMobileMenuOpen"
+                class="sm:hidden mt-2 overflow-hidden rounded-md border border-line bg-surface/95 p-4 shadow-xl shadow-black/10 backdrop-blur-xl dark:bg-[#202020]/95"
+            >
                 <div class="space-y-3">
-                    <!-- Поиск в мобильном меню -->
-                    <form @submit.prevent="performSearchMobile"
-                        class="flex items-center gap-2 rounded border border-gray-200 bg-gray-50 px-3 py-2 transition-all duration-200 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5">
-                        <SearchIcon
-                            class="h-4 w-4 shrink-0 text-gray-400 transition-colors duration-200 group-focus-within:text-emerald-500 dark:text-stone-400" />
-                        <input v-model="searchQuery" type="text" placeholder="Поиск по блогу..."
-                            class="flex-1 border-0 bg-transparent p-0 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0 dark:text-stone-200 dark:placeholder-stone-500" />
-                        <button type="submit" aria-label="Найти"
-                            class="shrink-0 rounded p-1 text-emerald-600 transition-all duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-emerald-300">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </form>
-
                     <!-- Кнопки авторизации для мобильных -->
                     <div v-if="!$page.props.auth.user" class="grid gap-2.5">
-                        <a :href="route('login')" @click="closeMobileMenu"
-                            class="inline-flex w-full items-center justify-center rounded border border-gray-200 bg-[#FAF8F4] px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:border-emerald-300 hover:text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-white/10 dark:bg-white/5 dark:text-stone-200 dark:hover:border-emerald-400/40 dark:hover:text-emerald-300 dark:focus-visible:ring-offset-[#202020]">
+                        <a
+                            :href="route('login')"
+                            @click="closeMobileMenu"
+                            class="inline-flex w-full items-center justify-center rounded border border-line bg-surface px-4 py-3 text-sm font-semibold text-content shadow-sm transition-all duration-200 hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page dark:hover:border-accent dark:hover:text-accent"
+                        >
                             Войти
                         </a>
-                        <a :href="route('register')" @click="closeMobileMenu"
-                            class="inline-flex w-full items-center justify-center rounded bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition-all duration-200 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#202020]">
+                        <a
+                            :href="route('register')"
+                            @click="closeMobileMenu"
+                            class="inline-flex w-full items-center justify-center rounded bg-accent hover:bg-accent-hover px-4 py-3 text-sm font-semibold text-accent-contrast shadow-md transition-all duration-200 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page"
+                        >
                             Регистрация
                         </a>
                     </div>
 
-                    <!-- Переключатель темы для мобильных -->
-                    <button @click="toggleTheme(), closeMobileMenu()"
-                        class="flex w-full items-center rounded p-3 text-left text-sm font-medium text-slate-700 transition-all duration-150 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-stone-200 dark:hover:bg-white/10">
-                        <svg v-if="isDark" class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        <svg v-else class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                        </svg>
-                        {{ isDark ? 'Светлая тема' : 'Темная тема' }}
-                    </button>
-
                     <!-- Профиль для мобильных -->
                     <div v-if="$page.props.auth.user" class="space-y-1">
-                        <a href="#" @click.prevent="goToProfile"
-                            class="flex items-center gap-3 rounded border border-gray-200 p-2.5 transition-colors duration-150 hover:border-emerald-200 hover:bg-emerald-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-white/10 dark:hover:border-emerald-400/40 dark:hover:bg-emerald-500/10">
+                        <a
+                            href="#"
+                            @click.prevent="goToProfile"
+                            class="flex items-center gap-3 rounded border border-line p-2.5 transition-colors duration-150 hover:border-accent hover:bg-accent-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:hover:border-accent"
+                        >
                             <UserAvatar :user="$page.props.auth.user" :size="40" />
-                            <div class="text-sm font-medium text-gray-900 dark:text-stone-100">
-                                Профиль
-                            </div>
+                            <div class="text-sm font-medium text-content">Профиль</div>
                         </a>
 
-                        <a href="#" @click.prevent="goToSettings"
-                            class="flex items-center rounded px-4 py-3 text-sm font-medium text-gray-700 transition-colors duration-150 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-stone-200 dark:hover:bg-white/10">
+                        <a
+                            href="#"
+                            @click.prevent="goToSettings"
+                            class="flex items-center rounded px-4 py-3 text-sm font-medium text-content transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        >
                             Настройки
                         </a>
-                        <a href="#" @click.prevent="logoutMobile"
-                            class="flex items-center rounded px-4 py-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-400 dark:hover:bg-red-500/10">
+                        <a
+                            href="#"
+                            @click.prevent="logoutMobile"
+                            class="flex items-center rounded px-4 py-3 text-sm font-medium text-red-600 transition-colors duration-150 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-400 dark:hover:bg-red-500/10"
+                        >
                             Выйти
                         </a>
                     </div>
@@ -220,71 +358,95 @@ class="flex items-center gap-2 rounded border border-gray-200 bg-gray-50 px-3 py
 
 <script setup>
 import { onClickOutside } from "@vueuse/core";
-import { router } from "@inertiajs/vue3";
+import { Link, router, usePage } from "@inertiajs/vue3";
 import SearchIcon from "vue-material-design-icons/Magnify.vue";
-import { ref, watch, onMounted } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 
 const props = defineProps({
     searchQuery: String,
 });
 
-const searchQuery = ref("");
+const page = usePage();
+
+const queryFromUrl = (url) => new URLSearchParams((url || "").split("?")[1] || "").get("query") || "";
+
+const searchQuery = ref(props.searchQuery ?? queryFromUrl(page.url));
 const isOpen = ref(false);
 const isMobileMenuOpen = ref(false);
 const isSearchOpen = ref(false);
 const dropdown = ref(null);
-const isDark = ref(false);
+const mobileSearchInput = ref(null);
+const themes = [
+    { id: "light", label: "Светлая", swatch: "#f5f1e8", dark: false },
+    { id: "cupcake", label: "Cupcake", swatch: "#efeae6", dark: false },
+    { id: "corporate", label: "Corporate", swatch: "#e8e8e8", dark: false },
+    { id: "lofi", label: "Lofi", swatch: "#f2f2f2", dark: false },
+    { id: "garden", label: "Garden", swatch: "#d4d2d2", dark: false },
+    { id: "retro", label: "Retro", swatch: "#e4d8b4", dark: false },
+    { id: "winter", label: "Winter", swatch: "#f2f7ff", dark: false },
+    { id: "dark", label: "Тёмная", swatch: "#151515", dark: true },
+    { id: "dracula", label: "Dracula", swatch: "#232530", dark: true },
+    { id: "business", label: "Business", swatch: "#1c1c1c", dark: true },
+    { id: "night", label: "Night", swatch: "#0c1425", dark: true },
+    { id: "forest", label: "Forest", swatch: "#140f0f", dark: true },
+    { id: "coffee", label: "Coffee", swatch: "#1c131b", dark: true },
+    { id: "dim", label: "Dim", swatch: "#242933", dark: true },
+];
 
-const setTheme = (theme) => {
+const themeGroups = [
+    { label: "Светлые", items: themes.filter((theme) => !theme.dark) },
+    { label: "Тёмные", items: themes.filter((theme) => theme.dark) },
+];
+
+const isThemeOpen = ref(false);
+const activeTheme = ref("light");
+const themeDropdown = ref(null);
+
+const applyTheme = (id) => {
+    const theme = themes.find((item) => item.id === id) ?? themes[0];
     const html = document.documentElement;
 
-    if (theme === "dark") {
-        html.setAttribute("data-theme", "dark");
-        localStorage.setItem("theme", "dark");
-        isDark.value = true;
-    } else {
-        html.removeAttribute("data-theme");
-        localStorage.setItem("theme", "light");
-        isDark.value = false;
-    }
+    html.setAttribute("data-theme", theme.id);
+    html.setAttribute("data-mode", theme.dark ? "dark" : "light");
+    html.style.colorScheme = theme.dark ? "dark" : "light";
+    localStorage.setItem("theme", theme.id);
+
+    activeTheme.value = theme.id;
+    isThemeOpen.value = false;
+};
+
+const savedThemeId = () => {
+    const saved = localStorage.getItem("theme");
+    return themes.some((item) => item.id === saved) ? saved : null;
 };
 
 onMounted(() => {
-    const savedTheme = localStorage.getItem("theme");
-    const systemPrefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-    ).matches;
+    const initial = savedThemeId() ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
 
-    if (savedTheme === "dark" || (!savedTheme && systemPrefersDark)) {
-        setTheme("dark");
-    } else {
-        setTheme("light");
-    }
+    const theme = themes.find((item) => item.id === initial) ?? themes[0];
 
-    // Следим за изменениями системных предпочтений
-    window
-        .matchMedia("(prefers-color-scheme: dark)")
-        .addEventListener("change", (e) => {
-            if (!localStorage.getItem("theme")) {
-                setTheme(e.matches ? "dark" : "light");
-            }
-        });
+    document.documentElement.setAttribute("data-theme", theme.id);
+    document.documentElement.setAttribute("data-mode", theme.dark ? "dark" : "light");
+    document.documentElement.style.colorScheme = theme.dark ? "dark" : "light";
+    activeTheme.value = theme.id;
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("keydown", handleEscape);
 });
 
-const toggleTheme = () => {
-    if (isDark.value) {
-        setTheme("light");
-    } else {
-        setTheme("dark");
-    }
-};
+onBeforeUnmount(() => {
+    window.removeEventListener("resize", handleResize);
+    window.removeEventListener("keydown", handleEscape);
+});
+
+onClickOutside(themeDropdown, () => {
+    isThemeOpen.value = false;
+});
 
 const performSearch = () => {
     if (searchQuery.value.trim()) {
-        router.get(route("articles.search"), {
-            query: searchQuery.value,
-        });
+        router.get(route("articles.search"), { query: searchQuery.value });
     } else {
         router.visit(route("home"));
     }
@@ -292,15 +454,12 @@ const performSearch = () => {
     closeSearch();
 };
 
-const performSearchMobile = () => {
-    performSearch();
-    closeMobileMenu();
-};
-
-const toggleSearch = () => {
+const toggleSearch = async () => {
     isSearchOpen.value = !isSearchOpen.value;
     if (isSearchOpen.value) {
         isMobileMenuOpen.value = false;
+        await nextTick();
+        mobileSearchInput.value?.focus();
     }
 };
 
@@ -346,26 +505,28 @@ const logoutMobile = () => {
     closeMobileMenu();
 };
 
-// Закрытие меню при изменении размера окна на десктопный
+// Держим поле поиска в актуальном состоянии при переходах между страницами
 watch(
-    () => window.innerWidth,
-    (newWidth) => {
-        if (newWidth >= 640) {
-            closeMobileMenu();
-            closeSearch();
-        }
-    }
+    () => page.url,
+    (url) => {
+        searchQuery.value = queryFromUrl(url);
+    },
 );
 
-// Закрытие меню при нажатии Escape
-const handleEscape = (event) => {
-    if (event.key === "Escape") {
+// Закрытие мобильных панелей при расширении окна до десктопа
+const handleResize = () => {
+    if (window.innerWidth >= 640) {
         closeMobileMenu();
         closeSearch();
     }
 };
 
-if (typeof window !== "undefined") {
-    window.addEventListener("keydown", handleEscape);
-}
+const handleEscape = (event) => {
+    if (event.key === "Escape") {
+        closeMobileMenu();
+        closeSearch();
+        isOpen.value = false;
+        isThemeOpen.value = false;
+    }
+};
 </script>

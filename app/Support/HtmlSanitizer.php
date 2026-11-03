@@ -35,7 +35,18 @@ class HtmlSanitizer
         'a'  => ['href', 'rel', 'target'],
         'img'=> ['src'],
         'ol' => ['start'],
+        // Выравнивание текста из редактора — единственное разрешённое свойство style.
+        'p'  => ['style'],
+        'h1' => ['style'],
+        'h2' => ['style'],
+        'h3' => ['style'],
+        'h4' => ['style'],
+        'h5' => ['style'],
+        'h6' => ['style'],
     ];
+
+    /** Единственное свойство style, которое разрешено сохранять. */
+    protected static string $safeStylePattern = '/^\s*text-align\s*:\s*(left|center|right|justify)\s*;?\s*$/i';
 
     /** Схемы URL, которые разрешено оставлять. */
     protected static array $allowedSchemes = ['http', 'https', 'mailto', 'tel'];
@@ -172,6 +183,11 @@ class HtmlSanitizer
             }
 
             if ($name === 'class' && !preg_match('/^[a-zA-Z0-9_\-\s]+$/', $value)) {
+                $toRemove[] = $attr->name;
+                continue;
+            }
+
+            if ($name === 'style' && !preg_match(static::$safeStylePattern, $value)) {
                 $toRemove[] = $attr->name;
                 continue;
             }

@@ -10,6 +10,24 @@ use Illuminate\Support\Facades\DB;
 
 class Article extends Model
 {
+    /**
+     * Колонки, достаточные для карточки статьи в лентах/сайдбарах.
+     * Полный `content` (до 200 КБ) в список не отдаём.
+     */
+    public const CARD_COLUMNS = [
+        'id',
+        'title',
+        'slug',
+        'excerpt',
+        'card_image_path',
+        'category_slug',
+        'created_at',
+        'views_count',
+        'likes_count',
+        'comments_count',
+        'user_id',
+    ];
+
     protected $fillable = [
         'title',
         'slug',
@@ -159,15 +177,17 @@ class Article extends Model
             ])
             ->getQuery();
 
+        $columns = array_map(fn ($column) => 'popular.' . $column, static::CARD_COLUMNS);
+
         return static::hydrate(
             DB::table($sub, 'popular')
-                ->select('popular.*')
+                ->select($columns)
                 ->when($categorySlug, fn ($query) => $query->where('popular.category_slug', $categorySlug))
                 ->orderByRaw('(recent_views * 1 + recent_likes * 2 + recent_comments * 1.5) DESC')
                 ->limit($limit)
                 ->get()
                 ->all()
-        )->load('user');
+        )->load('user:id,name,avatar');
     }
 
 }

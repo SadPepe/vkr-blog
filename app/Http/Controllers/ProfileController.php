@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Article;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,9 @@ class ProfileController extends Controller
                 'name' => $request->user()->name,
                 'email' => $request->user()->email,
                 'about' => $request->user()->about,
+                'avatar_url' => $request->user()->avatar_url,
+                'cover_url' => $request->user()->cover_url,
+                'background_url' => $request->user()->background_url,
             ],
 
         ]);
@@ -37,17 +41,52 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
+        $user = $request->user();
+        $data = $request->validated();
 
-        $request->user()->fill($request->validated());
+        foreach (['cover_image', 'background_image'] as $field) {
+            unset($data[$field], $data['remove_' . $field]);
+        }
 
-    if ($request->user()->isDirty('email')) {
-        $request->user()->email_verified_at = null;
+        $this->applyProfileImage($request, $user, 'cover_image', 'profile/covers');
+        $this->applyProfileImage($request, $user, 'background_image', 'profile/backgrounds');
+
+        $user->fill($data);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        return Redirect::to('/profile')->with('success', 'Профиль обновлён');
     }
 
-    $request->user()->save();
+    /**
+     * Загружает, заменяет или удаляет картинку профиля (обложку/фон).
+     */
+    private function applyProfileImage(Request $request, User $user, string $field, string $directory): void
+    {
+        if ($request->hasFile($field)) {
+            $this->deleteProfileImage($user->{$field});
+            $user->{$field} = $request->file($field)->store($directory, 'public');
 
-     return Redirect::to('/profile');
-        
+            return;
+        }
+
+        if ($request->boolean('remove_' . $field)) {
+            $this->deleteProfileImage($user->{$field});
+            $user->{$field} = null;
+        }
+    }
+
+    private function deleteProfileImage(?string $path): void
+    {
+        if (!$path || str_starts_with($path, 'http')) {
+            return;
+        }
+
+        Storage::disk('public')->delete($path);
     }
 
     /**
@@ -73,26 +112,36 @@ class ProfileController extends Controller
 
     public function show(Request $request)
     {
-        // Получаем авторизованного пользователя с его статьями
-        $user = $request->user()->load('articles');
+        $user = $request->user();
+        $user->append(['avatar_url', 'cover_url', 'background_url']);
+
+        $stats = $user->articles()
+            ->selectRaw('
+                COUNT(*) as articles_count,
+                COALESCE(SUM(views_count), 0) as views_count,
+                COALESCE(SUM(likes_count), 0) as likes_count,
+                COALESCE(SUM(comments_count), 0) as comments_count
+            ')
+            ->first();
 
         return Inertia::render('Profile/Show', [
             'user' => $user,
-            'articles' => $user->articles()->latest()->get()->map(function ($article) {
-                return [
-                    'id' => $article->id,
-                    'title' => $article->title,
-                    'slug' => $article->slug,
-                    'content' => $article->content,
-                    'excerpt' => $article->excerpt,
-                    'card_image_path' => $article->card_image_path,
-                    'created_at' => $article->created_at->format('d.m.Y'),
-                    'user' => $article->user 
-                ];
-
-
-
-            })
+            'stats' => [
+                'articles_count' => (int) $stats->articles_count,
+                'views_count' => (int) $stats->views_count,
+                'likes_count' => (int) $stats->likes_count,
+                'comments_count' => (int) $stats->comments_count,
+            ],
+            'articles' => $user->articles()
+                ->with('user:id,name,avatar')
+                ->latest()
+                ->select(Article::CARD_COLUMNS)
+                ->paginate(12),
+            'media' => $user->articles()
+                ->whereNotNull('card_image_path')
+                ->latest()
+                ->take(6)
+                ->get(['id', 'slug', 'title', 'card_image_path']),
         ]);
     }
 }
