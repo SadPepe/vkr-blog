@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class Article extends Model
 {
+    use HasFactory;
+
     /**
      * Колонки, достаточные для карточки статьи в лентах/сайдбарах.
      * Полный `content` (до 200 КБ) в список не отдаём.

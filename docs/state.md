@@ -109,7 +109,7 @@ Laravel 12 + Inertia 2 + Vue 3 + Tailwind 3 + PostgreSQL.
 
 ```bash
 npm run build                                  # синтаксис Vue + сборка
-php artisan test                               # 28 тестов (Breeze + локализация), sqlite :memory:
+php artisan test                               # 48 тестов, sqlite :memory: (1 пропуск на sqlite)
 make test                                      # то же в контейнере: docker compose --profile test run --rm tests
 php -l app/Http/Controllers/File.php           # синтаксис PHP
 node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматирование (.prettierrc.json)
@@ -121,7 +121,7 @@ node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматир�
 
 ## Известные ограничения / долги
 
-- Нет Feature-тестов блога (статьи/лайки/комментарии) — инфраструктура тестов готова.
+- Поиск по кириллице: регистронезависимость проверяется только на PostgreSQL — на sqlite тест пропускается.
 - Аватары: аксессор `avatar_url` есть, загрузить аватар нельзя.
 - Обложка и фон профиля: поля `users.cover_image` / `users.background_image`, файлы
   в `profile/covers`, `profile/backgrounds` (диск `public`), до 5 МБ, JPG/PNG/WebP;
