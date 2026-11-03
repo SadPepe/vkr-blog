@@ -118,7 +118,7 @@ Laravel 12 + Inertia 2 + Vue 3 + Tailwind 3 + PostgreSQL.
 
 ```bash
 npm run build                                  # синтаксис Vue + сборка
-php artisan test                               # 50 тестов, sqlite :memory: (1 пропуск на sqlite)
+php artisan test                               # 57 тестов, sqlite :memory: (1 пропуск на sqlite)
 make test                                      # то же в контейнере: docker compose --profile test run --rm tests
 php -l app/Http/Controllers/File.php           # синтаксис PHP
 node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматирование (.prettierrc.json)

@@ -96,7 +96,8 @@ docker compose --profile test run --rm tests --filter=ProfileTest
 ```
 
 Тесты идут на sqlite `:memory:` (`.env.testing` + `phpunit.xml`), PostgreSQL и `.env` для них
-не нужны. В образе есть `pdo_sqlite`, поэтому `php artisan test` работает так же, как в CI.
+не нужны. В образе есть `pdo_sqlite` (и `dom` для превью постов), поэтому `php artisan test`
+работает так же, как в CI: 57 тестов, 1 пропуск.
 
 ## Разработка
 
