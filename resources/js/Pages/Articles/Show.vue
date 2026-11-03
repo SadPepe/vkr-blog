@@ -75,7 +75,7 @@
 
                     <!-- Главное изображение -->
                     <div
-                        v-if="article.card_image_path"
+                        v-if="showHeroImage"
                         class="mt-10 overflow-hidden rounded-md bg-surface-muted"
                         :class="{ 'animate-pulse': !imageLoaded }"
                     >
@@ -262,6 +262,14 @@ const displayTitle = computed(() => {
     if (title) return title;
     const excerpt = (props.article.excerpt || "").trim();
     return excerpt ? excerpt.slice(0, 70) : "Пост";
+});
+
+// Превью карточки — первая картинка из текста, поэтому на странице поста
+// её не дублируем: показываем отдельный hero только для старых обложек
+const showHeroImage = computed(() => {
+    const image = props.article.card_image_path;
+    if (!image) return false;
+    return !String(props.article.content || "").includes(image);
 });
 
 const category = computed(() => {

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 use App\Traits\HandlesArticles;
 use App\Support\HtmlSanitizer;
+use App\Support\PostPreview;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -197,12 +198,13 @@ class ArticleController extends Controller
     {
         $sort = $this->resolveSort($request);
 
-        $articles = $this->applySort(
-            Article::with(['user:id,name,avatar'])->select(Article::CARD_COLUMNS),
-            $sort
-        )
-            ->paginate(12)
-            ->withQueryString();
+        $articles = PostPreview::attachPaginator(
+            $this->applySort(
+                Article::with(['user:id,name,avatar'])
+                    ->select(array_merge(Article::CARD_COLUMNS, ['content'])),
+                $sort
+            )->paginate(12)
+        )->withQueryString();
 
         // Используем PopularArticleController для получения популярных статей
         $popularArticleController = new \App\Http\Controllers\PopularArticleController();
@@ -270,14 +272,14 @@ class ArticleController extends Controller
         if ($categorySlug) {
             $sort = $this->resolveSort(request());
 
-            $articles = $this->applySort(
-                Article::where('category_slug', $categorySlug)
-                    ->with(['user:id,name,avatar'])
-                    ->select(Article::CARD_COLUMNS),
-                $sort
-            )
-                ->paginate(10)
-                ->withQueryString();
+            $articles = PostPreview::attachPaginator(
+                $this->applySort(
+                    Article::where('category_slug', $categorySlug)
+                        ->with(['user:id,name,avatar'])
+                        ->select(array_merge(Article::CARD_COLUMNS, ['content'])),
+                    $sort
+                )->paginate(10)
+            )->withQueryString();
 
             // Для категорий тоже используем популярные статьи за неделю
             $popularArticles = Article::popularForPeriod(5, 'week', $categorySlug);

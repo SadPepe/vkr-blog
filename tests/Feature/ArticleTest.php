@@ -204,6 +204,8 @@ class ArticleTest extends TestCase
                 ->has('articles.data', 1)
                 ->where('articles.data.0.title', null)
                 ->where('articles.data.0.excerpt', 'Какая-то мысль на бегу')
+                ->where('articles.data.0.preview', '<p>Какая-то мысль на бегу</p>')
+                ->missing('articles.data.0.content')
                 ->etc());
     }
 }

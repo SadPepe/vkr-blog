@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Article;
 use App\Models\User;
+use App\Support\PostPreview;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -132,11 +133,13 @@ class ProfileController extends Controller
                 'likes_count' => (int) $stats->likes_count,
                 'comments_count' => (int) $stats->comments_count,
             ],
-            'articles' => $user->articles()
-                ->with('user:id,name,avatar')
-                ->latest()
-                ->select(Article::CARD_COLUMNS)
-                ->paginate(12),
+            'articles' => PostPreview::attachPaginator(
+                $user->articles()
+                    ->with('user:id,name,avatar')
+                    ->latest()
+                    ->select(array_merge(Article::CARD_COLUMNS, ['content']))
+                    ->paginate(12)
+            ),
             'media' => $user->articles()
                 ->whereNotNull('card_image_path')
                 ->latest()

@@ -1,0 +1,42 @@
+<?php
+
+namespace Tests\Unit;
+
+use App\Support\PostPreview;
+use PHPUnit\Framework\TestCase;
+
+class PostPreviewTest extends TestCase
+{
+    public function test_preview_keeps_author_order_of_text_and_images(): void
+    {
+        $html = '<p><img src="/storage/images/first.jpg"></p><p>Текст после фото</p>';
+
+        $preview = PostPreview::make($html);
+
+        $this->assertStringContainsString('<img', $preview);
+        $this->assertStringContainsString('Текст после фото', $preview);
+        // Картинка идёт раньше текста — как в посте
+        $this->assertLessThan(mb_strpos($preview, 'Текст после фото'), mb_strpos($preview, '<img'));
+    }
+
+    public function test_preview_is_limited_by_images_count(): void
+    {
+        $html = '<p><img src="/storage/images/1.jpg"></p>'
+            .'<p><img src="/storage/images/2.jpg"></p>'
+            .'<p><img src="/storage/images/3.jpg"></p>';
+
+        $preview = PostPreview::make($html);
+
+        $this->assertSame(PostPreview::IMAGE_LIMIT, substr_count($preview, '<img'));
+    }
+
+    public function test_oversized_single_paragraph_is_truncated(): void
+    {
+        $html = '<p>'.str_repeat('Слово ', 500).'</p>';
+
+        $preview = PostPreview::make($html);
+
+        $this->assertLessThan(mb_strlen(strip_tags($html)), mb_strlen(strip_tags($preview)));
+        $this->assertStringEndsWith('…', strip_tags($preview));
+    }
+}

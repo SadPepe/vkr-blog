@@ -46,21 +46,19 @@
                 {{ article.title }}
             </h2>
 
-            <!-- Первые строки статьи -->
-            <p class="line-clamp-3 text-sm leading-7 text-muted md:text-[15px]">
-                {{ plainText }}
-            </p>
-
-            <!-- Картинка из текста поста (она же превью карточки) -->
-            <div v-if="article.card_image_path" class="overflow-hidden rounded-md bg-surface-muted">
-                <img
-                    :src="article.card_image_path"
-                    :alt="article.title || article.excerpt || 'Изображение поста'"
-                    class="aspect-video w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                    decoding="async"
-                />
+            <!-- Пост как есть: текст и картинки в авторском порядке -->
+            <div v-if="article.preview" class="relative">
+                <div
+                    class="post-preview max-h-[22rem] overflow-hidden text-[15px] leading-7 text-content"
+                    v-html="article.preview"
+                ></div>
+                <div
+                    class="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-surface to-transparent"
+                    aria-hidden="true"
+                ></div>
             </div>
+
+            <span v-if="article.preview" class="text-sm font-semibold text-accent">Читать полностью →</span>
 
             <!-- Статистика -->
             <div class="flex items-center gap-5 text-xs text-muted">
@@ -113,9 +111,6 @@ const categoryName = computed(() => {
     return found ? found.name : "";
 });
 
-// Текст превью берём из готового excerpt — не парсим полный HTML статьи в каждой карточке
-const plainText = computed(() => (props.article.excerpt || "").trim());
-
 const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("ru-RU", {
@@ -127,6 +122,66 @@ const formatDate = (dateString) => {
 </script>
 
 <style scoped>
+.post-preview :deep(p) {
+    margin: 0 0 0.75rem;
+}
+
+.post-preview :deep(p:last-child) {
+    margin-bottom: 0;
+}
+
+.post-preview :deep(h1),
+.post-preview :deep(h2),
+.post-preview :deep(h3) {
+    margin: 0.75rem 0 0.5rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.post-preview :deep(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0.75rem 0;
+    border-radius: 0.375rem;
+}
+
+.post-preview :deep(figure) {
+    margin: 0.75rem 0;
+}
+
+.post-preview :deep(figcaption) {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--c-muted);
+}
+
+.post-preview :deep(blockquote) {
+    margin: 0.75rem 0;
+    border-left: 3px solid var(--c-accent);
+    padding-left: 0.85rem;
+    color: var(--c-muted);
+}
+
+.post-preview :deep(ul),
+.post-preview :deep(ol) {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+}
+
+.post-preview :deep(ul) {
+    list-style: disc;
+}
+
+.post-preview :deep(ol) {
+    list-style: decimal;
+}
+
+.post-preview :deep(a) {
+    color: var(--c-accent);
+    text-decoration: underline;
+}
+
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;

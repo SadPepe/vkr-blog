@@ -3,17 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\PostPreview;
 use Inertia\Inertia;
 
 class AuthorController extends Controller
 {
     public function show(User $user)
     {
-        $articles = $user->articles()
-            ->with('user:id,name,avatar')
-            ->select(\App\Models\Article::CARD_COLUMNS)
-            ->latest()
-            ->paginate(12);
+        $articles = PostPreview::attachPaginator(
+            $user->articles()
+                ->with('user:id,name,avatar')
+                ->select(array_merge(\App\Models\Article::CARD_COLUMNS, ['content']))
+                ->latest()
+                ->paginate(12)
+        );
 
         $stats = $user->articles()
             ->selectRaw('
