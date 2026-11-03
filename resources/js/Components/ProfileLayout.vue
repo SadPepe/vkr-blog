@@ -45,11 +45,11 @@
                                 :key="item.id"
                                 :href="route('articles.show', { article: item.slug })"
                                 class="group relative block aspect-square overflow-hidden rounded-md bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                                :aria-label="`Открыть статью: ${item.title}`"
+                                :aria-label="`Открыть пост: ${item.title || 'без заголовка'}`"
                             >
                                 <img
                                     :src="item.card_image_path"
-                                    :alt="item.title"
+                                    :alt="item.title || 'Изображение поста'"
                                     class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                     loading="lazy"
                                 />

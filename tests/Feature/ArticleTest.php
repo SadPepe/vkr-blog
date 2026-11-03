@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Article;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ArticleTest extends TestCase
@@ -184,5 +185,25 @@ class ArticleTest extends TestCase
             ->assertSessionHasErrors('content');
 
         $this->assertDatabaseCount('articles', 0);
+    }
+
+    public function test_post_without_title_is_shown_in_feed(): void
+    {
+        $user = User::factory()->create();
+        Article::factory()->for($user)->create([
+            'title' => null,
+            'slug' => 'kakaya-to-mysl',
+            'excerpt' => 'Какая-то мысль на бегу',
+            'content' => '<p>Какая-то мысль на бегу</p>',
+        ]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Home')
+                ->has('articles.data', 1)
+                ->where('articles.data.0.title', null)
+                ->where('articles.data.0.excerpt', 'Какая-то мысль на бегу')
+                ->etc());
     }
 }

@@ -37,7 +37,7 @@
                         <h4
                             class="text-sm font-semibold text-content leading-tight group-hover:text-accent dark:group-hover:text-accent transition-colors line-clamp-2 mb-1"
                         >
-                            {{ article.title }}
+                            {{ article.title || (article.excerpt || "").trim().slice(0, 80) || "Пост" }}
                         </h4>
 
                         <!-- Статистика -->

@@ -24,7 +24,7 @@
                     <img
                         v-if="article.card_image_path"
                         :src="article.card_image_path"
-                        :alt="article.title"
+                        :alt="article.title || postLabel(article)"
                         class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                         loading="lazy"
                     />
@@ -47,7 +47,7 @@
                     <h4
                         class="line-clamp-2 text-sm font-semibold leading-tight text-content transition-colors group-hover:text-accent dark:group-hover:text-accent"
                     >
-                        {{ article.title }}
+                        {{ article.title || postLabel(article) }}
                     </h4>
 
                     <div class="mt-1.5 flex items-center gap-3 text-xs text-muted">
@@ -87,6 +87,9 @@
 
 <script setup>
 import { Link } from "@inertiajs/vue3";
+
+// У поста может не быть заголовка — в списке показываем начало текста
+const postLabel = (article) => (article.excerpt || "").trim().slice(0, 80) || "Пост";
 
 defineProps({
     articles: {
