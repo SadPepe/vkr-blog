@@ -24,3 +24,7 @@ yarn-error.log
 
 # Локальное состояние DSH (агент)
 .dsh/
+
+# Артефакты редизайна: скриншоты, референсы, замеры .taste-skill
+.review/
+.taste-skill/
