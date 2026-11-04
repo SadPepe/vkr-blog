@@ -3,12 +3,14 @@
         v-if="user?.avatar_url"
         :src="user.avatar_url"
         :alt="user.name"
-        class="rounded-full object-cover"
+        class="object-cover"
+        :class="square ? '' : 'rounded-full'"
         :style="{ width: `${size}px`, height: `${size}px` }"
     />
     <span
         v-else
-        class="inline-flex shrink-0 select-none items-center justify-center rounded-full bg-surface-muted font-semibold text-content"
+        class="inline-flex shrink-0 select-none items-center justify-center bg-surface-muted font-semibold text-content"
+        :class="square ? '' : 'rounded-full'"
         :style="{
             width: `${size}px`,
             height: `${size}px`,
@@ -32,6 +34,10 @@ const props = defineProps({
     size: {
         type: Number,
         default: 32,
+    },
+    square: {
+        type: Boolean,
+        default: false,
     },
 });
 

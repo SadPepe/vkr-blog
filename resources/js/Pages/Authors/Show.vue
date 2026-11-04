@@ -12,33 +12,31 @@
         </Head>
 
         <ProfileLayout :user="author" :stats="stats" :media="media">
-            <h2 class="sr-only">Статьи автора {{ author.name }}</h2>
+            <h2 class="type-h2 text-content">Статьи</h2>
 
-            <div
-                v-if="articles.data.length"
-                class="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface px-5 sm:px-6"
-            >
-                <ArticleCard v-for="article in articles.data" :key="article.id" :article="article" :categories="categories" />
-            </div>
+            <!-- Лента постов: строки с заголовком и метой, без карточек -->
+            <ul v-if="articles.data.length" class="mt-8 flex flex-col">
+                <li v-for="article in articles.data" :key="article.id" class="py-8 first:pt-0">
+                    <h3 class="font-display text-[1.75rem] font-bold leading-[1.15] tracking-[-0.02em] text-content">
+                        <Link :href="route('articles.show', article.slug)" class="transition-colors hover:text-accent">
+                            {{ article.title || trimExcerpt(article.excerpt) }}
+                        </Link>
+                    </h3>
+                    <p class="type-meta mt-2.5">
+                        <time :datetime="article.created_at">{{ formatDate(article.created_at) }}</time>
+                        <span aria-hidden="true"> · </span>
+                        <span class="num">{{ article.views_count }}</span> просмотров
+                    </p>
+                    <p v-if="article.excerpt" class="measure mt-3 line-clamp-2 text-content">
+                        {{ trimExcerpt(article.excerpt) }}
+                    </p>
+                </li>
+            </ul>
 
-            <!-- Пустое состояние -->
-            <div v-else class="rounded-md border border-dashed border-line-strong bg-surface px-6 py-14 text-center">
-                <svg
-                    class="mx-auto mb-4 h-12 w-12 text-muted"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                </svg>
-                <h3 class="text-lg font-semibold text-content">У автора пока нет статей</h3>
-                <p class="mx-auto mt-1.5 max-w-sm text-sm text-muted">Загляните позже — здесь появятся новые публикации.</p>
+            <!-- Пустое состояние: крупный текст и действие -->
+            <div v-else class="mt-10 max-w-[40rem]">
+                <p class="type-display-l text-content">У автора пока нет статей</p>
+                <p class="measure mt-4 text-muted">Загляните позже — здесь появятся новые публикации.</p>
             </div>
 
             <Pagination v-if="articles && articles.links && articles.links.length > 3" :links="articles.links" />
@@ -51,7 +49,6 @@ import { computed } from "vue";
 import { Head, usePage } from "@inertiajs/vue3";
 import Layout from "@/Layouts/Layout.vue";
 import ProfileLayout from "@/Components/ProfileLayout.vue";
-import ArticleCard from "@/Components/ArticleCard.vue";
 import Pagination from "@/Components/Pagination.vue";
 
 const props = defineProps({
@@ -80,4 +77,13 @@ const categories = computed(() => page.props.categories ?? []);
 const authorDescription = computed(() => (props.author.about || "").trim() || `Статьи автора ${props.author.name} на МОЙ.БЛОГ.`);
 
 const metaDescription = computed(() => authorDescription.value.slice(0, 160));
+
+const formatDate = (value) =>
+    new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" }).format(new Date(value)).replace(/ /g, "\u00A0");
+
+const trimExcerpt = (text) => {
+    const value = (text ?? "").trim();
+    if (!value) return "";
+    return /[.!?…»)]$/.test(value) ? value : `${value}…`;
+};
 </script>

@@ -1,120 +1,101 @@
 <template>
-    <div class="relative mx-auto w-full max-w-[1100px] pb-8">
-        <!-- Фон профиля: фото живёт только в полях вокруг колонки, приглушено
-             и растворяется в цвет страницы сверху и снизу — швов нет -->
-        <div
-            v-if="user.background_url"
-            class="pointer-events-none absolute inset-y-0 left-1/2 -z-10 hidden w-screen -translate-x-1/2 overflow-hidden lg:block"
-            aria-hidden="true"
-        >
+    <div class="relative pb-24 pt-4">
+        <!-- Фон профиля: картинка пользователя, приглушённая подложкой -->
+        <div v-if="user.background_url" class="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
             <img
                 :src="user.background_url"
                 alt=""
+                class="h-full w-full object-cover"
+                :style="{ filter: `blur(${backgroundBlur}px) saturate(75%)` }"
                 loading="lazy"
                 decoding="async"
-                class="h-full w-full scale-110 object-cover opacity-90"
-                :style="{ filter: `blur(${backgroundBlur}px) saturate(75%)` }"
                 @load="measureBackground"
             />
-            <!-- Плёнка подстраивается под яркость картинки: тёмные фото глушим сильнее,
-                 светлые — почти не трогаем. Контраст текста от этого не зависит:
-                 текст всегда лежит на непрозрачных панелях -->
             <div class="absolute inset-0" :style="{ backgroundColor: `rgb(var(--c-page) / ${filmAlpha})` }"></div>
-            <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-page to-transparent"></div>
-            <div class="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-page to-transparent"></div>
         </div>
-        <!-- Подложка во всю ширину блока профиля; карточки внутри неё с небольшим отступом -->
-        <div v-if="user.background_url" class="pointer-events-none absolute inset-0 -z-10 bg-page" aria-hidden="true"></div>
-        <!-- Шапка: обложка во всю ширину подложки, вплотную к её верхнему краю -->
-        <div class="overflow-hidden rounded-md border border-line bg-surface shadow-sm">
-            <div class="relative h-40 w-full bg-gradient-to-r from-accent via-accent to-accent-2 sm:h-56">
-                <img v-if="user.cover_url" :src="user.cover_url" alt="" class="h-full w-full object-cover" />
+
+        <div class="page-shell">
+            <!-- Обложка во всю ширину контейнера, без скруглений -->
+            <div class="relative aspect-[16/7] max-h-[46vh] w-full overflow-hidden bg-surface-muted">
+                <img v-if="user.cover_url" :src="user.cover_url" alt="" class="h-full w-full object-cover" loading="eager" />
             </div>
-        </div>
 
-        <div class="mt-3 px-4 sm:px-5 lg:px-6">
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:gap-8">
-                <!-- Левая колонка: аватар и карточка с информацией -->
-                <div class="min-w-0 lg:col-start-1">
-                    <!-- Аватар наезжает на шапку снизу -->
-                    <div class="relative z-10 -mb-8 -mt-16 ml-5 w-max sm:-mt-20 sm:ml-6">
-                        <div class="w-max rounded-full ring-4 ring-surface" aria-hidden="true">
-                            <UserAvatar :user="user" :size="112" />
-                        </div>
-                    </div>
+            <!-- Аватар-квадрат наезжает на обложку, рамка — тон поверхности -->
+            <div class="relative -mt-16 w-max bg-surface p-1">
+                <UserAvatar :user="user" :size="120" square />
+            </div>
 
-                    <!-- Карточка информации: на десктопе прилипает к верху при прокрутке ленты -->
-                    <div
-                        class="rounded-md border border-line bg-surface p-5 pt-12 shadow-sm sm:p-6 sm:pt-14 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain"
-                    >
-                        <h1 class="break-words text-2xl font-bold tracking-tight text-content">{{ user.name }}</h1>
-                        <p v-if="memberSince" class="mt-1 text-sm text-muted">
-                            На блоге с <time :datetime="user.created_at">{{ memberSince }}</time>
-                        </p>
+            <!-- Имя дисплейным кеглем и строка «что это» сразу под ним -->
+            <h1
+                class="mt-6 font-display text-[clamp(2.25rem,5vw,4rem)] font-extrabold leading-[0.95] tracking-[-0.03em] [text-wrap:balance] text-content"
+            >
+                {{ user.name }}
+            </h1>
 
-                        <p
-                            v-if="user.about"
-                            :id="aboutId"
-                            class="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-content"
-                            :class="aboutExpanded ? '' : 'max-h-[6.75rem] overflow-hidden lg:max-h-none'"
-                        >
-                            {{ user.about }}
-                        </p>
-                        <button
-                            v-if="showAboutToggle"
-                            type="button"
-                            class="mt-1.5 inline-flex items-center gap-1 text-sm font-semibold text-accent transition-colors hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:hidden"
-                            :aria-expanded="aboutExpanded"
-                            :aria-controls="aboutId"
-                            @click="aboutExpanded = !aboutExpanded"
-                        >
-                            {{ aboutExpanded ? "Свернуть" : "Показать полностью" }}
-                        </button>
-                        <p v-else class="mt-3 text-sm text-muted">Здесь пока нет описания профиля.</p>
+            <p
+                v-if="user.about"
+                :id="aboutId"
+                class="measure mt-4 whitespace-pre-line text-[1.25rem] leading-relaxed text-content"
+                :class="aboutExpanded ? '' : 'max-h-[7.5rem] overflow-hidden lg:max-h-none'"
+            >
+                {{ user.about }}
+            </p>
+            <button
+                v-if="showAboutToggle"
+                type="button"
+                class="mt-2 inline-flex min-h-11 items-center text-sm text-accent transition-colors hover:text-accent-hover lg:hidden"
+                :aria-expanded="aboutExpanded"
+                :aria-controls="aboutId"
+                @click="aboutExpanded = !aboutExpanded"
+            >
+                {{ aboutExpanded ? "Свернуть" : "Показать полностью" }}
+            </button>
 
-                        <!-- Статистика профиля -->
-                        <dl class="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line">
-                            <div v-for="item in statsItems" :key="item.label" class="min-w-0 bg-surface px-2 py-2.5">
-                                <dt class="text-[10px] font-semibold uppercase tracking-normal text-muted">
-                                    {{ item.label }}
-                                </dt>
-                                <dd class="mt-0.5 text-lg font-bold tabular-nums text-content">{{ item.value }}</dd>
-                            </div>
-                        </dl>
-
-                        <div v-if="$slots.actions" class="mt-5 flex flex-col gap-2">
-                            <slot name="actions" />
-                        </div>
-
-                        <!-- Медиа: последние обложки статей -->
-                        <div v-if="media.length" class="mt-7">
-                            <h2 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Медиа</h2>
-                            <div class="mt-2 grid grid-cols-3 gap-1">
-                                <Link
-                                    v-for="item in media"
-                                    :key="item.id"
-                                    :href="route('articles.show', { article: item.slug })"
-                                    class="group relative block aspect-square overflow-hidden rounded-md bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                                    :aria-label="`Открыть пост: ${item.title || 'без заголовка'}`"
-                                >
-                                    <img
-                                        :src="item.card_image_path"
-                                        alt=""
-                                        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                        loading="lazy"
-                                        decoding="async"
-                                    />
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Статистика: крупная цифра и подпись в одну строку, обычным регистром -->
+            <dl class="mt-10 flex flex-wrap gap-x-12 gap-y-5">
+                <div v-for="item in statsItems" :key="item.label" class="flex items-baseline gap-2.5">
+                    <dd class="num font-display text-[2.25rem] font-bold leading-none text-content">
+                        {{ item.value }}
+                    </dd>
+                    <dt class="text-[0.9375rem] text-muted">{{ item.label }}</dt>
                 </div>
+            </dl>
 
-                <!-- Центральная колонка: лента -->
-                <section class="min-w-0 lg:col-start-2">
-                    <slot />
-                </section>
+            <p v-if="memberSince" class="mt-6 text-[0.9375rem] text-muted">
+                На блоге с <time :datetime="user.created_at">{{ memberSince }}</time>
+            </p>
+
+            <!-- Медиасетка 3×2: пустые ячейки — поля тона, а не дыра -->
+            <section v-if="media.length" class="mt-14">
+                <h2 class="type-h2 text-content">Медиа</h2>
+                <div class="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
+                    <template v-for="cell in 6" :key="cell">
+                        <Link
+                            v-if="media[cell - 1]"
+                            :href="route('articles.show', { article: media[cell - 1].slug })"
+                            class="group relative block aspect-square overflow-hidden bg-surface-muted focus-visible:outline-none"
+                            :aria-label="`Открыть пост: ${media[cell - 1].title || 'без заголовка'}`"
+                        >
+                            <img
+                                :src="media[cell - 1].card_image_path"
+                                alt=""
+                                class="h-full w-full object-cover"
+                                loading="lazy"
+                                decoding="async"
+                            />
+                        </Link>
+                        <div v-else class="aspect-square bg-surface-muted" aria-hidden="true"></div>
+                    </template>
+                </div>
+            </section>
+
+            <div v-if="$slots.actions" class="mt-8 flex flex-wrap gap-3">
+                <slot name="actions" />
             </div>
+
+            <section class="mt-16 min-w-0">
+                <slot />
+            </section>
         </div>
     </div>
 </template>
@@ -160,9 +141,10 @@ const aboutExpanded = ref(false);
 const backgroundLuminance = ref(null);
 
 const filmAlpha = computed(() => {
-    if (backgroundLuminance.value === null) return 0.4;
+    if (backgroundLuminance.value === null) return 0.55;
 
-    return Math.min(0.6, Math.max(0.22, 0.6 - (backgroundLuminance.value / 255) * 0.4));
+    // Тёмное фото глушим сильнее: подписи и цифры должны читаться без замены фона
+    return Math.min(0.82, Math.max(0.42, 0.82 - (backgroundLuminance.value / 255) * 0.4));
 });
 
 // Размытие выбирает владелец профиля (0–24 px), по умолчанию 12 px
@@ -211,10 +193,21 @@ const memberSince = computed(() => {
     return `${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`;
 });
 
+const plural = (n, forms) => {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return forms[0];
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return forms[1];
+    return forms[2];
+};
+
 const statsItems = computed(() => [
-    { label: "Статьи", value: props.stats.articles_count ?? 0 },
-    { label: "Просмотры", value: props.stats.views_count ?? 0 },
-    { label: "Лайки", value: props.stats.likes_count ?? 0 },
-    { label: "Комментарии", value: props.stats.comments_count ?? 0 },
+    { label: plural(props.stats.articles_count ?? 0, ["статья", "статьи", "статей"]), value: props.stats.articles_count ?? 0 },
+    { label: plural(props.stats.views_count ?? 0, ["просмотр", "просмотра", "просмотров"]), value: props.stats.views_count ?? 0 },
+    { label: plural(props.stats.likes_count ?? 0, ["лайк", "лайка", "лайков"]), value: props.stats.likes_count ?? 0 },
+    {
+        label: plural(props.stats.comments_count ?? 0, ["комментарий", "комментария", "комментариев"]),
+        value: props.stats.comments_count ?? 0,
+    },
 ]);
 </script>
