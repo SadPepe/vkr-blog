@@ -9,60 +9,68 @@
             <meta property="article:published_time" :content="article.created_at" />
         </Head>
 
-        <!-- Прогресс чтения -->
-        <div class="pointer-events-none fixed inset-x-0 top-0 z-40 h-1 bg-accent/10">
+        <!-- Прогресс чтения: линия акцентом, без подложки -->
+        <div class="pointer-events-none fixed inset-x-0 top-0 z-40 h-0.5 bg-transparent">
             <div class="h-full bg-accent transition-[width] duration-150 ease-out" :style="{ width: `${progress}%` }"></div>
         </div>
 
-        <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
-            <div class="mx-auto max-w-2xl lg:mx-0">
-                <!-- Хлебные крошки -->
-                <nav class="flex items-center gap-1.5 text-xs text-muted" aria-label="Хлебные крошки">
-                    <Link
-                        :href="route('home')"
-                        class="inline-flex items-center gap-1 transition-colors hover:text-accent dark:hover:text-accent"
-                    >
-                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Все статьи
+        <div class="article-spread page-shell pb-24 pt-8">
+            <!-- Хлебные крошки: текстом, без иконок и разделителей -->
+            <nav class="type-meta" aria-label="Хлебные крошки">
+                <Link :href="route('home')" class="transition-colors hover:text-accent">Все статьи</Link>
+                <template v-if="category">
+                    <span aria-hidden="true"> · </span>
+                    <Link :href="route('articlesByCategory', category.slug)" class="transition-colors hover:text-accent">
+                        {{ category.name }}
                     </Link>
+                </template>
+            </nav>
 
-                    <template v-if="category">
-                        <span class="text-muted" aria-hidden="true">/</span>
-                        <Link
-                            :href="`/categories/${category.slug}`"
-                            class="transition-colors hover:text-accent dark:hover:text-accent"
+            <div class="article-layout">
+                <div class="min-w-0">
+                    <div class="article-head">
+                        <h1
+                            v-if="article.title"
+                            class="mt-6 font-display text-[clamp(2rem,4.4vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.02em] [text-wrap:balance] text-content"
                         >
-                            {{ category.name }}
-                        </Link>
-                    </template>
-                </nav>
+                            {{ article.title }}
+                        </h1>
 
-                <div class="article-container px-2 pt-6 md:px-0">
-                    <!-- Метаданные: автор · дата · время чтения -->
-                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
-                        <span class="inline-flex items-center gap-2">
-                            <UserAvatar :user="article.user" :size="24" />
-                            <Link
-                                :href="authorUrl"
-                                class="font-semibold text-content transition-colors hover:text-accent dark:hover:text-accent"
-                            >
-                                {{ article.user.name }}
-                            </Link>
-                        </span>
-                        <span class="text-muted" aria-hidden="true">·</span>
-                        <time :datetime="article.created_at">{{ formatDate(article.created_at) }}</time>
-                        <span class="text-muted" aria-hidden="true">·</span>
-                        <span>{{ readingMinutes }} мин чтения</span>
+                        <!-- Категория и дата — строкой после заголовка -->
+                        <p class="type-meta mt-4">
+                            <template v-if="category">
+                                <Link :href="route('articlesByCategory', category.slug)" class="transition-colors hover:text-accent">
+                                    {{ category.name }}
+                                </Link>
+                                <span aria-hidden="true"> · </span>
+                            </template>
+                            <span>опубликовано</span>
+                            <time :datetime="article.created_at">{{ formatDate(article.created_at) }}</time>
+                            <span aria-hidden="true"> · </span>
+                            <span class="whitespace-nowrap">{{ readingMinutes }} мин чтения</span>
+                        </p>
                     </div>
 
-                    <h1
-                        v-if="article.title"
-                        class="mt-3 text-2xl font-extrabold leading-snug tracking-tight text-content sm:text-3xl lg:text-4xl"
-                    >
-                        {{ article.title }}
-                    </h1>
+                    <!-- Обложка во всю ширину контейнера -->
+                    <figure v-if="article.card_image_path" class="mt-10">
+                        <img
+                            :src="article.card_image_path"
+                            :alt="article.title || displayTitle"
+                            class="max-h-[70vh] w-full cursor-zoom-in object-contain"
+                            :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
+                            fetchpriority="high"
+                            @load="imageLoaded = true"
+                            @error="onImageError"
+                            @click="openLightbox(article.card_image_path)"
+                        />
+                    </figure>
+
+                    <div class="mt-6 flex items-center gap-3">
+                        <UserAvatar :user="article.user" :size="40" />
+                        <Link :href="authorUrl" class="text-[1.0625rem] font-medium text-content transition-colors hover:text-accent">
+                            {{ article.user.name }}
+                        </Link>
+                    </div>
 
                     <ArticleStats
                         :article="article"
@@ -73,100 +81,86 @@
                         class="mt-6"
                     />
 
-                    <!-- Главное изображение -->
                     <div
-                        v-if="showHeroImage"
-                        class="mt-10 overflow-hidden rounded-md bg-surface-muted"
-                        :class="{ 'animate-pulse': !imageLoaded }"
-                    >
-                        <img
-                            :src="article.card_image_path"
-                            :alt="article.title || displayTitle"
-                            class="aspect-video max-h-[400px] w-full cursor-zoom-in object-cover shadow-sm transition-opacity duration-300"
-                            :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
-                            fetchpriority="high"
-                            @load="imageLoaded = true"
-                            @error="onImageError"
-                            @click="openLightbox(article.card_image_path)"
-                        />
+                        ref="contentRef"
+                        class="article-body mt-12 text-content"
+                        :class="{ 'article-body--hero': article.card_image_path }"
+                        v-html="article.content"
+                    ></div>
+
+                    <div class="article-measure mx-auto">
+                        <!-- Поделиться: текстовые ссылки -->
+                        <div class="mt-10 flex flex-wrap items-baseline gap-x-5 gap-y-2 text-[1.0625rem]">
+                            <span class="text-muted">Поделиться</span>
+                            <button type="button" class="text-accent transition-colors hover:text-accent-hover" @click="copyLink">
+                                {{ copied ? "Ссылка скопирована" : "Скопировать ссылку" }}
+                            </button>
+                            <a
+                                :href="telegramShareUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-accent transition-colors hover:text-accent-hover"
+                            >
+                                Telegram
+                            </a>
+                            <a
+                                :href="vkShareUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-accent transition-colors hover:text-accent-hover"
+                            >
+                                ВКонтакте
+                            </a>
+                        </div>
                     </div>
 
-                    <div ref="contentRef" class="article-content text-content" v-html="article.content"></div>
-                </div>
-
-                <!-- Автор статьи -->
-                <div
-                    class="mt-12 flex flex-col gap-4 rounded-md border border-line bg-surface p-5 shadow-sm sm:flex-row sm:items-center"
-                >
-                    <UserAvatar :user="article.user" :size="56" class="shrink-0" />
-                    <div class="min-w-0 flex-1">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Автор</p>
-                        <Link
-                            :href="authorUrl"
-                            class="mt-1 inline-block rounded text-base font-semibold text-content transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:text-accent"
-                        >
-                            {{ article.user.name }}
-                        </Link>
-                        <p v-if="article.user.about" class="mt-1 line-clamp-2 text-sm text-muted">
-                            {{ article.user.about }}
-                        </p>
+                    <div class="article-measure">
+                        <CommentSection :comments="article.comments" :article="article" :article-slug="article.slug" />
                     </div>
-                    <Link
-                        :href="authorUrl"
-                        class="inline-flex shrink-0 items-center justify-center rounded border border-line-strong px-4 py-2 text-sm font-semibold text-content transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:border-accent dark:hover:text-accent"
-                    >
-                        Все статьи автора
-                    </Link>
                 </div>
 
-                <!-- Поделиться -->
-                <div class="mt-6 flex flex-wrap items-center gap-2">
-                    <span class="mr-1 text-sm text-muted">Поделиться:</span>
+                <!-- Рейл: похожие и афиша закрывают правую сторону -->
+                <aside class="article-rail">
+                    <!-- Автор статьи: кто это и куда идти дальше -->
+                    <div class="flex items-start gap-4">
+                        <UserAvatar :user="article.user" :size="56" class="shrink-0" />
+                        <div class="min-w-0">
+                            <Link :href="authorUrl" class="text-[1.0625rem] font-medium text-content transition-colors hover:text-accent">
+                                {{ article.user.name }}
+                            </Link>
+                            <p v-if="article.user.about" class="mt-1.5 text-muted">
+                                {{ article.user.about }}
+                            </p>
+                            <Link :href="authorUrl" class="mt-2 inline-block text-sm text-accent transition-colors hover:text-accent-hover">
+                                Все статьи автора
+                            </Link>
+                        </div>
+                    </div>
 
-                    <button
-                        type="button"
-                        @click="copyLink"
-                        class="inline-flex items-center gap-1.5 rounded border border-line-strong px-3 py-1.5 text-sm font-medium text-content transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:border-accent dark:hover:text-accent"
-                    >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M13.828 10.172a4 0 010 5.656l-2.828 2.829a4 0 01-5.657-5.657l1.414-1.414M10.172 13.828a4 0 010-5.656l2.828-2.829a4 0 015.657 5.657l-1.414"
-                            />
-                        </svg>
-                        {{ copied ? "Ссылка скопирована" : "Скопировать ссылку" }}
-                    </button>
-
-                    <a
-                        :href="telegramShareUrl"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1.5 rounded border border-line-strong px-3 py-1.5 text-sm font-medium text-content transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:border-accent dark:hover:text-accent"
-                    >
-                        Telegram
-                    </a>
-
-                    <a
-                        :href="vkShareUrl"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1.5 rounded border border-line-strong px-3 py-1.5 text-sm font-medium text-content transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:border-accent dark:hover:text-accent"
-                    >
-                        ВКонтакте
-                    </a>
-                </div>
-
-                <CommentSection :comments="article.comments" :article="article" :article-slug="article.slug" />
+                    <template v-if="popularArticles && popularArticles.length > 0">
+                        <h2 class="type-h2 mt-12 text-content">Афиша</h2>
+                        <ul class="mt-5 flex flex-col gap-5">
+                            <li v-for="item in popularArticles.slice(0, 5)" :key="item.id">
+                                <Link
+                                    :href="route('articles.show', item.slug)"
+                                    class="group flex flex-wrap items-baseline gap-x-2.5 gap-y-1"
+                                >
+                                    <span
+                                        class="num font-display text-[1.75rem] font-bold leading-none tracking-[-0.02em] text-content transition-colors group-hover:text-accent"
+                                    >
+                                        {{ item.views_count }}
+                                    </span>
+                                    <span
+                                        class="basis-full text-[1.0625rem] font-medium leading-snug text-content transition-colors group-hover:text-accent"
+                                    >
+                                        {{ item.title }}
+                                    </span>
+                                </Link>
+                            </li>
+                        </ul>
+                    </template>
+                </aside>
             </div>
-
-            <!-- Похожие и рекомендуемые статьи -->
-            <aside class="mx-auto mt-10 w-full max-w-2xl lg:mt-0 lg:max-w-none lg:self-start lg:sticky lg:top-24">
-                <div class="space-y-6">
-                    <RelatedArticles v-if="relatedArticles && relatedArticles.length > 0" :articles="relatedArticles" />
-                    <PopularArticles v-if="popularArticles && popularArticles.length > 0" :articles="popularArticles" />
-                </div>
-            </aside>
         </div>
 
         <!-- Наверх -->
@@ -181,11 +175,11 @@
             <button
                 v-if="showTopButton"
                 type="button"
-                @click="scrollToTop"
-                class="fixed bottom-6 right-6 z-30 inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-muted shadow-lg transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:text-accent"
+                class="fixed bottom-6 right-6 z-30 inline-flex h-11 w-11 items-center justify-center bg-surface-muted text-content transition-colors hover:text-accent focus-visible:outline-none"
                 aria-label="Наверх"
+                @click="scrollToTop"
             >
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5M5 12l7-7 7 7" />
                 </svg>
             </button>
@@ -203,8 +197,6 @@ import MainLayout from "@/Layouts/Layout.vue";
 import CommentSection from "@/Components/Comments/CommentSection.vue";
 import ArticleStats from "@/Components/ArticleStats.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
-import PopularArticles from "@/Components/PopularArticles.vue";
-import RelatedArticles from "@/Components/RelatedArticles.vue";
 import ImageLightbox from "@/Components/ImageLightbox.vue";
 
 const page = usePage();
@@ -226,9 +218,7 @@ const props = defineProps({
 
 // Своя страница автора не нужна: у себя ведём в профиль
 const authorUrl = computed(() =>
-    page.props.auth?.user?.id === props.article.user.id
-        ? route("profile")
-        : route("authors.show", props.article.user.id),
+    page.props.auth?.user?.id === props.article.user.id ? route("profile") : route("authors.show", props.article.user.id),
 );
 
 // Заголовок необязателен: для <title>/шаринга берём текст поста

@@ -1,8 +1,6 @@
 <template>
-    <div class="mt-24 flex min-h-[calc(100vh-6rem)] flex-col">
-        <header>
-            <Navbar />
-        </header>
+    <div class="flex min-h-screen flex-col">
+        <Navbar />
 
         <FlashMessage />
 

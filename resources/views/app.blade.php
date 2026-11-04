@@ -12,12 +12,13 @@
     <script>
         (function () {
             try {
-                var lightThemes = ['light', 'cupcake', 'corporate', 'lofi', 'garden', 'retro', 'winter'];
-                var knownThemes = ['light', 'cupcake', 'corporate', 'lofi', 'garden', 'retro', 'winter', 'dark', 'dracula', 'business', 'night', 'forest', 'coffee', 'dim'];
+                var lightThemes = ['paper', 'light', 'cupcake', 'corporate', 'lofi', 'garden', 'retro', 'winter'];
+                var knownThemes = ['paper', 'light', 'cupcake', 'corporate', 'lofi', 'garden', 'retro', 'winter', 'toner', 'dark', 'dracula', 'business', 'night', 'forest', 'coffee', 'dim'];
 
                 var saved = localStorage.getItem('theme');
                 if (!saved || knownThemes.indexOf(saved) === -1) {
-                    saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    // Новым посетителям — «Бумага»; сохранённый выбор не трогаем.
+                    saved = 'paper';
                 }
 
                 document.documentElement.setAttribute('data-theme', saved);
@@ -31,16 +32,16 @@
         })();
     </script>
 
-    <!-- Fonts -->
+    <!-- Fonts: Unbounded — только «голос контента», Golos Text — весь интерфейс -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style"
-        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap">
+        href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@600;800&display=swap">
     <link rel="stylesheet" media="print" onload="this.media='all'"
-        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap">
+        href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@600;800&display=swap">
     <noscript>
         <link rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap">
+            href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@600;800&display=swap">
     </noscript>
 
     <!-- Scripts -->
@@ -82,22 +83,16 @@
 
     <style>
         #boot-skeleton {
-            padding-top: 96px;
-            max-width: 1500px;
+            max-width: 1440px;
             margin: 0 auto;
+            padding-inline: 20px;
         }
 
         #boot-skeleton .bs-nav {
-            position: fixed;
-            top: 0;
-            inset-inline: 0;
-            height: 64px;
+            height: 72px;
             display: flex;
             align-items: center;
             gap: 16px;
-            padding: 0 16px;
-            background: rgb(var(--c-surface, 255 255 255) / .85);
-            border-bottom: 1px solid rgb(var(--c-line, 228 221 209));
         }
 
         #boot-skeleton .bs-logo {
@@ -165,19 +160,7 @@
         #boot-skeleton .bs-line,
         #boot-skeleton .bs-card,
         #boot-skeleton .bs-block {
-            background: linear-gradient(
-                90deg,
-                rgb(var(--c-surface-muted, 240 235 226)) 25%,
-                rgb(var(--c-line, 228 221 209) / 0.45) 37%,
-                rgb(var(--c-surface-muted, 240 235 226)) 63%
-            );
-            background-size: 400% 100%;
-            animation: bs-shimmer 1.4s ease infinite;
-        }
-
-                        @keyframes bs-shimmer {
-            0% { background-position: 100% 0; }
-            100% { background-position: 0 0; }
+            background: rgb(var(--c-surface-muted, 240 235 226));
         }
 
         @media (max-width: 1023px) {
