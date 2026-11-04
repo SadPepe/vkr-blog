@@ -34,57 +34,58 @@ const submit = () => {
 <template>
     <GuestLayout>
         <Head title="Новый пароль" />
+        <div class="mx-auto w-full max-w-md py-8 md:py-12">
+            <form @submit.prevent="submit">
+                <div>
+                    <InputLabel for="email" value="Почта" />
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Почта" />
+                    <TextInput
+                        id="email"
+                        type="email"
+                        class="mt-1 block w-full"
+                        v-model="form.email"
+                        required
+                        autofocus
+                        autocomplete="username"
+                    />
 
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
+                    <InputError class="mt-2" :message="form.errors.email" />
+                </div>
 
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
+                <div class="mt-4">
+                    <InputLabel for="password" value="Пароль" />
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Пароль" />
+                    <TextInput
+                        id="password"
+                        type="password"
+                        class="mt-1 block w-full"
+                        v-model="form.password"
+                        required
+                        autocomplete="new-password"
+                    />
 
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="new-password"
-                />
+                    <InputError class="mt-2" :message="form.errors.password" />
+                </div>
 
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
+                <div class="mt-4">
+                    <InputLabel for="password_confirmation" value="Подтверждение пароля" />
 
-            <div class="mt-4">
-                <InputLabel for="password_confirmation" value="Подтверждение пароля" />
+                    <TextInput
+                        id="password_confirmation"
+                        type="password"
+                        class="mt-1 block w-full"
+                        v-model="form.password_confirmation"
+                        required
+                        autocomplete="new-password"
+                    />
 
-                <TextInput
-                    id="password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password_confirmation"
-                    required
-                    autocomplete="new-password"
-                />
+                    <InputError class="mt-2" :message="form.errors.password_confirmation" />
+                </div>
 
-                <InputError class="mt-2" :message="form.errors.password_confirmation" />
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing"> Сохранить пароль </PrimaryButton>
-            </div>
-        </form>
+                <div class="mt-4 flex items-center justify-end">
+                    <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing"> Сохранить пароль </PrimaryButton>
+                </div>
+            </form>
+        </div>
     </GuestLayout>
 </template>

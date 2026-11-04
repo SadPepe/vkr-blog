@@ -25,7 +25,15 @@ class User extends Authenticatable
         'avatar',
         'cover_image',
         'background_image',
+        'background_blur',
     ];
+
+    /**
+     * Вычисляемые поля, которые всегда попадают в JSON (нужны для аватара в лентах и комментариях).
+     *
+     * @var list<string>
+     */
+    protected $appends = ['avatar_url'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -47,6 +55,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'background_blur' => 'integer',
         ];
     }
 

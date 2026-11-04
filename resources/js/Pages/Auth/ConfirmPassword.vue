@@ -20,29 +20,30 @@ const submit = () => {
 <template>
     <GuestLayout>
         <Head title="Подтверждение пароля" />
+        <div class="mx-auto w-full max-w-md py-8 md:py-12">
+            <div class="mb-4 text-sm text-muted">Это защищённый раздел. Подтвердите пароль, чтобы продолжить.</div>
 
-        <div class="mb-4 text-sm text-muted">Это защищённый раздел. Подтвердите пароль, чтобы продолжить.</div>
+            <form @submit.prevent="submit">
+                <div>
+                    <InputLabel for="password" value="Пароль" />
+                    <TextInput
+                        id="password"
+                        type="password"
+                        class="mt-1 block w-full"
+                        v-model="form.password"
+                        required
+                        autocomplete="current-password"
+                        autofocus
+                    />
+                    <InputError class="mt-2" :message="form.errors.password" />
+                </div>
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="password" value="Пароль" />
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="current-password"
-                    autofocus
-                />
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4 flex justify-end">
-                <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                    Подтвердить
-                </PrimaryButton>
-            </div>
-        </form>
+                <div class="mt-4 flex justify-end">
+                    <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+                        Подтвердить
+                    </PrimaryButton>
+                </div>
+            </form>
+        </div>
     </GuestLayout>
 </template>

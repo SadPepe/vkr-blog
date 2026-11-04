@@ -45,7 +45,7 @@
                         <span class="inline-flex items-center gap-2">
                             <UserAvatar :user="article.user" :size="24" />
                             <Link
-                                :href="route('authors.show', article.user.id)"
+                                :href="authorUrl"
                                 class="font-semibold text-content transition-colors hover:text-accent dark:hover:text-accent"
                             >
                                 {{ article.user.name }}
@@ -102,7 +102,7 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Автор</p>
                         <Link
-                            :href="route('authors.show', article.user.id)"
+                            :href="authorUrl"
                             class="mt-1 inline-block rounded text-base font-semibold text-content transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:text-accent"
                         >
                             {{ article.user.name }}
@@ -112,7 +112,7 @@
                         </p>
                     </div>
                     <Link
-                        :href="route('authors.show', article.user.id)"
+                        :href="authorUrl"
                         class="inline-flex shrink-0 items-center justify-center rounded border border-line-strong px-4 py-2 text-sm font-semibold text-content transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:hover:border-accent dark:hover:text-accent"
                     >
                         Все статьи автора
@@ -192,40 +192,7 @@
         </Transition>
 
         <!-- Лайтбокс: картинка на полный экран -->
-        <Teleport to="body">
-            <Transition name="lightbox">
-                <div
-                    v-if="lightboxOpen"
-                    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-6 backdrop-blur-md sm:p-10"
-                    role="dialog"
-                    aria-modal="true"
-                    :aria-label="`Просмотр изображения: ${displayTitle}`"
-                    @click="closeLightbox"
-                >
-                    <button
-                        @click="closeLightbox"
-                        class="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2.5 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-6 sm:top-6"
-                        aria-label="Закрыть"
-                        title="Закрыть (Esc)"
-                    >
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-
-                    <figure class="flex max-h-full max-w-[min(1100px,92vw)] flex-col items-center gap-3" @click.stop>
-                        <img
-                            :src="lightboxSrc"
-                            :alt="article.title || displayTitle"
-                            class="max-h-[78vh] w-auto max-w-full rounded-md object-contain shadow-2xl"
-                        />
-                        <figcaption class="text-xs text-white/60">
-                            Esc или клик вне изображения — закрыть
-                        </figcaption>
-                    </figure>
-                </div>
-            </Transition>
-        </Teleport>
+        <ImageLightbox :show="lightboxOpen" :src="lightboxSrc" :alt="article.title || displayTitle" @close="closeLightbox" />
     </MainLayout>
 </template>
 
@@ -238,6 +205,7 @@ import ArticleStats from "@/Components/ArticleStats.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import PopularArticles from "@/Components/PopularArticles.vue";
 import RelatedArticles from "@/Components/RelatedArticles.vue";
+import ImageLightbox from "@/Components/ImageLightbox.vue";
 
 const page = usePage();
 
@@ -255,6 +223,13 @@ const props = defineProps({
         default: () => [],
     },
 });
+
+// Своя страница автора не нужна: у себя ведём в профиль
+const authorUrl = computed(() =>
+    page.props.auth?.user?.id === props.article.user.id
+        ? route("profile")
+        : route("authors.show", props.article.user.id),
+);
 
 // Заголовок необязателен: для <title>/шаринга берём текст поста
 const displayTitle = computed(() => {
@@ -383,10 +358,6 @@ const closeLightbox = () => {
     document.body.style.overflow = "";
 };
 
-const onKeydown = (e) => {
-    if (e.key === "Escape") closeLightbox();
-};
-
 const handleContentImageClick = (event) => {
     const target = event.target;
     if (target && target.tagName === "IMG") {
@@ -406,7 +377,6 @@ const updateProgress = () => {
 onMounted(() => {
     updateProgress();
     window.addEventListener("scroll", updateProgress, { passive: true });
-    window.addEventListener("keydown", onKeydown);
     contentRef.value?.addEventListener("click", handleContentImageClick);
 
     // Картинки в тексте: ленивая загрузка и декодирование в фоне
@@ -418,7 +388,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     window.removeEventListener("scroll", updateProgress);
-    window.removeEventListener("keydown", onKeydown);
     contentRef.value?.removeEventListener("click", handleContentImageClick);
     document.body.style.overflow = "";
 });
@@ -582,15 +551,5 @@ onBeforeUnmount(() => {
 
 .article-content :deep(li) {
     margin: 0.35rem 0;
-}
-
-.lightbox-enter-active,
-.lightbox-leave-active {
-    transition: opacity 0.2s ease;
-}
-
-.lightbox-enter-from,
-.lightbox-leave-to {
-    opacity: 0;
 }
 </style>

@@ -18,7 +18,7 @@
                 </Link>
             </template>
 
-            <div v-if="articles.data.length" class="flex flex-col gap-5">
+            <div v-if="articles.data.length" class="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface px-5 sm:px-6">
                 <ArticleCard v-for="article in articles.data" :key="article.id" :article="article" :categories="categories">
                     <template #actions>
                         <Link

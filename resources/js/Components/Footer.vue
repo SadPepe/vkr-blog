@@ -1,9 +1,9 @@
 <template>
     <footer
         lang="ru"
-        class="mx-auto mt-12 border-t border-line bg-surface"
+        class="mt-12 border-t border-line bg-surface"
     >
-        <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:px-8">
             <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
                 <!-- О блоге -->
                 <div class="lg:col-span-2">

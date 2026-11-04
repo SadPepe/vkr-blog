@@ -1,20 +1,36 @@
 <template>
     <Layout>
         <Head :title="author.name">
-            <meta name="description" :content="authorDescription" />
+            <meta name="description" :content="metaDescription" />
             <meta property="og:title" :content="author.name" />
-            <meta property="og:description" :content="authorDescription" />
+            <meta property="og:description" :content="metaDescription" />
             <meta property="og:type" content="profile" />
+            <meta property="og:url" :content="route('authors.show', author.id)" />
+            <meta v-if="author.cover_url" property="og:image" :content="author.cover_url" />
+            <meta name="twitter:card" :content="author.cover_url ? 'summary_large_image' : 'summary'" />
+            <link rel="canonical" :href="route('authors.show', author.id)" />
         </Head>
 
         <ProfileLayout :user="author" :stats="stats" :media="media">
-            <div v-if="articles.data.length" class="flex flex-col gap-5">
+            <h2 class="sr-only">Статьи автора {{ author.name }}</h2>
+
+            <div
+                v-if="articles.data.length"
+                class="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface px-5 sm:px-6"
+            >
                 <ArticleCard v-for="article in articles.data" :key="article.id" :article="article" :categories="categories" />
             </div>
 
             <!-- Пустое состояние -->
             <div v-else class="rounded-md border border-dashed border-line-strong bg-surface px-6 py-14 text-center">
-                <svg class="mx-auto mb-4 h-12 w-12 text-muted" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <svg
+                    class="mx-auto mb-4 h-12 w-12 text-muted"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -25,7 +41,7 @@
                 <p class="mx-auto mt-1.5 max-w-sm text-sm text-muted">Загляните позже — здесь появятся новые публикации.</p>
             </div>
 
-            <Pagination v-if="articles && articles.links && articles.links.length > 3" :links="articles.links" class="mt-8" />
+            <Pagination v-if="articles && articles.links && articles.links.length > 3" :links="articles.links" />
         </ProfileLayout>
     </Layout>
 </template>
@@ -62,4 +78,6 @@ const page = usePage();
 const categories = computed(() => page.props.categories ?? []);
 
 const authorDescription = computed(() => (props.author.about || "").trim() || `Статьи автора ${props.author.name} на МОЙ.БЛОГ.`);
+
+const metaDescription = computed(() => authorDescription.value.slice(0, 160));
 </script>

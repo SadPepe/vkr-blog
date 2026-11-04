@@ -208,4 +208,28 @@ class ArticleTest extends TestCase
                 ->missing('articles.data.0.content')
                 ->etc());
     }
+
+    public function test_excerpt_endpoint_returns_expanded_part_and_truncation_flag(): void
+    {
+        $article = Article::factory()->create([
+            'content' => str_repeat('<p>'.str_repeat('Длинный текст ', 80).'</p>', 10),
+        ]);
+
+        $response = $this->getJson(route('articles.excerpt', $article->slug));
+
+        $response->assertOk()
+            ->assertJsonStructure(['html', 'complete'])
+            ->assertJsonPath('complete', false);
+
+        $this->assertStringContainsString('Длинный текст', $response->json('html'));
+    }
+
+    public function test_excerpt_endpoint_marks_short_post_as_complete(): void
+    {
+        $article = Article::factory()->create(['content' => '<p>Совсем короткий пост</p>']);
+
+        $this->getJson(route('articles.excerpt', $article->slug))
+            ->assertOk()
+            ->assertJsonPath('complete', true);
+    }
 }

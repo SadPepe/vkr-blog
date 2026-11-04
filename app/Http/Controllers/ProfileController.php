@@ -32,6 +32,7 @@ class ProfileController extends Controller
                 'avatar_url' => $request->user()->avatar_url,
                 'cover_url' => $request->user()->cover_url,
                 'background_url' => $request->user()->background_url,
+                'background_blur' => $request->user()->background_blur,
             ],
 
         ]);
@@ -45,10 +46,11 @@ class ProfileController extends Controller
         $user = $request->user();
         $data = $request->validated();
 
-        foreach (['cover_image', 'background_image'] as $field) {
+        foreach (['avatar_image', 'cover_image', 'background_image'] as $field) {
             unset($data[$field], $data['remove_' . $field]);
         }
 
+        $this->applyProfileImage($request, $user, 'avatar_image', 'profile/avatars', 'avatar');
         $this->applyProfileImage($request, $user, 'cover_image', 'profile/covers');
         $this->applyProfileImage($request, $user, 'background_image', 'profile/backgrounds');
 
@@ -64,20 +66,27 @@ class ProfileController extends Controller
     }
 
     /**
-     * Загружает, заменяет или удаляет картинку профиля (обложку/фон).
+     * Загружает, заменяет или удаляет картинку профиля (аватар/обложку/фон).
      */
-    private function applyProfileImage(Request $request, User $user, string $field, string $directory): void
-    {
+    private function applyProfileImage(
+        Request $request,
+        User $user,
+        string $field,
+        string $directory,
+        ?string $column = null,
+    ): void {
+        $column ??= $field;
+
         if ($request->hasFile($field)) {
-            $this->deleteProfileImage($user->{$field});
-            $user->{$field} = $request->file($field)->store($directory, 'public');
+            $this->deleteProfileImage($user->{$column});
+            $user->{$column} = $request->file($field)->store($directory, 'public');
 
             return;
         }
 
         if ($request->boolean('remove_' . $field)) {
-            $this->deleteProfileImage($user->{$field});
-            $user->{$field} = null;
+            $this->deleteProfileImage($user->{$column});
+            $user->{$column} = null;
         }
     }
 

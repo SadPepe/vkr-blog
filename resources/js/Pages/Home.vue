@@ -8,8 +8,8 @@
             <meta property="og:type" content="website" />
         </Head>
 
-        <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 gap-8 lg:grid-cols-[260px_minmax(0,1fr)_300px]">
+        <div class="mx-auto max-w-[1400px] px-4 py-8 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 gap-8 lg:grid-cols-[220px_minmax(0,1fr)_260px] xl:grid-cols-[240px_minmax(0,1fr)_296px]">
                 <!-- Левая колонка: категории -->
                 <aside class="self-start lg:sticky lg:top-24">
                     <div class="">
@@ -63,7 +63,7 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-5">
+                    <div class="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface px-5 sm:px-6">
                         <ArticleCard v-for="article in articles.data" :key="article.id" :article="article" :categories="categories" />
                     </div>
 

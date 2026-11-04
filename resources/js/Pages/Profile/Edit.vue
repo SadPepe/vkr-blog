@@ -51,10 +51,60 @@
                 <section class="rounded-md border border-line bg-surface p-6 shadow-sm">
                     <h2 class="text-lg font-semibold text-content">Оформление профиля</h2>
                     <p class="mt-1 text-sm text-muted">
-                        Обложка украсит шапку профиля, фон — всю страницу. Подойдут JPG, PNG или WebP до 5 МБ.
+                        Обложка украсит шапку профиля, фон — поля вокруг него. Фон автоматически приглушается и размывается, чтобы текст
+                        оставался читаемым при любом изображении. Подойдут JPG, PNG или WebP до 5 МБ.
                     </p>
 
                     <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                        <!-- Аватар -->
+                        <div class="sm:col-span-2">
+                            <p class="text-sm font-medium text-content">Аватар</p>
+
+                            <div class="mt-2 flex flex-wrap items-center gap-4">
+                                <div class="h-20 w-20 shrink-0 overflow-hidden rounded-full ring-1 ring-line">
+                                    <img v-if="avatarShown" :src="avatarShown" alt="Аватар профиля" class="h-full w-full object-cover" />
+                                    <span
+                                        v-else
+                                        class="flex h-full w-full items-center justify-center bg-surface-muted text-lg font-semibold text-muted"
+                                    >
+                                        {{ avatarInitial }}
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label
+                                        for="avatar_image"
+                                        class="inline-flex cursor-pointer items-center justify-center rounded-md border border-line-strong px-3 py-1.5 text-sm font-medium text-content transition-colors hover:bg-surface-muted focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 focus-within:ring-offset-surface"
+                                        :class="{ 'pointer-events-none opacity-60': avatarProcessing }"
+                                    >
+                                        {{ avatarShown ? "Заменить" : "Загрузить" }}
+                                    </label>
+                                    <input
+                                        id="avatar_image"
+                                        ref="avatarInput"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        class="sr-only"
+                                        @change="onAvatarChange"
+                                    />
+                                    <button
+                                        v-if="avatarShown"
+                                        type="button"
+                                        class="rounded-md px-2.5 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-400"
+                                        @click="removeAvatar"
+                                    >
+                                        Удалить
+                                    </button>
+
+                                    <span v-if="avatarProcessing" class="text-sm text-muted">Готовим фото…</span>
+                                </div>
+                            </div>
+
+                            <p class="mt-1.5 text-xs text-muted">Квадратное фото до 2 МБ — сожмём до 512 px автоматически.</p>
+
+                            <InputError class="mt-1" :message="form.errors.avatar_image" />
+                        </div>
+
                         <!-- Обложка -->
                         <div>
                             <p class="text-sm font-medium text-content">Фото в шапке профиля</p>
@@ -147,6 +197,37 @@
 
                             <InputError class="mt-2" :message="form.errors.background_image" />
                         </div>
+
+                        <!-- Размытие фона -->
+                        <div class="sm:col-span-2">
+                            <div class="flex items-center justify-between gap-3">
+                                <label for="background_blur" class="text-sm font-medium text-content"> Размытие фона </label>
+                                <span class="text-sm tabular-nums text-muted">{{ form.background_blur }} px</span>
+                            </div>
+
+                            <input
+                                id="background_blur"
+                                v-model.number="form.background_blur"
+                                type="range"
+                                min="0"
+                                max="24"
+                                step="1"
+                                class="mt-2 w-full accent-accent"
+                                :disabled="!backgroundShown"
+                            />
+
+                            <div class="mt-1 flex items-center justify-between text-xs text-muted">
+                                <span>0 — чётко</span>
+                                <span>24 — мягко</span>
+                            </div>
+
+                            <p class="mt-1.5 text-xs text-muted">
+                                Читаемость от размытия не зависит: тексты и карточки всегда лежат на непрозрачных панелях. Ползунок меняет
+                                только то, насколько заметен фон.
+                            </p>
+
+                            <InputError class="mt-1" :message="form.errors.background_blur" />
+                        </div>
                     </div>
                 </section>
 
@@ -184,6 +265,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { Head, useForm } from "@inertiajs/vue3";
+import imageCompression from "browser-image-compression";
 import Layout from "@/Layouts/Layout.vue";
 import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
@@ -202,20 +284,33 @@ const props = defineProps({
     },
 });
 
+const avatarInput = ref(null);
 const coverInput = ref(null);
 const backgroundInput = ref(null);
+const avatarObjectUrl = ref(null);
 const coverObjectUrl = ref(null);
 const backgroundObjectUrl = ref(null);
+const avatarProcessing = ref(false);
 
 const form = useForm({
     name: props.user.name,
     email: props.user.email,
     about: props.user.about || "",
+    background_blur: props.user.background_blur ?? 12,
+    avatar_image: null,
     cover_image: null,
     background_image: null,
+    remove_avatar_image: false,
     remove_cover_image: false,
     remove_background_image: false,
 });
+
+const avatarShown = computed(() => {
+    if (form.avatar_image) return avatarObjectUrl.value;
+    return form.remove_avatar_image ? null : props.user.avatar_url;
+});
+
+const avatarInitial = computed(() => (props.user.name || "?").trim().charAt(0).toUpperCase());
 
 const coverShown = computed(() => {
     if (form.cover_image) return coverObjectUrl.value;
@@ -232,6 +327,29 @@ const previewUrl = (file, current) => {
     return file ? URL.createObjectURL(file) : null;
 };
 
+const onAvatarChange = async (event) => {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) return;
+
+    avatarProcessing.value = true;
+
+    try {
+        const compressed = await imageCompression(file, {
+            maxWidthOrHeight: 512,
+            maxSizeMB: 0.5,
+            useWebWorker: true,
+            fileType: "image/jpeg",
+        });
+
+        form.avatar_image = compressed;
+        form.remove_avatar_image = false;
+        avatarObjectUrl.value = previewUrl(compressed, avatarObjectUrl.value);
+    } finally {
+        avatarProcessing.value = false;
+    }
+};
+
 const onCoverChange = (event) => {
     const file = event.target.files?.[0] ?? null;
     form.cover_image = file;
@@ -244,6 +362,13 @@ const onBackgroundChange = (event) => {
     form.background_image = file;
     form.remove_background_image = false;
     backgroundObjectUrl.value = previewUrl(file, backgroundObjectUrl.value);
+};
+
+const removeAvatar = () => {
+    form.avatar_image = null;
+    form.remove_avatar_image = true;
+    avatarObjectUrl.value = previewUrl(null, avatarObjectUrl.value);
+    if (avatarInput.value) avatarInput.value.value = "";
 };
 
 const removeCover = () => {
@@ -266,10 +391,10 @@ const submit = () => {
         const payload = { ...data, _method: "PUT" };
 
         // Не отправляем пустые файлы и «false»-флаги: правило boolean их не примет.
-        ["cover_image", "background_image"].forEach((field) => {
+        ["avatar_image", "cover_image", "background_image"].forEach((field) => {
             if (!payload[field]) delete payload[field];
         });
-        ["remove_cover_image", "remove_background_image"].forEach((field) => {
+        ["remove_avatar_image", "remove_cover_image", "remove_background_image"].forEach((field) => {
             if (!payload[field]) delete payload[field];
         });
 
@@ -278,11 +403,18 @@ const submit = () => {
         preserveScroll: true,
         forceFormData: true,
         onSuccess: () => {
+            avatarObjectUrl.value = previewUrl(null, avatarObjectUrl.value);
             coverObjectUrl.value = previewUrl(null, coverObjectUrl.value);
             backgroundObjectUrl.value = previewUrl(null, backgroundObjectUrl.value);
+            if (avatarInput.value) avatarInput.value.value = "";
             if (coverInput.value) coverInput.value.value = "";
             if (backgroundInput.value) backgroundInput.value.value = "";
-            form.reset();
+            form.avatar_image = null;
+            form.cover_image = null;
+            form.background_image = null;
+            form.remove_avatar_image = false;
+            form.remove_cover_image = false;
+            form.remove_background_image = false;
         },
     });
 };

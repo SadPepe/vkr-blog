@@ -1,9 +1,9 @@
 <template>
     <div
-        class="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-screen-xl border border-line bg-surface/80 shadow-lg shadow-black/5 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/70 dark:supports-[backdrop-filter]:bg-[#1c1c1c]/60 md:top-2.5 xl:rounded-md"
+        class="fixed inset-x-2 top-2 z-30 rounded-md border border-line bg-surface/80 shadow-lg shadow-black/5 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/70 dark:supports-[backdrop-filter]:bg-[#1c1c1c]/60 md:top-2.5"
     >
         <div class="relative z-20 border-b border-line">
-            <div class="px-4 py-3.5 sm:px-6">
+            <div class="mx-auto w-full max-w-[1400px] px-4 py-3.5 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between gap-4">
                     <!-- Логотип -->
                     <Link

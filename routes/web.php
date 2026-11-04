@@ -53,6 +53,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/articles/{article:slug}', [ArticleController::class, 'update'])->name('articles.update');
     Route::delete('/articles/{article:slug}', [ArticleController::class, 'destroy'])->name('articles.destroy');
 });
+Route::get('/articles/{article:slug}/excerpt', [ArticleController::class, 'excerpt'])
+    ->name('articles.excerpt');
 Route::get('/articles/{article:slug}', [ArticleController::class, 'show'])
     ->name('articles.show');
 

@@ -1,5 +1,5 @@
 <template>
-    <div class="mx-auto mt-24 flex min-h-[calc(100vh-6rem)] max-w-[1500px] flex-col">
+    <div class="mt-24 flex min-h-[calc(100vh-6rem)] flex-col">
         <header>
             <Navbar />
         </header>

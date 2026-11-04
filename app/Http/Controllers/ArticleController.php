@@ -194,6 +194,17 @@ class ArticleController extends Controller
         ]);
     }
 
+    /**
+     * Развёрнутая часть поста для ленты: тот же авторский порядок блоков,
+     * но с большими лимитами. Полный content в ленты по-прежнему не отдаётся.
+     */
+    public function excerpt(Article $article)
+    {
+        return response()->json(
+            PostPreview::excerpt((string) $article->content)
+        );
+    }
+
     public function index(Request $request)
     {
         $sort = $this->resolveSort($request);
