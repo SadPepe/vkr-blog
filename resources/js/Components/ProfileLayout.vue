@@ -15,87 +15,91 @@
         </div>
 
         <div class="page-shell">
-            <!-- Обложка во всю ширину контейнера, без скруглений -->
-            <div class="relative aspect-[16/7] max-h-[46vh] w-full overflow-hidden bg-surface-muted">
-                <img v-if="user.cover_url" :src="user.cover_url" alt="" class="h-full w-full object-cover" loading="eager" />
-            </div>
-
-            <!-- Аватар-квадрат наезжает на обложку, рамка — тон поверхности -->
-            <div class="relative -mt-16 w-max bg-surface p-1">
-                <UserAvatar :user="user" :size="120" square />
-            </div>
-
-            <!-- Имя дисплейным кеглем и строка «что это» сразу под ним -->
-            <h1
-                class="mt-6 font-display text-[clamp(2.25rem,5vw,4rem)] font-extrabold leading-[0.95] tracking-[-0.03em] [text-wrap:balance] text-content"
-            >
-                {{ user.name }}
-            </h1>
-
-            <p
-                v-if="user.about"
-                :id="aboutId"
-                class="measure mt-4 whitespace-pre-line text-[1.25rem] leading-relaxed text-content"
-                :class="aboutExpanded ? '' : 'max-h-[7.5rem] overflow-hidden lg:max-h-none'"
-            >
-                {{ user.about }}
-            </p>
-            <button
-                v-if="showAboutToggle"
-                type="button"
-                class="mt-2 inline-flex min-h-11 items-center text-sm text-accent transition-colors hover:text-accent-hover lg:hidden"
-                :aria-expanded="aboutExpanded"
-                :aria-controls="aboutId"
-                @click="aboutExpanded = !aboutExpanded"
-            >
-                {{ aboutExpanded ? "Свернуть" : "Показать полностью" }}
-            </button>
-
-            <!-- Статистика: крупная цифра и подпись в одну строку, обычным регистром -->
-            <dl class="mt-10 flex flex-wrap gap-x-12 gap-y-5">
-                <div v-for="item in statsItems" :key="item.label" class="flex items-baseline gap-2.5">
-                    <dd class="num font-display text-[2.25rem] font-bold leading-none text-content">
-                        {{ item.value }}
-                    </dd>
-                    <dt class="text-[0.9375rem] text-muted">{{ item.label }}</dt>
+            <div class="mx-auto w-full max-w-[68rem] bg-page">
+                <!-- Обложка во всю ширину контейнера, без скруглений -->
+                <div class="relative aspect-[16/7] max-h-[38vh] w-full overflow-hidden bg-surface-muted">
+                    <img v-if="user.cover_url" :src="user.cover_url" alt="" class="h-full w-full object-cover" loading="eager" />
                 </div>
-            </dl>
 
-            <p v-if="memberSince" class="mt-6 text-[0.9375rem] text-muted">
-                На блоге с <time :datetime="user.created_at">{{ memberSince }}</time>
-            </p>
+                <div class="px-5 pb-14 sm:px-8 lg:px-10">
+                    <!-- Аватар-квадрат наезжает на обложку, рамка — тон поверхности -->
+                    <div class="relative -mt-16 w-max bg-page p-1">
+                        <UserAvatar :user="user" :size="120" square />
+                    </div>
 
-            <!-- Медиасетка 3×2: пустые ячейки — поля тона, а не дыра -->
-            <section v-if="media.length" class="mt-14">
-                <h2 class="type-h2 text-content">Медиа</h2>
-                <div class="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
-                    <template v-for="cell in 6" :key="cell">
-                        <Link
-                            v-if="media[cell - 1]"
-                            :href="route('articles.show', { article: media[cell - 1].slug })"
-                            class="group relative block aspect-square overflow-hidden bg-surface-muted focus-visible:outline-none"
-                            :aria-label="`Открыть пост: ${media[cell - 1].title || 'без заголовка'}`"
-                        >
-                            <img
-                                :src="media[cell - 1].card_image_path"
-                                alt=""
-                                class="h-full w-full object-cover"
-                                loading="lazy"
-                                decoding="async"
-                            />
-                        </Link>
-                        <div v-else class="aspect-square bg-surface-muted" aria-hidden="true"></div>
-                    </template>
+                    <!-- Имя дисплейным кеглем и строка «что это» сразу под ним -->
+                    <h1
+                        class="mt-6 font-display text-[clamp(2.25rem,5vw,4rem)] font-extrabold leading-[0.95] tracking-[-0.03em] [text-wrap:balance] text-content"
+                    >
+                        {{ user.name }}
+                    </h1>
+
+                    <p
+                        v-if="user.about"
+                        :id="aboutId"
+                        class="measure mt-4 whitespace-pre-line text-[1.25rem] leading-relaxed text-content"
+                        :class="aboutExpanded ? '' : 'max-h-[7.5rem] overflow-hidden lg:max-h-none'"
+                    >
+                        {{ user.about }}
+                    </p>
+                    <button
+                        v-if="showAboutToggle"
+                        type="button"
+                        class="mt-2 inline-flex min-h-11 items-center text-sm text-accent transition-colors hover:text-accent-hover lg:hidden"
+                        :aria-expanded="aboutExpanded"
+                        :aria-controls="aboutId"
+                        @click="aboutExpanded = !aboutExpanded"
+                    >
+                        {{ aboutExpanded ? "Свернуть" : "Показать полностью" }}
+                    </button>
+
+                    <!-- Статистика: крупная цифра и подпись в одну строку, обычным регистром -->
+                    <dl class="mt-10 flex flex-wrap gap-x-12 gap-y-5">
+                        <div v-for="item in statsItems" :key="item.label" class="flex items-baseline gap-2.5">
+                            <dd class="num font-display text-[2.25rem] font-bold leading-none text-content">
+                                {{ item.value }}
+                            </dd>
+                            <dt class="text-[0.9375rem] text-muted">{{ item.label }}</dt>
+                        </div>
+                    </dl>
+
+                    <p v-if="memberSince" class="mt-6 text-[0.9375rem] text-muted">
+                        На блоге с <time :datetime="user.created_at">{{ memberSince }}</time>
+                    </p>
+
+                    <!-- Медиасетка 3×2: пустые ячейки — поля тона, а не дыра -->
+                    <section v-if="media.length" class="mt-14">
+                        <h2 class="type-h2 text-content">Медиа</h2>
+                        <div class="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
+                            <template v-for="cell in 6" :key="cell">
+                                <Link
+                                    v-if="media[cell - 1]"
+                                    :href="route('articles.show', { article: media[cell - 1].slug })"
+                                    class="group relative block aspect-square overflow-hidden bg-surface-muted focus-visible:outline-none"
+                                    :aria-label="`Открыть пост: ${media[cell - 1].title || 'без заголовка'}`"
+                                >
+                                    <img
+                                        :src="media[cell - 1].card_image_path"
+                                        alt=""
+                                        class="h-full w-full object-cover"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
+                                </Link>
+                                <div v-else class="aspect-square bg-surface-muted" aria-hidden="true"></div>
+                            </template>
+                        </div>
+                    </section>
+
+                    <div v-if="$slots.actions" class="mt-8 flex flex-wrap gap-3">
+                        <slot name="actions" />
+                    </div>
+
+                    <section class="mt-14 min-w-0">
+                        <slot />
+                    </section>
                 </div>
-            </section>
-
-            <div v-if="$slots.actions" class="mt-8 flex flex-wrap gap-3">
-                <slot name="actions" />
             </div>
-
-            <section class="mt-16 min-w-0">
-                <slot />
-            </section>
         </div>
     </div>
 </template>
@@ -143,8 +147,8 @@ const backgroundLuminance = ref(null);
 const filmAlpha = computed(() => {
     if (backgroundLuminance.value === null) return 0.55;
 
-    // Тёмное фото глушим сильнее: подписи и цифры должны читаться без замены фона
-    return Math.min(0.82, Math.max(0.42, 0.82 - (backgroundLuminance.value / 255) * 0.4));
+    // Контент лежит на непрозрачной панели, поэтому фото вокруг затемняем умеренно
+    return Math.min(0.6, Math.max(0.3, 0.6 - (backgroundLuminance.value / 255) * 0.3));
 });
 
 // Размытие выбирает владелец профиля (0–24 px), по умолчанию 12 px
