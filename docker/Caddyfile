@@ -1,0 +1,21 @@
+# HTTPS-прокси для vkr-blog.
+# Caddy сам получает и продлевает сертификат Let's Encrypt (HTTP-01/TLS-ALPN),
+# поэтому домен должен указывать на этот сервер, а порты 80 и 443 — быть открыты.
+#
+# Переменные APP_DOMAIN и ACME_EMAIL приходят из docker-compose.yml (.env).
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		# HSTS: после проверки HTTPS. Preload не включаем — это необратимо.
+		Strict-Transport-Security "max-age=31536000"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# Приложение слушает 80 внутри compose-сети; наружу порт не проброшен.
+	reverse_proxy app:80
+}

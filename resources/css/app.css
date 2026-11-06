@@ -1,0 +1,770 @@
+@import "./fonts.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------
+   16 палитр. Авторские: «Бумага» (paper — дефолт новых посетителей),
+   «Тонер» (toner), «Светлая»/«Тёмная». Остальные — палитры DaisyUI
+   (cupcake, corporate, lofi, garden, retro, winter, dracula, business,
+   night, forest, coffee, dim).
+   Каждая тема меняет только значения переменных, компоненты используют
+   токены: bg-page, bg-surface, text-content, text-muted, bg-accent…
+   ------------------------------------------------------------------ */
+
+:root,
+[data-theme="light"] {
+    --c-page: 245 241 232;
+    --c-surface: 255 255 255;
+    --c-surface-muted: 242 236 227;
+    --c-line: 228 221 209;
+    --c-line-strong: 214 204 187;
+    --c-content: 28 25 23;
+    --c-muted: 87 83 78;
+    --c-accent: 4 120 87;
+    --c-accent-hover: 6 95 70;
+    --c-accent-soft: 236 253 245;
+    --c-accent-contrast: 255 255 255;
+    --c-accent-2: 13 148 136;
+}
+
+/* Бумага: низкохромная кость, панели темнее страницы (углублённый лист).
+   Оттенок 40°, но lightness ниже 0.88 — не «крем» по правилам инспектора. */
+[data-theme="paper"] {
+    --c-page: 230 225 215;
+    --c-surface: 221 214 201;
+    --c-surface-muted: 210 202 187;
+    --c-line: 196 186 168;
+    --c-line-strong: 167 158 144;
+    --c-content: 22 20 15;
+    --c-muted: 97 90 80;
+    --c-accent: 180 18 42;
+    --c-accent-hover: 150 15 32;
+    --c-accent-soft: 240 214 218;
+    --c-accent-contrast: 255 255 255;
+    --c-accent-2: 91 90 78;
+}
+
+/* Тонер: тёмная печатная краска, акцент — раскалённый красный. */
+[data-theme="toner"] {
+    --c-page: 18 17 16;
+    --c-surface: 26 25 23;
+    --c-surface-muted: 35 33 32;
+    --c-line: 53 50 46;
+    --c-line-strong: 86 81 74;
+    --c-content: 231 224 212;
+    --c-muted: 176 167 155;
+    --c-accent: 255 90 54;
+    --c-accent-hover: 255 122 92;
+    --c-accent-soft: 58 29 20;
+    --c-accent-contrast: 20 18 16;
+    --c-accent-2: 201 191 175;
+}
+
+[data-theme="cupcake"] {
+    --c-page: 239 234 230;
+    --c-surface: 250 247 245;
+    --c-surface-muted: 231 226 223;
+    --c-line: 208 201 202;
+    --c-line-strong: 166 156 165;
+    --c-content: 41 19 52;
+    --c-muted: 104 87 110;
+    --c-accent: 57 111 113;
+    --c-accent-hover: 50 98 99;
+    --c-accent-soft: 227 231 229;
+    --c-accent-contrast: 255 255 255;
+    --c-accent-2: 239 159 188;
+}
+
+[data-theme="corporate"] {
+    --c-page: 232 232 232;
+    --c-surface: 255 255 255;
+    --c-surface-muted: 209 209 209;
+    --c-line: 187 187 189;
+    --c-line-strong: 146 147 152;
+    --c-content: 24 26 42;
+    --c-muted: 93 95 106;
+    --c-accent: 63 89 207;
+    --c-accent-hover: 55 78 182;
+    --c-accent-soft: 232 235 249;
+    --c-accent-contrast: 255 255 255;
+    --c-accent-2: 123 146 178;
+}
+
+[data-theme="lofi"] {
+    --c-page: 242 242 242;
+    --c-surface: 255 255 255;
+    --c-surface-muted: 230 229 229;
+    --c-line: 202 202 202;
+    --c-line-strong: 152 151 151;
+    --c-content: 0 0 0;
+    --c-muted: 102 102 102;
+    --c-accent: 13 13 13;
+    --c-accent-hover: 11 11 11;
+    --c-accent-soft: 226 226 226;
+    --c-accent-contrast: 255 255 255;
+    --c-accent-2: 26 25 25;
+}
+
+[data-theme="garden"] {
+    --c-page: 212 210 210;
+    --c-surface: 233 231 231;
+    --c-surface-muted: 191 189 189;
+    --c-line: 170 168 168;
+    --c-line-strong: 132 130 130;
+    --c-content: 16 15 15;
+    --c-muted: 81 80 80;
+    --c-accent: 178 0 82;
+    --c-accent-hover: 157 0 72;
+    --c-accent-soft: 226 203 213;
+    --c-accent-contrast: 255 255 255;
+    --c-accent-2: 142 65 98;
+}
+
+[data-theme="retro"] {
+    --c-page: 228 216 180;
+    --c-surface: 236 227 202;
+    --c-surface-muted: 219 202 154;
+    --c-line: 198 182 140;
+    --c-line-strong: 158 146 114;
+    --c-content: 40 36 37;
+    --c-muted: 89 84 78;
+    --c-accent: 123 78 77;
+    --c-accent-hover: 108 69 68;
+    --c-accent-soft: 222 209 187;
+    --c-accent-contrast: 255 255 255;
+    --c-accent-2: 164 203 180;
+}
+
+[data-theme="winter"] {
+    --c-page: 242 247 255;
+    --c-surface: 255 255 255;
+    --c-surface-muted: 227 233 244;
+    --c-line: 207 214 227;
+    --c-line-strong: 169 180 197;
+    --c-content: 57 78 106;
+    --c-muted: 87 105 128;
+    --c-accent: 0 100 242;
+    --c-accent-hover: 0 88 213;
+    --c-accent-soft: 224 236 253;
+    --c-accent-contrast: 255 255 255;
+    --c-accent-2: 70 58 162;
+}
+
+[data-theme="dark"] {
+    --c-page: 21 21 21;
+    --c-surface: 37 37 37;
+    --c-surface-muted: 48 48 48;
+    --c-line: 46 46 46;
+    --c-line-strong: 63 63 70;
+    --c-content: 231 229 228;
+    --c-muted: 168 162 158;
+    --c-accent: 52 211 153;
+    --c-accent-hover: 110 231 183;
+    --c-accent-soft: 6 78 59;
+    --c-accent-contrast: 21 21 21;
+    --c-accent-2: 45 212 191;
+}
+
+[data-theme="dracula"] {
+    --c-page: 35 37 48;
+    --c-surface: 40 42 54;
+    --c-surface-muted: 31 32 42;
+    --c-line: 57 58 66;
+    --c-line-strong: 105 105 110;
+    --c-content: 248 248 242;
+    --c-muted: 165 166 167;
+    --c-accent: 255 121 198;
+    --c-accent-hover: 255 137 205;
+    --c-accent-soft: 66 51 71;
+    --c-accent-contrast: 17 17 17;
+    --c-accent-2: 189 147 249;
+}
+
+[data-theme="business"] {
+    --c-page: 28 28 28;
+    --c-surface: 32 32 32;
+    --c-surface-muted: 24 24 24;
+    --c-line: 46 46 46;
+    --c-line-strong: 86 86 86;
+    --c-content: 205 205 205;
+    --c-muted: 144 144 144;
+    --c-accent: 112 144 174;
+    --c-accent-hover: 129 157 184;
+    --c-accent-soft: 42 45 49;
+    --c-accent-contrast: 17 17 17;
+    --c-accent-2: 124 144 154;
+}
+
+[data-theme="night"] {
+    --c-page: 12 20 37;
+    --c-surface: 15 23 42;
+    --c-surface-muted: 10 17 32;
+    --c-line: 33 39 53;
+    --c-line-strong: 75 80 92;
+    --c-content: 200 203 208;
+    --c-muted: 135 140 150;
+    --c-accent: 56 189 248;
+    --c-accent-hover: 80 197 249;
+    --c-accent-soft: 20 43 67;
+    --c-accent-contrast: 17 17 17;
+    --c-accent-2: 129 140 248;
+}
+
+[data-theme="forest"] {
+    --c-page: 20 15 15;
+    --c-surface: 23 18 18;
+    --c-surface-muted: 17 12 12;
+    --c-line: 39 35 35;
+    --c-line-strong: 80 76 76;
+    --c-content: 203 201 201;
+    --c-muted: 140 137 137;
+    --c-accent: 30 184 84;
+    --c-accent-hover: 57 193 105;
+    --c-accent-soft: 24 38 26;
+    --c-accent-contrast: 17 17 17;
+    --c-accent-2: 29 184 142;
+}
+
+[data-theme="coffee"] {
+    --c-page: 28 19 27;
+    --c-surface: 32 22 31;
+    --c-surface-muted: 24 16 23;
+    --c-line: 45 33 32;
+    --c-line-strong: 83 65 48;
+    --c-content: 197 159 96;
+    --c-muted: 164 132 83;
+    --c-accent: 219 146 75;
+    --c-accent-hover: 223 159 97;
+    --c-accent-soft: 54 37 36;
+    --c-accent-contrast: 17 17 17;
+    --c-accent-2: 38 62 63;
+}
+
+[data-theme="dim"] {
+    --c-page: 36 41 51;
+    --c-surface: 42 48 60;
+    --c-surface-muted: 32 37 46;
+    --c-line: 50 57 66;
+    --c-line-strong: 82 94 103;
+    --c-content: 178 204 214;
+    --c-muted: 144 165 176;
+    --c-accent: 159 232 141;
+    --c-accent-hover: 171 235 155;
+    --c-accent-soft: 56 70 70;
+    --c-accent-contrast: 17 17 17;
+    --c-accent-2: 255 125 92;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Защита от горизонтального скролла на узких экранах */
+html,
+body {
+    overflow-x: clip;
+}
+
+/* Chrome/Safari/Edge игнорируют ::-webkit-scrollbar, если заданы
+   стандартные scrollbar-width/color, поэтому их задаём только для Firefox */
+@supports (-moz-appearance: none) {
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgb(var(--c-line-strong)) rgb(var(--c-page));
+    }
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::selection {
+    background: rgb(var(--c-accent-soft));
+    color: rgb(var(--c-content));
+}
+
+::-webkit-scrollbar-track {
+    background: rgb(var(--c-page));
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--c-line-strong));
+}
+
+html {
+    /* Полоса прокрутки резервируется симметрично: кадр остаётся ровным при любом контенте */
+    scrollbar-gutter: stable both-edges;
+}
+
+body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: "Golos Text", ui-sans-serif, system-ui, sans-serif;
+    font-size: 1.0625rem; /* 17px */
+    line-height: 1.6;
+    font-weight: 400;
+    color: rgb(var(--c-content));
+    background-color: rgb(var(--c-page));
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: rgb(var(--c-content));
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+button,
+input,
+select,
+textarea,
+.btn {
+    font-family: inherit;
+    letter-spacing: 0;
+}
+
+/* Видимый фокус — клавиатура, не мышь. Компоненты с ring его перекрывают своим. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid rgb(var(--c-accent));
+    outline-offset: 2px;
+}
+
+::selection {
+    background: rgb(var(--c-accent-soft));
+    color: rgb(var(--c-content));
+}
+
+/* ------------------------------------------------------------------
+   Типографическая шкала. Дисплей (Unbounded) — только голос контента:
+   h1 страниц, заголовки статей, имя в профиле, крупные цифры.
+   ------------------------------------------------------------------ */
+@layer utilities {
+    .type-display-xl {
+        font-family: "Unbounded", sans-serif;
+        font-weight: 800;
+        font-size: clamp(2.75rem, 7vw, 6rem);
+        line-height: 0.95;
+        letter-spacing: -0.03em;
+        text-wrap: balance;
+    }
+
+    .type-display-l {
+        font-family: "Unbounded", sans-serif;
+        font-weight: 700;
+        font-size: clamp(2rem, 4.5vw, 3.5rem);
+        line-height: 1;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+    }
+
+    .type-article {
+        font-family: "Unbounded", sans-serif;
+        font-weight: 700;
+        font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+    }
+
+    .type-h2 {
+        font-family: "Golos Text", sans-serif;
+        font-weight: 600;
+        font-size: clamp(1.25rem, 2vw, 1.75rem);
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+    }
+
+    .type-h3 {
+        font-family: "Golos Text", sans-serif;
+        font-weight: 600;
+        font-size: 1.125rem;
+        line-height: 1.35;
+    }
+
+    .type-body {
+        font-family: "Golos Text", sans-serif;
+        font-weight: 400;
+        font-size: 1.0625rem;
+        line-height: 1.6;
+    }
+
+    .type-small {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    .type-meta {
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: rgb(var(--c-muted));
+    }
+
+    .measure {
+        max-width: 60ch;
+    }
+
+    .num {
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+/* ------------------------------------------------------------------
+   Каркас страницы: одна пара полей 20 / 32 / 48px, контейнер 1440px.
+   ------------------------------------------------------------------ */
+@layer components {
+    .page-shell {
+        margin-inline: auto;
+        width: 100%;
+        max-width: 1440px;
+        padding-inline: 20px;
+    }
+
+    @media (min-width: 640px) {
+        .page-shell {
+            padding-inline: 32px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .page-shell {
+            padding-inline: 48px;
+        }
+    }
+
+    /* Статья: колонка 40rem, обложка и фото из тела — во всю ширину контейнера */
+    .article-spread {
+        --measure: 40rem;
+        /* Фото выступает за текст, но не на всю ширину: не больше 7rem в каждую сторону */
+        --bleed: max(20px, min(7rem, calc((min(100vw, 1440px) - 96px - var(--measure)) / 2)));
+    }
+
+    .article-measure {
+        max-width: var(--measure);
+    }
+
+    /* Статья: текстовая колонка плюс рейл, кадр страницы остаётся ровным */
+    .article-layout {
+        display: grid;
+        gap: 3rem 3.5rem;
+    }
+
+    @media (min-width: 1280px) {
+        .article-layout {
+            /* Пара «колонка + рейл» центрируется: внешние поля равные, блок не жмётся влево */
+            max-width: calc(40rem + 3.5rem + 22rem);
+            margin-inline: auto;
+            grid-template-columns: minmax(0, 40rem) minmax(0, 22rem);
+            align-items: start;
+        }
+
+        .article-rail {
+            position: sticky;
+            top: 2rem;
+            max-width: 22rem;
+        }
+    }
+
+    .article-rail {
+        min-width: 0;
+    }
+
+    /* Главная: та же пара «колонка + афиша», что и на статье, — афиша прижата к мере */
+    .home-layout {
+        display: grid;
+        gap: 2.5rem 3rem;
+    }
+
+    @media (min-width: 1280px) {
+        .home-layout {
+            max-width: calc(44rem + 3rem + 22rem);
+            margin-inline: auto;
+            grid-template-columns: minmax(0, 44rem) minmax(0, 22rem);
+            align-items: start;
+        }
+    }
+
+    .article-head {
+        max-width: var(--measure);
+    }
+
+    .article-bleed,
+    .article-body > figure,
+    .article-body > img,
+    .article-body > p > img {
+        width: calc(100% + 2 * var(--bleed));
+        margin-inline: calc(var(--bleed) * -1);
+        max-width: none;
+    }
+
+    .article-body {
+        max-width: var(--measure);
+        margin-inline: auto;
+        font-size: 1.0625rem;
+        line-height: 1.7;
+    }
+
+    .article-body > * + * {
+        margin-top: 1.15rem;
+    }
+
+    .article-body h2 {
+        margin-top: 2.5rem;
+        font-weight: 600;
+        font-size: clamp(1.25rem, 2vw, 1.75rem);
+        line-height: 1.2;
+    }
+
+    .article-body h3 {
+        margin-top: 2rem;
+        font-weight: 600;
+        font-size: 1.125rem;
+        line-height: 1.35;
+    }
+
+    /* Обложка уже показана сверху — её дубль в теле скрываем */
+    .article-body--hero img:first-of-type {
+        display: none;
+    }
+
+    .article-body img {
+        height: auto;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .article-body figcaption {
+        max-width: var(--measure);
+        margin-top: 0.75rem;
+        margin-left: var(--bleed);
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        color: rgb(var(--c-muted));
+    }
+
+    .article-body ul,
+    .article-body ol {
+        padding-left: 1.25rem;
+        list-style: disc;
+    }
+
+    .article-body blockquote {
+        border-left: 2px solid rgb(var(--c-accent));
+        padding-left: 1rem;
+        color: rgb(var(--c-muted));
+        /* Цитата держит левую ось колонки: центрирование в авторском HTML ломает её */
+        text-align: left;
+    }
+
+    .article-body pre {
+        overflow-x: auto;
+        padding: 1rem;
+        background: rgb(var(--c-surface-muted));
+        font-size: 0.9375rem;
+        line-height: 1.5;
+    }
+
+    .article-body code {
+        font-size: 0.9375rem;
+    }
+
+    .article-body a {
+        color: rgb(var(--c-accent));
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    /* Тело статьи, вставленное в ленту: типографика автора, рамки и тени гасим */
+    .post-content > * + * {
+        margin-top: 1rem;
+    }
+
+    .post-content p,
+    .post-content ul,
+    .post-content ol,
+    .post-content blockquote {
+        max-width: 60ch;
+    }
+
+    .post-content img {
+        /* Ширина по снимку: кадр ниже 48vh, но без пустой рамки справа от вертикального фото */
+        width: auto;
+        max-width: min(60ch, 100%);
+        height: auto;
+        /* Вертикальный снимок не растягивается на полтора экрана: вписываем целиком.
+           Потолок 54vh бьёт только по вертикальным: альбомные ограничены шириной меры */
+        max-height: 54vh;
+        object-fit: contain;
+        /* Вписанный по высоте снимок держим по левому краю текста, а не по центру кадра */
+        object-position: left center;
+        margin: 1.5rem 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    /* В свёрнутом виде видно первые четыре блока поста, остальное открывает кнопка */
+    .post-content.feed-body--clamped > *:nth-child(n + 5) {
+        display: none;
+    }
+
+    .post-content figure img {
+        margin-bottom: 0.5rem;
+    }
+
+    .post-content figure {
+        margin: 1.5rem 0;
+    }
+
+    .post-content figcaption {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: rgb(var(--c-muted));
+    }
+
+    .post-content .post-subhead {
+        max-width: 60ch;
+        margin-top: 1.75rem;
+        font-weight: 600;
+        font-size: 1.125rem;
+        line-height: 1.35;
+    }
+
+    .post-content h2 {
+        margin-top: 2rem;
+        font-weight: 600;
+        font-size: clamp(1.25rem, 2vw, 1.75rem);
+        line-height: 1.2;
+    }
+
+    .post-content h3 {
+        margin-top: 1.75rem;
+        font-weight: 600;
+        font-size: 1.125rem;
+        line-height: 1.35;
+    }
+
+    .post-content ul,
+    .post-content ol {
+        padding-left: 1.25rem;
+        list-style: disc;
+    }
+
+    .post-content a {
+        color: rgb(var(--c-accent));
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    .post-content blockquote {
+        border-left: 2px solid rgb(var(--c-accent));
+        padding-left: 1rem;
+        color: rgb(var(--c-muted));
+    }
+
+    /* Шапка: логотип и поиск в первом ярусе, категории лентой во втором */
+    .site-header-grid {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    @media (min-width: 1024px) {
+        .site-header-grid {
+            display: grid;
+            align-items: center;
+            column-gap: 40px;
+            row-gap: 10px;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            grid-template-areas:
+                "logo search actions"
+                "cats cats cats";
+        }
+    }
+
+    .site-header-logo {
+        grid-area: logo;
+    }
+
+    .site-header-cats {
+        grid-area: cats;
+    }
+
+    .site-header-search {
+        grid-area: search;
+    }
+
+    .site-header-actions {
+        grid-area: actions;
+    }
+
+    /* Юридические страницы: типографика без плагина typography */
+    .legal h2 {
+        margin-top: 2.25rem;
+        font-weight: 600;
+        font-size: 1.25rem;
+        line-height: 1.3;
+        color: rgb(var(--c-content));
+    }
+
+    .legal h3 {
+        margin-top: 1.75rem;
+        font-weight: 600;
+        font-size: 1.0625rem;
+        color: rgb(var(--c-content));
+    }
+
+    .legal p {
+        margin-top: 0.75rem;
+        font-size: 0.9375rem;
+        line-height: 1.7;
+        color: rgb(var(--c-content));
+    }
+
+    .legal ul,
+    .legal ol {
+        margin-top: 0.75rem;
+        padding-left: 1.25rem;
+        font-size: 0.9375rem;
+        line-height: 1.7;
+        color: rgb(var(--c-content));
+    }
+
+    .legal ul {
+        list-style: disc;
+    }
+
+    .legal ol {
+        list-style: decimal;
+    }
+
+    .legal li {
+        margin-top: 0.35rem;
+    }
+
+    .legal li::marker {
+        color: rgb(var(--c-muted));
+    }
+
+    .legal a {
+        color: rgb(var(--c-accent));
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    .legal a:hover {
+        color: rgb(var(--c-accent-hover));
+    }
+
+    .legal strong {
+        font-weight: 600;
+    }
+}
