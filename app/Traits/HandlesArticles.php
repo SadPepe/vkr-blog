@@ -83,6 +83,20 @@ trait HandlesArticles
     }
 
     /**
+     * Удаляет файлы статьи: обложку карточки и картинки из контента.
+     * Используется и при удалении статьи, и при удалении аккаунта.
+     */
+    protected function deleteArticleFiles(Article $article): void
+    {
+        if ($article->card_image_path) {
+            $relative = ltrim(str_replace('/storage/', '', $article->card_image_path), '/');
+            Storage::disk('public')->delete($relative);
+        }
+
+        $this->deleteContentImages($article->content);
+    }
+
+    /**
      * Удаляет изображения, которые были в старом контенте, но исчезли
      * из нового (картинку удалили из редактора).
      */

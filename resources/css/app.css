@@ -1,3 +1,5 @@
+@import "./fonts.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -475,6 +477,21 @@ textarea,
         min-width: 0;
     }
 
+    /* Главная: та же пара «колонка + афиша», что и на статье, — афиша прижата к мере */
+    .home-layout {
+        display: grid;
+        gap: 2.5rem 3rem;
+    }
+
+    @media (min-width: 1280px) {
+        .home-layout {
+            max-width: calc(44rem + 3rem + 22rem);
+            margin-inline: auto;
+            grid-template-columns: minmax(0, 44rem) minmax(0, 22rem);
+            align-items: start;
+        }
+    }
+
     .article-head {
         max-width: var(--measure);
     }
@@ -578,11 +595,13 @@ textarea,
     }
 
     .post-content img {
-        width: 100%;
-        max-width: 60ch;
+        /* Ширина по снимку: кадр ниже 48vh, но без пустой рамки справа от вертикального фото */
+        width: auto;
+        max-width: min(60ch, 100%);
         height: auto;
-        /* Вертикальный снимок не растягивается на полтора экрана: вписываем целиком */
-        max-height: 58vh;
+        /* Вертикальный снимок не растягивается на полтора экрана: вписываем целиком.
+           Потолок 54vh бьёт только по вертикальным: альбомные ограничены шириной меры */
+        max-height: 54vh;
         object-fit: contain;
         /* Вписанный по высоте снимок держим по левому краю текста, а не по центру кадра */
         object-position: left center;
@@ -685,5 +704,67 @@ textarea,
 
     .site-header-actions {
         grid-area: actions;
+    }
+
+    /* Юридические страницы: типографика без плагина typography */
+    .legal h2 {
+        margin-top: 2.25rem;
+        font-weight: 600;
+        font-size: 1.25rem;
+        line-height: 1.3;
+        color: rgb(var(--c-content));
+    }
+
+    .legal h3 {
+        margin-top: 1.75rem;
+        font-weight: 600;
+        font-size: 1.0625rem;
+        color: rgb(var(--c-content));
+    }
+
+    .legal p {
+        margin-top: 0.75rem;
+        font-size: 0.9375rem;
+        line-height: 1.7;
+        color: rgb(var(--c-content));
+    }
+
+    .legal ul,
+    .legal ol {
+        margin-top: 0.75rem;
+        padding-left: 1.25rem;
+        font-size: 0.9375rem;
+        line-height: 1.7;
+        color: rgb(var(--c-content));
+    }
+
+    .legal ul {
+        list-style: disc;
+    }
+
+    .legal ol {
+        list-style: decimal;
+    }
+
+    .legal li {
+        margin-top: 0.35rem;
+    }
+
+    .legal li::marker {
+        color: rgb(var(--c-muted));
+    }
+
+    .legal a {
+        color: rgb(var(--c-accent));
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    .legal a:hover {
+        color: rgb(var(--c-accent-hover));
+    }
+
+    .legal strong {
+        font-weight: 600;
     }
 }

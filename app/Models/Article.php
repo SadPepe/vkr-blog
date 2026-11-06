@@ -67,6 +67,14 @@ class Article extends Model
         return $this->hasMany(Comment::class)->whereNull('parent_id')->orderBy('created_at');
     }
 
+    /**
+     * Один комментарий для превью в ленте: свежий в обсуждении, включая ответы.
+     */
+    public function latestComment()
+    {
+        return $this->hasOne(Comment::class)->latestOfMany();
+    }
+
     public function allComments()
     {
         return $this->hasMany(Comment::class)->orderBy('created_at');
@@ -152,6 +160,40 @@ class Article extends Model
         return $this->views()->where('created_at', '>=', $date)->count();
     }
 
+    /**
+     * Метка для списков вне ленты: заголовок, иначе начало текста, иначе «Фотопост» —
+     * в блоге заголовок необязателен, и пост может состоять из одних картинок.
+     */
+    public function label(int $limit = 60): string
+    {
+        if (filled($this->title)) {
+            return (string) $this->title;
+        }
+
+        $text = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $this->content)));
+
+        return $text === '' ? 'Фотопост' : Str::limit($text, $limit);
+    }
+
+    /**
+     * «Чаще читают» на странице автора: топ по просмотрам с короткой меткой.
+     * Заголовок есть не у каждого поста, поэтому подпись собирается из текста.
+     */
+    public static function topFor(User $user, int $limit = 3)
+    {
+        return $user->articles()
+            ->orderByDesc('views_count')
+            ->orderByDesc('created_at')
+            ->take($limit)
+            ->get(['id', 'slug', 'title', 'content', 'views_count'])
+            ->map(fn (self $article) => [
+                'id' => $article->id,
+                'slug' => $article->slug,
+                'views_count' => (int) $article->views_count,
+                'label' => $article->label(),
+            ]);
+    }
+
     // Популярные статьи за период (взвешенный рейтинг активности за неделю/месяц)
     public static function popularForPeriod(int $limit = 5, string $period = 'week', ?string $categorySlug = null)
     {
@@ -163,22 +205,32 @@ class Article extends Model
             default => now()->subWeek(),
         };
 
-        $sub = static::query()
-            ->addSelect([
+        $sub = static::query();
+
+        if ($date === null) {
+            // Детальные просмотры храним 12 месяцев, поэтому «за всё время»
+            // считаем по денормализованному счётчику статьи.
+            $sub->select('articles.*')->selectRaw('articles.views_count as recent_views');
+        } else {
+            $sub->addSelect([
                 'recent_views' => ArticleView::select(DB::raw('COUNT(*)'))
                     ->whereColumn('article_views.article_id', 'articles.id')
-                    ->when($date, fn ($query) => $query->where('article_views.created_at', '>=', $date)),
+                    ->where('article_views.created_at', '>=', $date),
+            ]);
+        }
 
-                'recent_likes' => Like::select(DB::raw('COUNT(*)'))
-                    ->whereColumn('likes.article_id', 'articles.id')
-                    ->when($date, fn ($query) => $query->where('likes.created_at', '>=', $date)),
+        $sub->addSelect([
+            'recent_likes' => Like::select(DB::raw('COUNT(*)'))
+                ->whereColumn('likes.article_id', 'articles.id')
+                ->when($date, fn ($query) => $query->where('likes.created_at', '>=', $date)),
 
-                'recent_comments' => Comment::select(DB::raw('COUNT(*)'))
-                    ->whereColumn('comments.article_id', 'articles.id')
-                    ->when($date, fn ($query) => $query->where('comments.created_at', '>=', $date))
-                    ->whereNull('comments.parent_id'),
-            ])
-            ->getQuery();
+            'recent_comments' => Comment::select(DB::raw('COUNT(*)'))
+                ->whereColumn('comments.article_id', 'articles.id')
+                ->when($date, fn ($query) => $query->where('comments.created_at', '>=', $date))
+                ->whereNull('comments.parent_id'),
+        ]);
+
+        $sub = $sub->getQuery();
 
         $columns = array_map(fn ($column) => 'popular.' . $column, static::CARD_COLUMNS);
 

@@ -73,10 +73,29 @@
 
             <!-- Название возвращается во всю ширину: футер — закрывающая полоса, а не карта сайта -->
             <div class="mt-16">
-                <p class="type-display-xl text-content" aria-hidden="true">МОЙ.<span class="text-accent">БЛОГ</span></p>
+                <p class="type-display-xl text-content" aria-hidden="true">Челны <span class="text-accent">подземка</span></p>
                 <div class="mt-6 flex flex-col gap-2 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-                    <p>© {{ year }} МОЙ.БЛОГ. Все права защищены.</p>
+                    <p>© {{ year }} Челны подземка. Все права защищены.</p>
                     <p>Сделано с любовью к текстам</p>
+                </div>
+
+                <div class="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-line pt-5 text-sm">
+                    <Link :href="route('legal.privacy')" class="text-muted transition-colors hover:text-accent">
+                        Политика обработки ПД
+                    </Link>
+                    <Link :href="route('legal.terms')" class="text-muted transition-colors hover:text-accent">
+                        Пользовательское соглашение
+                    </Link>
+                    <Link :href="route('legal.consent')" class="text-muted transition-colors hover:text-accent">
+                        Согласие на обработку
+                    </Link>
+                    <Link :href="route('legal.distribution')" class="text-muted transition-colors hover:text-accent">
+                        Согласие на распространение
+                    </Link>
+                    <Link :href="route('legal.copyright')" class="text-muted transition-colors hover:text-accent"> Правообладателям </Link>
+                    <a :href="'mailto:' + $page.props.legal.email" class="text-muted transition-colors hover:text-accent">
+                        {{ $page.props.legal.email }}
+                    </a>
                 </div>
             </div>
         </div>

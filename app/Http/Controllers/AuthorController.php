@@ -18,7 +18,7 @@ class AuthorController extends Controller
 
         $articles = PostPreview::attachPaginator(
             $user->articles()
-                ->with('user:id,name,avatar')
+                ->with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
                 ->select(array_merge(\App\Models\Article::CARD_COLUMNS, ['content']))
                 ->latest()
                 ->paginate(12)
@@ -42,14 +42,12 @@ class AuthorController extends Controller
                 'cover_url' => $user->cover_url,
                 'background_url' => $user->background_url,
                 'background_blur' => (int) $user->background_blur,
+                'links' => $user->links ?? [],
                 'created_at' => $user->created_at,
             ],
             'articles' => $articles,
-            'media' => $user->articles()
-                ->whereNotNull('card_image_path')
-                ->latest()
-                ->take(6)
-                ->get(['id', 'slug', 'title', 'card_image_path']),
+            // Лучшие статьи автора: рейтинг по просмотрам вместо прежней медиасетки
+            'topArticles' => \App\Models\Article::topFor($user),
             'stats' => $stats,
         ]);
     }

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Article;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -126,6 +127,27 @@ class ArticleTest extends TestCase
             ->assertRedirect(route('profile'));
 
         $this->assertDatabaseMissing('articles', ['id' => $article->id]);
+    }
+
+    public function test_deleting_article_removes_its_images(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $article = Article::factory()->for($user)->create([
+            'content' => '<p><img src="/storage/images/post.jpg"></p>',
+            'card_image_path' => '/storage/images/card.jpg',
+        ]);
+
+        Storage::disk('public')->put('images/post.jpg', 'test');
+        Storage::disk('public')->put('images/card.jpg', 'test');
+
+        $this->actingAs($user)
+            ->delete(route('articles.destroy', $article->slug))
+            ->assertRedirect(route('profile'));
+
+        Storage::disk('public')->assertMissing('images/post.jpg');
+        Storage::disk('public')->assertMissing('images/card.jpg');
     }
 
     public function test_other_user_cannot_delete_article(): void

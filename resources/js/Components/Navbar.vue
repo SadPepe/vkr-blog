@@ -2,14 +2,28 @@
     <header class="relative z-30 w-full bg-page">
         <div class="page-shell">
             <div class="site-header-grid py-4 lg:py-5">
-                <!-- Логотип наборный: «.БЛОГ» акцентом -->
+                <!-- Логотип: знак подземного перехода + название, второе слово акцентом -->
                 <Link
                     :href="route('home')"
-                    class="site-header-logo inline-flex shrink-0 items-baseline focus-visible:outline-none"
-                    aria-label="МОЙ.БЛОГ — на главную"
+                    class="site-header-logo inline-flex shrink-0 items-center gap-2 focus-visible:outline-none"
+                    aria-label="Челны подземка — на главную"
                 >
-                    <span class="font-sans text-[1.25rem] font-bold leading-none tracking-[-0.02em] text-content lg:text-[1.5rem]"
-                        >МОЙ<span class="text-accent">.БЛОГ</span></span
+                    <svg
+                        class="h-6 w-6 shrink-0 text-accent lg:h-7 lg:w-7"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M4 21V10.5a8 8 0 0 1 16 0V21" />
+                        <path d="M8 21v-4.5h4V12h4" />
+                    </svg>
+                    <span
+                        class="font-sans text-[1.0625rem] font-bold leading-none tracking-[-0.02em] text-content sm:text-[1.25rem] lg:text-[1.5rem]"
+                        >Челны <span class="text-accent">подземка</span></span
                     >
                 </Link>
 
@@ -117,8 +131,19 @@
                         </a>
                     </template>
 
-                    <!-- Авторизован -->
-                    <div v-else class="relative hidden lg:block">
+                    <!-- Авторизован: создать пост иконкой, профиль — в меню аватара -->
+                    <template v-else>
+                        <Link
+                            :href="route('create')"
+                            class="hidden h-11 w-11 items-center justify-center text-accent transition-colors hover:text-accent-hover focus-visible:outline-none lg:inline-flex lg:h-10 lg:w-10"
+                            aria-label="Написать статью"
+                            title="Написать статью"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+                            </svg>
+                        </Link>
+                    <div class="relative hidden lg:block">
                         <button
                             class="flex items-center focus-visible:outline-none"
                             aria-label="Меню профиля"
@@ -149,7 +174,7 @@
                                     class="flex items-center px-3 py-2.5 text-[1.0625rem] text-content transition-colors hover:bg-surface-muted"
                                     @click.prevent="goToSettings"
                                 >
-                                    Настройки
+                                    Редактировать профиль
                                 </a>
                                 <a
                                     href="#"
@@ -161,11 +186,12 @@
                             </div>
                         </transition>
                     </div>
+                    </template>
 
                     <!-- Поиск на планшете -->
                     <button
                         type="button"
-                        class="hidden h-11 w-11 items-center justify-center text-muted transition-colors hover:text-accent focus-visible:outline-none sm:inline-flex lg:h-10 lg:w-10"
+                        class="hidden h-11 w-11 items-center justify-center text-muted transition-colors hover:text-accent focus-visible:outline-none sm:inline-flex lg:hidden"
                         :aria-label="isSearchOpen ? 'Скрыть поиск' : 'Открыть поиск'"
                         :aria-expanded="isSearchOpen"
                         @click="toggleSearch"
@@ -184,7 +210,7 @@
                     <!-- Бургер -->
                     <button
                         type="button"
-                        class="inline-flex h-11 w-11 items-center justify-center text-content transition-colors hover:text-accent focus-visible:outline-none lg:h-10 lg:w-10"
+                        class="inline-flex h-11 w-11 items-center justify-center text-content transition-colors hover:text-accent focus-visible:outline-none lg:hidden"
                         aria-label="Меню"
                         :aria-expanded="isMobileMenuOpen"
                         @click="toggleMobileMenu"
@@ -232,12 +258,25 @@
                 <div class="page-shell flex items-center justify-between py-4">
                     <Link
                         :href="route('home')"
-                        class="inline-flex shrink-0 items-baseline focus-visible:outline-none"
-                        aria-label="МОЙ.БЛОГ — на главную"
+                        class="inline-flex shrink-0 items-center gap-2 focus-visible:outline-none"
+                        aria-label="Челны подземка — на главную"
                         @click="closeMobileMenu"
                     >
-                        <span class="text-[1.25rem] font-bold leading-none tracking-[-0.02em] text-content lg:text-[1.5rem]"
-                            >МОЙ<span class="text-accent">.БЛОГ</span></span
+                        <svg
+                            class="h-6 w-6 shrink-0 text-accent"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <path d="M4 21V10.5a8 8 0 0 1 16 0V21" />
+                            <path d="M8 21v-4.5h4V12h4" />
+                        </svg>
+                        <span class="text-[1.0625rem] font-bold leading-none tracking-[-0.02em] text-content"
+                            >Челны <span class="text-accent">подземка</span></span
                         >
                     </Link>
                     <button
@@ -296,7 +335,16 @@
                             <UserAvatar :user="$page.props.auth.user" :size="40" />
                             <span class="text-[1.0625rem] font-medium text-content">Профиль</span>
                         </a>
-                        <a href="#" class="mt-1 block py-2 text-[1.0625rem] text-content" @click.prevent="goToSettings"> Настройки </a>
+                        <Link
+                            :href="route('create')"
+                            class="mt-1 flex items-center gap-2 py-2 text-[1.0625rem] text-content"
+                            @click="closeMobileMenu"
+                        >
+                            Написать статью
+                        </Link>
+                        <a href="#" class="mt-1 block py-2 text-[1.0625rem] text-content" @click.prevent="goToSettings">
+                            Редактировать профиль
+                        </a>
                         <a href="#" class="mt-1 block py-2 text-[1.0625rem] text-accent" @click.prevent="logoutMobile"> Выйти </a>
                     </div>
                 </div>

@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use App\Traits\HandlesArticles;
 use App\Support\HtmlSanitizer;
 use App\Support\PostPreview;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 
@@ -64,16 +63,8 @@ class ArticleController extends Controller
         Gate::authorize('delete', $article);
 
         try {
-            // Удаляем связанное изображение карточки
-            if ($article->card_image_path) {
-                $imagePath = str_replace('/storage/', '', $article->card_image_path);
-                Storage::delete('public/' . $imagePath);
-            }
+            $this->deleteArticleFiles($article);
 
-            // Удаляем изображения, встроенные в контент
-            $this->deleteContentImages($article->content);
-
-            // Удаляем статью
             $article->delete();
 
             return redirect()
@@ -211,7 +202,7 @@ class ArticleController extends Controller
 
         $articles = PostPreview::attachPaginator(
             $this->applySort(
-                Article::with(['user:id,name,avatar'])
+                Article::with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
                     ->select(array_merge(Article::CARD_COLUMNS, ['content'])),
                 $sort
             )->paginate(12)

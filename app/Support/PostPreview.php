@@ -4,6 +4,7 @@ namespace App\Support;
 
 use DOMDocument;
 use DOMNode;
+use Illuminate\Support\Str;
 
 /**
  * Короткое превью поста для ленты: первые блоки content в авторском порядке
@@ -122,7 +123,23 @@ class PostPreview
             $article->preview = $preview['html'];
             $article->has_more = ! $preview['complete'];
 
-            return $article->makeHidden('content');
+            // Кнопка лайка в ленте знает своё состояние сразу, без отдельного запроса
+            $article->is_liked = auth()->check() ? (bool) $article->getIsLikedAttribute() : false;
+
+            // Один комментарий под постом: свежий в обсуждении
+            $comment = $article->relationLoaded('latestComment') ? $article->latestComment : null;
+
+            $article->latest_comment = $comment ? [
+                'id' => $comment->id,
+                'body' => Str::limit(trim(preg_replace('/\s+/u', ' ', strip_tags((string) $comment->content))), 180),
+                'created_at' => optional($comment->created_at)->toIso8601String(),
+                'user' => [
+                    'name' => $comment->user?->name,
+                    'avatar_url' => $comment->user?->avatar_url,
+                ],
+            ] : null;
+
+            return $article->makeHidden(['content', 'latestComment']);
         });
     }
 
