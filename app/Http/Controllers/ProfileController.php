@@ -5,10 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Article;
 use App\Models\User;
-<<<<<<< HEAD
-=======
 use App\Support\ImageStore;
->>>>>>> my-saved-changes
 use App\Support\PostPreview;
 use App\Traits\HandlesArticles;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -61,15 +58,9 @@ class ProfileController extends Controller
 
         $data['links'] = $this->normalizeLinks((array) ($data['links'] ?? []));
 
-<<<<<<< HEAD
-        $this->applyProfileImage($request, $user, 'avatar_image', 'profile/avatars', 'avatar');
-        $this->applyProfileImage($request, $user, 'cover_image', 'profile/covers');
-        $this->applyProfileImage($request, $user, 'background_image', 'profile/backgrounds');
-=======
         $this->applyProfileImage($request, $user, 'avatar_image', 'profile/avatars', 'avatar', 512, 512);
         $this->applyProfileImage($request, $user, 'cover_image', 'profile/covers', null, 2400, 2400);
         $this->applyProfileImage($request, $user, 'background_image', 'profile/backgrounds', null, 2400, 2400);
->>>>>>> my-saved-changes
 
         $user->fill($data);
 
@@ -136,26 +127,19 @@ class ProfileController extends Controller
         string $field,
         string $directory,
         ?string $column = null,
-<<<<<<< HEAD
-=======
         int $maxWidth = ImageStore::DEFAULT_MAX_WIDTH,
         int $maxHeight = ImageStore::DEFAULT_MAX_HEIGHT,
->>>>>>> my-saved-changes
     ): void {
         $column ??= $field;
 
         if ($request->hasFile($field)) {
             $this->deleteProfileImage($user->{$column});
-<<<<<<< HEAD
-            $user->{$column} = $request->file($field)->store($directory, 'public');
-=======
             $user->{$column} = ImageStore::storeUploaded(
                 $request->file($field),
                 $directory,
                 $maxWidth,
                 $maxHeight,
             );
->>>>>>> my-saved-changes
 
             return;
         }

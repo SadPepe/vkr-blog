@@ -122,11 +122,7 @@ class ProfileTest extends TestCase
             ->put('/profile', [
                 'name' => 'Test User',
                 'email' => $user->email,
-<<<<<<< HEAD
-                // Настоящий PNG вместо fake()->image(): в тестовом контейнере нет GD
-=======
                 // Настоящий PNG: валиден и там, где нет GD (на хосте — фолбэк ImageStore)
->>>>>>> my-saved-changes
                 'avatar_image' => UploadedFile::fake()->createWithContent(
                     'avatar.png',
                     base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='),
