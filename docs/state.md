@@ -1,6 +1,6 @@
 # Состояние проекта vkr-blog
 
-Актуально на: 2026-11-02. Документ для передачи контекста в новую сессию.
+Актуально на: 2026-11-06. Документ для передачи контекста в новую сессию.
 
 ## Что это
 
@@ -25,14 +25,21 @@ Laravel 12 + Inertia 2 + Vue 3 + Tailwind 3 + PostgreSQL.
   наезжающим аватаром, левая колонка (имя, «на блоге с», описание, медиасетка 3×2 из
   обложек статей), правая (панель статистики + лента карточек как на главной). Общая для
   своего профиля и страницы автора; фон страницы на весь экран, без затемнения.
-  Настройки: данные, загрузка обложки и фона, смена пароля, удаление аккаунта.
-- Авторизация: Breeze (вход, регистрация, сброс пароля, подтверждение почты в маршрутах,
-  но `MustVerifyEmail` отключён).
+  Настройки: данные, загрузка аватара, обложки и фона, смена пароля, удаление аккаунта.
+- Авторизация: Breeze (вход по логину, регистрация с необязательным email, сброс пароля
+  по email, подтверждение почты в маршрутах, но `MustVerifyEmail` отключён).
+- Юридические документы: `/privacy`, `/terms`, `/consent`, `/consent-distribution`,
+  `/copyright`; согласия пишутся в `users`, реквизиты — в `config/legal.php`.
+- Удаление аккаунта удаляет файлы профиля и картинки статей до каскадного удаления записей.
+- Эксплуатация: шрифты self-hosted (`public/fonts`), `views:prune` (365 дней) с
+  расписанием и `schedule:work` в контейнере; бэкапы `scripts/backup.sh`; ротация
+  docker-логов 10m×3; закрытая бета — `PRIVATE_BETA` и `REGISTRATION_INVITE_CODE`.
 - Оформление: 16 тем (добавлены `paper` — по умолчанию для новых посетителей, и `toner`),
   переключатель в навбаре, сохранение в `localStorage`, применение до первой отрисовки.
-- Ошибки: брендовая 404 (standalone Blade), тосты для flash-сообщений.
+- Ошибки: брендовые 403/404/419/500/503 (standalone Blade, тема toner), тосты для flash-сообщений.
 - Локализация: `lang/ru` (валидация, пагинация, auth, passwords), `APP_LOCALE=ru`,
-  `APP_NAME="МОЙ.БЛОГ"`.
+  `APP_NAME="Челны подземка"` (бренд переименован: знак-арка + наборное имя,
+  `подземка` — акцентом).
 
 ## Дизайн-система
 
@@ -118,9 +125,11 @@ Laravel 12 + Inertia 2 + Vue 3 + Tailwind 3 + PostgreSQL.
 
 ```bash
 npm run build                                  # синтаксис Vue + сборка
-php artisan test                               # 57 тестов, sqlite :memory: (1 пропуск на sqlite)
+php artisan test                               # 90 passed, 1 skipped на sqlite
 make test                                      # то же в контейнере: docker compose --profile test run --rm tests
 php -l app/Http/Controllers/File.php           # синтаксис PHP
+php artisan views:prune                        # ретенция просмотров: 365 дней
+php artisan schedule:list                      # запланированные задачи
 node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматирование (.prettierrc.json)
 ```
 
@@ -131,19 +140,17 @@ node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматир�
 ## Известные ограничения / долги
 
 - Поиск по кириллице: регистронезависимость проверяется только на PostgreSQL — на sqlite тест пропускается.
-- Аватары: аксессор `avatar_url` есть, загрузить аватар нельзя.
-- Обложка и фон профиля: поля `users.cover_image` / `users.background_image`, файлы
-  в `profile/covers`, `profile/backgrounds` (диск `public`), до 5 МБ, JPG/PNG/WebP;
-  выводятся в `Profile/Show` и `Authors/Show`.
+- Профильные картинки: аватар, обложка и фон загружаются как есть, без кропа и ресайза;
+  лимиты 2/5/5 МБ, JPG/PNG/WebP, файлы в `profile/avatars|covers|backgrounds`.
 - Комментарии без пагинации: все верхнеуровневые и ответы приходят одним списком.
 - Нет черновиков/статусов публикации, тегов, RSS, sitemap, уведомлений.
 - `MustVerifyEmail` отключён, почта в `log`.
 - Rate limit: 10 комментариев/мин, 20 правок и удалений комментариев/мин,
   30 лайков (статьи и комментарии)/мин.
-- Нет `srcset`/ресайза обложек; 500/403 — стандартные страницы Laravel.
+- Нет `srcset`/ресайза обложек.
 - `PopularArticleController::index()` рендерит несуществующий `Pages/Popular/Index.vue`
   и не подключён в маршрутах (используется только `getPopularArticles()`).
-- 404-страница автономная (Blade, свой CSS) — не следует выбранной теме.
+- Страницы ошибок автономные (Blade, свой CSS), всегда в тёмной теме toner и не зависят от выбранной пользователем темы.
 
 ## Окружение
 
@@ -151,5 +158,6 @@ node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматир�
   (Vite, `public/hot`).
 - БД: PostgreSQL `blog` (см. `.env`), демо-данные — `php artisan migrate --seed`.
 - Docker: `docker compose up -d --build` → http://localhost:8080, демо-данные —
-  `DB_SEED=true docker compose up -d --build`; подробности в `docs/docker.md`.
+  `DB_SEED=true docker compose up -d --build`; HTTPS — `docker compose --profile https up -d --build`
+  (Caddy + Let's Encrypt, см. `docs/https.md`); подробности в `docs/docker.md`.
 - Симлинк картинок: `php artisan storage:link` (уже создан).
