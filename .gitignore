@@ -28,3 +28,6 @@ yarn-error.log
 # Артефакты редизайна: скриншоты, референсы, замеры .taste-skill
 .review/
 .taste-skill/
+
+# Бэкапы
+/backups

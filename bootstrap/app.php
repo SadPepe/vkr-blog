@@ -11,6 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // TLS терминирует Caddy, приложение слушает только localhost/внутреннюю
+        // сеть compose. Доверяем X-Forwarded-* от прокси, чтобы Laravel видел https
+        // и генерировал правильные абсолютные ссылки.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,

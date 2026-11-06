@@ -5,8 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @if (config('app.private_beta'))
+        <meta name="robots" content="noindex, nofollow">
+    @endif
 
-    <title inertia>{{ config('app.name', 'МОЙ.БЛОГ') }}</title>
+    <title inertia>{{ config('app.name', 'Челны подземка') }}</title>
 
     <!-- Тема применяется до первой отрисовки, чтобы не было вспышки светлой темы -->
     <script>
@@ -32,17 +35,9 @@
         })();
     </script>
 
-    <!-- Fonts: Unbounded — только «голос контента», Golos Text — весь интерфейс -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style"
-        href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@600;800&display=swap">
-    <link rel="stylesheet" media="print" onload="this.media='all'"
-        href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@600;800&display=swap">
-    <noscript>
-        <link rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@600;800&display=swap">
-    </noscript>
+    <!-- Шрифты: self-hosted (Golos Text, Unbounded), лицензия OFL. См. public/fonts/README.md -->
+    <link rel="preload" href="/fonts/golos-text-400-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/unbounded-600-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 
     <!-- Scripts -->
 

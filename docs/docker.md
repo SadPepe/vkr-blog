@@ -1,13 +1,15 @@
 # Docker: запуск сайта в контейнерах
 
 Стек в контейнерах: `app` (PHP 8.4 FPM + nginx + supervisor в одном образе) и `db` (PostgreSQL 16).
-Фронтенд (`npm run build`) и `composer install --no-dev` выполняются **при сборке образа**,
-поэтому в рантайме Node и Composer не нужны.
+Для HTTPS добавляется `caddy` (профиль `https`), который терминирует TLS и проксирует
+запросы в `app`. Фронтенд (`npm run build`) и `composer install --no-dev` выполняются
+**при сборке образа**, поэтому в рантайме Node и Composer не нужны.
 
 ## Требования
 
 - Docker Engine 24+ и Docker Compose v2.24+ (флаг `env_file.required`)
-- Свободный порт `8080` (или задайте другой через `APP_PORT`)
+- Свободный порт `8080` на localhost (или задайте другой через `APP_PORT`)
+- Для HTTPS: домен, свободные `80`/`443` и A-запись — см. [docs/https.md](https.md)
 - Локальный `.env` (он в `.gitignore`, но нужен как источник `APP_KEY` и настроек)
 
 ## Быстрый старт
@@ -17,8 +19,11 @@ cp .env.example .env        # если .env ещё нет
 php artisan key:generate    # локально, чтобы APP_KEY попал в .env
 
 docker compose up -d --build
-# http://localhost:8080
+# http://localhost:8080 — локальная отладка
 ```
+
+Для публичного HTTPS — `docker compose --profile https up -d --build` после настройки
+домена и переменных; пошагово — [docs/https.md](https.md).
 
 При первом запуске entrypoint сам: дожидается PostgreSQL, применяет миграции,
 создаёт симлинк `public/storage`, кэширует конфиг и шаблоны, затем стартует php-fpm и nginx.
@@ -38,23 +43,57 @@ DB_SEED=true docker compose up -d --build
 
 | Переменная | По умолчанию | Назначение |
 |---|---|---|
-| `APP_PORT` | `8080` | порт сайта на хосте |
+| `APP_PORT` | `8080` | порт приложения на localhost (наружу не открывается) |
+| `APP_BIND` | `127.0.0.1` | `0.0.0.0` — доступ по локальной сети/с ноутбука |
+| `APP_URL` | `http://localhost:8080` | публичный адрес; для HTTPS — `https://домен` |
+| `APP_DOMAIN` | — | домен для Caddy (профиль `https`) |
+| `ACME_EMAIL` | — | email для Let's Encrypt |
+| `SESSION_SECURE_COOKIE` | `false` | `true` при HTTPS |
+| `PRIVATE_BETA` | `false` | `true` — noindex в `<head>` для закрытой беты |
+| `REGISTRATION_INVITE_CODE` | — | код приглашения; пусто — регистрация открыта |
 | `APP_KEY` | из `.env` | если пусто — генерируется временный ключ |
-| `APP_ENV` / `APP_DEBUG` | из `.env` (`local`/`true`) | для демонстрации можно `production`/`false` |
+| `APP_ENV` / `APP_DEBUG` | из `.env` (`local`/`true`) | для продакшена — `production`/`false` |
 | `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | из `.env`, иначе `blog`/`blog`/`blog` | одинаково для `app` и `db` |
 | `DB_SEED` | `false` | наполнить БД демо-данными при первом старте |
 | `SEEDER_IMAGES_DIR` | `/home/anna/Изображения/Wallpapers/Best` | папка с фото для `ArticleSeeder` |
 
-`APP_URL` внутри контейнера выставляется в `http://localhost:${APP_PORT}` (переопределяется
-переменной `APP_DOCKER_URL`). Если меняете порт — поменяйте и её, чтобы ссылки на `/storage`
-в письмах/`Storage::url()` были корректными (Зигги берёт хост из запроса и работает с любым портом).
+`APP_URL` должен совпадать с реальным адресом сайта: от него зависят абсолютные ссылки
+и `Storage::url()` для новых картинок. После изменения `.env` — `docker compose restart app`.
+
+Логи контейнеров ограничены `10m × 3` через `logging` в `docker-compose.yml`.
+Бэкапы БД и файлов — `sh scripts/backup.sh` (см. [docs/backup.md](backup.md)).
+
+## Доступ по локальной сети
+
+По умолчанию порт приложения слушает только `127.0.0.1`. Чтобы открыть сайт с телефона
+или другого ноутбука в той же Wi-Fi:
+
+```bash
+# .env
+APP_BIND=0.0.0.0
+APP_URL=http://192.168.1.50:8080   # ваш LAN-IP
+
+docker compose up -d --build
+```
+
+Разрешите входящий TCP `8080` в фаерволе ноутбука. Это HTTP без TLS: подходит для
+демонстрации в доверенной сети, но не для интернета. Для удалённого доступа лучше
+WireGuard/Tailscale или VPS с HTTPS — см. `docs/https.md`.
+
+## HTTPS
+
+Публичный запуск — через профиль `https`: Caddy получает сертификат Let's Encrypt,
+редиректит HTTP и проксирует в `app`. Нужны домен, свободные 80/443 и переменные
+`APP_DOMAIN`, `ACME_EMAIL`, `APP_URL=https://…`, `SESSION_SECURE_COOKIE=true`.
+Пошагово, с проверками и типовыми ошибками — [docs/https.md](https.md).
 
 ## Данные и тома
 
 - `db` → `db:/var/lib/postgresql/data` — база;
-- `app` → `storage:/var/www/storage` — загруженные обложки и вставки редактора.
+- `app` → `storage:/var/www/storage` — загруженные обложки и вставки редактора;
+- `caddy` → `caddy_data:/data` — сертификаты и аккаунт ACME (не удалять при обновлениях).
 
-Полный сброс (удалит БД и файлы):
+Полный сброс (удалит БД, файлы и сертификаты):
 
 ```bash
 docker compose down -v
@@ -64,10 +103,12 @@ docker compose down -v
 
 ```bash
 docker compose logs -f app                 # логи php-fpm/nginx (LOG_CHANNEL=stderr)
+docker compose logs -f caddy               # HTTPS/ACME, только с профилем https
 docker compose exec app php artisan tinker # консоль Laravel
 docker compose exec app sh                 # shell в контейнере
 docker compose exec db psql -U postgres -d blog
 docker compose restart app                 # после изменения .env
+docker compose --profile https up -d       # поднять сайт с HTTPS
 docker compose down                        # остановить (без удаления данных)
 ```
 
@@ -97,7 +138,7 @@ docker compose --profile test run --rm tests --filter=ProfileTest
 
 Тесты идут на sqlite `:memory:` (`.env.testing` + `phpunit.xml`), PostgreSQL и `.env` для них
 не нужны. В образе есть `pdo_sqlite` (и `dom` для превью постов), поэтому `php artisan test`
-работает так же, как в CI: 57 тестов, 1 пропуск.
+работает так же, как в CI: 90 passed, 1 пропуск.
 
 ## Разработка
 

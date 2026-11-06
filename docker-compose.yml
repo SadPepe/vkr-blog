@@ -1,5 +1,11 @@
 name: vkr-blog
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   app:
     build:
@@ -8,8 +14,11 @@ services:
     image: vkr-blog/app:latest
     container_name: vkr-blog-app
     restart: unless-stopped
+    logging: *default-logging
     ports:
-      - "${APP_PORT:-8080}:80"
+      # По умолчанию только localhost: наружу сайт отдаёт Caddy по HTTPS.
+      # Для доступа по локальной сети: APP_BIND=0.0.0.0 в .env.
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8080}:80"
     # Локальный .env (в git не попадает) даёт APP_KEY и остальные настройки.
     # Переменные из блока environment имеют приоритет над .env.
     env_file:
@@ -21,7 +30,8 @@ services:
       APP_KEY: ${APP_KEY:-}
       APP_LOCALE: ${APP_LOCALE:-ru}
       APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE:-ru}
-      APP_URL: ${APP_DOCKER_URL:-http://localhost:8080}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false}
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: 5432
@@ -42,10 +52,35 @@ services:
       retries: 5
       start_period: 60s
 
+  # HTTPS-прокси: Caddy сам получает и продлевает сертификат Let's Encrypt.
+  # Запуск: docker compose --profile https up -d --build
+  # Нужны APP_DOMAIN и ACME_EMAIL в .env, A-запись домена и открытые 80/443.
+  caddy:
+    profiles: ["https"]
+    image: caddy:2-alpine
+    container_name: vkr-blog-caddy
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-example.ru}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.ru}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
   db:
     image: postgres:16-alpine
     container_name: vkr-blog-db
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_DB: ${DB_DATABASE:-blog}
       POSTGRES_USER: ${DB_USERNAME:-blog}
@@ -77,3 +112,5 @@ services:
 volumes:
   storage:
   db:
+  caddy_data:
+  caddy_config:

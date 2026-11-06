@@ -15,6 +15,9 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    // Закрытая бета: noindex в head; robots.txt правится отдельно.
+    'private_beta' => env('PRIVATE_BETA', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment
