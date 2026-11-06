@@ -14,7 +14,7 @@ defineProps({
 });
 
 const form = useForm({
-    email: "",
+    username: "",
     password: "",
     remember: false,
 });
@@ -33,9 +33,7 @@ const submit = () => {
         <Head title="Вход" />
 
         <div class="mx-auto flex w-full max-w-md items-center justify-center py-8 md:py-12">
-            <div
-                class="w-full max-w-md rounded-md border border-line bg-surface/90 p-8 shadow-xl shadow-black/5 backdrop-blur sm:p-10"
-            >
+            <div class="w-full max-w-md rounded-md border border-line bg-surface/90 p-8 shadow-xl shadow-black/5 backdrop-blur sm:p-10">
                 <!-- Логотип -->
                 <div class="mb-8 text-center">
                     <span
@@ -53,39 +51,36 @@ const submit = () => {
                     <p class="mt-1.5 text-sm text-muted">Рады видеть вас снова!</p>
                 </div>
 
-                <div
-                    v-if="status"
-                    class="mb-4 rounded-md bg-accent-soft px-4 py-3 text-sm font-medium text-accent"
-                >
+                <div v-if="status" class="mb-4 rounded-md bg-accent-soft px-4 py-3 text-sm font-medium text-accent">
                     {{ status }}
                 </div>
 
                 <form @submit.prevent="submit" class="space-y-5">
-                    <!-- Email -->
+                    <!-- Логин -->
                     <div>
-                        <label for="email" class="mb-1.5 block text-sm font-medium text-content"> Email </label>
+                        <label for="username" class="mb-1.5 block text-sm font-medium text-content"> Логин </label>
                         <div class="relative">
                             <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
-                                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
                                     />
                                 </svg>
                             </span>
                             <input
-                                id="email"
-                                type="email"
+                                id="username"
+                                type="text"
                                 class="w-full rounded-md border border-line bg-surface-muted py-2.5 pl-11 pr-3.5 text-sm text-content outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                placeholder="you@example.com"
-                                v-model="form.email"
+                                placeholder="chelny_author"
+                                v-model="form.username"
                                 required
                                 autofocus
                                 autocomplete="username"
                             />
                         </div>
-                        <InputError class="mt-1.5" :message="form.errors.email" />
+                        <InputError class="mt-1.5" :message="form.errors.username" />
                     </div>
 
                     <!-- Пароль -->
@@ -163,6 +158,10 @@ const submit = () => {
                             Забыли пароль?
                         </Link>
                     </div>
+
+                    <p class="text-xs leading-relaxed text-muted">
+                        Восстановление по почте работает, только если вы указали email в профиле. Если почты нет — напишите администратору.
+                    </p>
 
                     <button
                         type="submit"

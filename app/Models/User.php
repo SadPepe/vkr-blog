@@ -19,6 +19,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
         'about',
@@ -26,6 +27,7 @@ class User extends Authenticatable
         'cover_image',
         'background_image',
         'background_blur',
+        'links',
     ];
 
     /**
@@ -43,6 +45,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'username',
     ];
 
     /**
@@ -56,6 +59,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'background_blur' => 'integer',
+            'links' => 'array',
+            'terms_accepted_at' => 'datetime',
+            'privacy_consent_at' => 'datetime',
+            'distribution_consent_at' => 'datetime',
         ];
     }
 

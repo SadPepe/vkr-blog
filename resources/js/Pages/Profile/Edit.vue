@@ -9,7 +9,9 @@
                 <!-- Данные профиля -->
                 <section class="rounded-md border border-line bg-surface p-6 shadow-sm">
                     <h2 class="text-lg font-semibold text-content">Данные профиля</h2>
-                    <p class="mt-1 text-sm text-muted">Имя, почта и рассказ о себе — их видят читатели блога.</p>
+                    <p class="mt-1 text-sm text-muted">
+                        Имя и рассказ о себе видят читатели. Логин нужен только для входа, почта — для восстановления пароля.
+                    </p>
 
                     <div class="mt-5 space-y-4">
                         <div>
@@ -27,15 +29,15 @@
                         </div>
 
                         <div>
-                            <InputLabel for="email" value="Почта" />
-                            <TextInput
-                                id="email"
-                                v-model="form.email"
-                                type="email"
-                                class="mt-1.5 block w-full"
-                                required
-                                autocomplete="username"
-                            />
+                            <p class="text-sm font-medium text-content">Логин</p>
+                            <p class="mt-1.5 text-sm text-content">{{ user.username }}</p>
+                            <p class="mt-1 text-xs text-muted">Используется для входа, другим не показывается.</p>
+                        </div>
+
+                        <div>
+                            <InputLabel for="email" value="Почта (необязательно)" />
+                            <TextInput id="email" v-model="form.email" type="email" class="mt-1.5 block w-full" autocomplete="email" />
+                            <p class="mt-1 text-xs text-muted">Нужна для восстановления пароля. Можно оставить пустой.</p>
                             <InputError class="mt-2" :message="form.errors.email" />
                         </div>
 
@@ -44,6 +46,70 @@
                             <TextArea id="about" v-model="form.about" rows="4" class="mt-1.5 block w-full" autocomplete="about" />
                             <InputError class="mt-2" :message="form.errors.about" />
                         </div>
+                    </div>
+                </section>
+
+                <!-- Ссылки автора -->
+                <section class="rounded-md border border-line bg-surface p-6 shadow-sm">
+                    <h2 class="text-lg font-semibold text-content">Ссылки</h2>
+                    <p class="mt-1 text-sm text-muted">
+                        Сайт, Telegram, VK, портфолио — до пяти ссылок. Они появятся в профиле в блоке над «Об&nbsp;авторе». Название можно
+                        не заполнять: тогда подставится домен.
+                    </p>
+
+                    <div class="mt-5 space-y-3">
+                        <div v-for="(link, index) in form.links" :key="index" class="flex flex-col gap-2 sm:flex-row sm:items-start">
+                            <TextInput
+                                :id="`link-label-${index}`"
+                                v-model="link.label"
+                                type="text"
+                                class="sm:w-44"
+                                placeholder="Название, например Telegram"
+                                aria-label="Название ссылки"
+                                autocomplete="off"
+                            />
+                            <div class="min-w-0 flex-1">
+                                <TextInput
+                                    :id="`link-url-${index}`"
+                                    v-model="link.url"
+                                    type="text"
+                                    class="w-full"
+                                    placeholder="t.me/username или https://site.ru"
+                                    aria-label="Адрес ссылки"
+                                    autocomplete="off"
+                                />
+                                <InputError class="mt-1.5" :message="form.errors[`links.${index}.url`]" />
+                            </div>
+                            <button
+                                type="button"
+                                class="inline-flex h-10 w-10 items-center justify-center text-muted transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                                :aria-label="`Убрать ссылку ${index + 1}`"
+                                title="Убрать ссылку"
+                                @click="removeLink(index)"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.6"
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <InputError :message="form.errors.links" />
+
+                        <button
+                            v-if="form.links.length < 5"
+                            type="button"
+                            class="inline-flex min-h-11 items-center text-sm text-accent transition-colors hover:text-accent-hover"
+                            @click="addLink"
+                        >
+                            Добавить ссылку
+                        </button>
                     </div>
                 </section>
 
@@ -284,6 +350,14 @@ const props = defineProps({
     },
 });
 
+const addLink = () => {
+    if (form.links.length < 5) form.links.push({ label: "", url: "" });
+};
+
+const removeLink = (index) => {
+    form.links.splice(index, 1);
+};
+
 const avatarInput = ref(null);
 const coverInput = ref(null);
 const backgroundInput = ref(null);
@@ -294,9 +368,10 @@ const avatarProcessing = ref(false);
 
 const form = useForm({
     name: props.user.name,
-    email: props.user.email,
+    email: props.user.email ?? "",
     about: props.user.about || "",
     background_blur: props.user.background_blur ?? 12,
+    links: (props.user.links ?? []).map((link) => ({ label: link.label ?? "", url: link.url ?? "" })),
     avatar_image: null,
     cover_image: null,
     background_image: null,

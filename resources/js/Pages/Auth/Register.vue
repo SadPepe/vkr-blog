@@ -6,9 +6,14 @@ import { ref } from "vue";
 
 const form = useForm({
     name: "",
+    username: "",
     email: "",
+    invite_code: "",
     password: "",
     password_confirmation: "",
+    accept_terms: false,
+    accept_privacy: false,
+    accept_distribution: false,
 });
 
 const showPassword = ref(false);
@@ -25,9 +30,7 @@ const submit = () => {
         <Head title="Регистрация" />
 
         <div class="mx-auto flex w-full max-w-md items-center justify-center py-8 md:py-12">
-            <div
-                class="w-full max-w-md rounded-md border border-line bg-surface/90 p-8 shadow-xl shadow-black/5 backdrop-blur sm:p-10"
-            >
+            <div class="w-full max-w-md rounded-md border border-line bg-surface/90 p-8 shadow-xl shadow-black/5 backdrop-blur sm:p-10">
                 <!-- Логотип -->
                 <div class="mb-8 text-center">
                     <span
@@ -42,9 +45,7 @@ const submit = () => {
                         </svg>
                     </span>
                     <h1 class="mt-4 text-2xl font-bold tracking-tight text-content dark:text-white">Создать аккаунт</h1>
-                    <p class="mt-1.5 text-sm text-muted">
-                        Присоединяйтесь к нашему блогу — это займёт меньше минуты
-                    </p>
+                    <p class="mt-1.5 text-sm text-muted">Присоединяйтесь к нашему блогу — это займёт меньше минуты</p>
                 </div>
 
                 <form @submit.prevent="submit" class="space-y-5">
@@ -75,9 +76,40 @@ const submit = () => {
                         <InputError class="mt-1.5" :message="form.errors.name" />
                     </div>
 
+                    <!-- Логин -->
+                    <div>
+                        <label for="username" class="mb-1.5 block text-sm font-medium text-content"> Логин </label>
+                        <div class="relative">
+                            <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                                    />
+                                </svg>
+                            </span>
+                            <input
+                                id="username"
+                                type="text"
+                                class="w-full rounded-md border border-line bg-surface-muted py-2.5 pl-11 pr-3.5 text-sm text-content outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20"
+                                placeholder="chelny_author"
+                                v-model="form.username"
+                                required
+                                autocomplete="username"
+                            />
+                        </div>
+                        <p class="mt-1 text-xs text-muted">
+                            3–32 символа: латиница, цифры и подчёркивание. Для входа, другим не показывается.
+                        </p>
+                        <InputError class="mt-1.5" :message="form.errors.username" />
+                    </div>
+
                     <!-- Email -->
                     <div>
-                        <label for="email" class="mb-1.5 block text-sm font-medium text-content"> Email </label>
+                        <label for="email" class="mb-1.5 block text-sm font-medium text-content">
+                            Email <span class="font-normal text-muted">(необязательно)</span>
+                        </label>
                         <div class="relative">
                             <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -94,11 +126,39 @@ const submit = () => {
                                 class="w-full rounded-md border border-line bg-surface-muted py-2.5 pl-11 pr-3.5 text-sm text-content outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20"
                                 placeholder="you@example.com"
                                 v-model="form.email"
-                                required
-                                autocomplete="username"
+                                autocomplete="email"
                             />
                         </div>
+                        <p class="mt-1 text-xs text-muted">Нужен для восстановления пароля и уведомлений. Можно не указывать.</p>
                         <InputError class="mt-1.5" :message="form.errors.email" />
+                    </div>
+
+                    <!-- Код приглашения: включается, когда бета закрыта -->
+                    <div v-if="$page.props.registrationRequiresCode">
+                        <label for="invite_code" class="mb-1.5 block text-sm font-medium text-content"> Код приглашения </label>
+                        <div class="relative">
+                            <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+                                    />
+                                </svg>
+                            </span>
+                            <input
+                                id="invite_code"
+                                type="text"
+                                class="w-full rounded-md border border-line bg-surface-muted py-2.5 pl-11 pr-3.5 text-sm text-content outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20"
+                                placeholder="Код от администратора"
+                                v-model="form.invite_code"
+                                required
+                                autocomplete="off"
+                                spellcheck="false"
+                            />
+                        </div>
+                        <p class="mt-1 text-xs text-muted">Регистрация закрыта: код выдаёт администратор.</p>
+                        <InputError class="mt-1.5" :message="form.errors.invite_code" />
                     </div>
 
                     <!-- Пароль -->
@@ -183,6 +243,86 @@ const submit = () => {
                             />
                         </div>
                         <InputError class="mt-1.5" :message="form.errors.password_confirmation" />
+                    </div>
+
+                    <!-- Согласия: отдельные документы, чекбоксы не предзаполнены -->
+                    <div class="space-y-4 rounded-md border border-line bg-surface-muted/60 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Согласия</p>
+
+                        <div>
+                            <label class="flex items-start gap-3 text-sm leading-relaxed text-content">
+                                <input
+                                    v-model="form.accept_terms"
+                                    type="checkbox"
+                                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-line-strong text-accent focus:ring-accent"
+                                />
+                                <span>
+                                    Принимаю
+                                    <Link
+                                        :href="route('legal.terms')"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="text-accent underline underline-offset-2 hover:text-accent-hover"
+                                    >
+                                        Пользовательское соглашение
+                                    </Link>
+                                </span>
+                            </label>
+                            <InputError class="mt-1.5" :message="form.errors.accept_terms" />
+                        </div>
+
+                        <div>
+                            <label class="flex items-start gap-3 text-sm leading-relaxed text-content">
+                                <input
+                                    v-model="form.accept_privacy"
+                                    type="checkbox"
+                                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-line-strong text-accent focus:ring-accent"
+                                />
+                                <span>
+                                    Даю
+                                    <Link
+                                        :href="route('legal.consent')"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="text-accent underline underline-offset-2 hover:text-accent-hover"
+                                    >
+                                        согласие на обработку персональных данных
+                                    </Link>
+                                    и подтверждаю, что ознакомлен(а) с
+                                    <Link
+                                        :href="route('legal.privacy')"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="text-accent underline underline-offset-2 hover:text-accent-hover"
+                                    >
+                                        Политикой
+                                    </Link>
+                                </span>
+                            </label>
+                            <InputError class="mt-1.5" :message="form.errors.accept_privacy" />
+                        </div>
+
+                        <div>
+                            <label class="flex items-start gap-3 text-sm leading-relaxed text-content">
+                                <input
+                                    v-model="form.accept_distribution"
+                                    type="checkbox"
+                                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-line-strong text-accent focus:ring-accent"
+                                />
+                                <span>
+                                    Согласен(на) на публикацию профиля — имя, аватар, «о себе» и ссылки будут видны всем. Условия:
+                                    <Link
+                                        :href="route('legal.distribution')"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="text-accent underline underline-offset-2 hover:text-accent-hover"
+                                    >
+                                        согласие на распространение
+                                    </Link>
+                                </span>
+                            </label>
+                            <InputError class="mt-1.5" :message="form.errors.accept_distribution" />
+                        </div>
                     </div>
 
                     <button

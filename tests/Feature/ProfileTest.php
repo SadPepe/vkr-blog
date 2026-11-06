@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Article;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -43,6 +44,51 @@ class ProfileTest extends TestCase
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_author_links_are_normalized_and_saved(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->put('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'links' => [
+                    ['label' => 'Telegram', 'url' => 't.me/moyblog'],
+                    ['label' => '', 'url' => 'https://example.com'],
+                    ['label' => 'Пустая', 'url' => ''],
+                ],
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $links = $user->refresh()->links;
+
+        $this->assertCount(2, $links);
+        $this->assertSame('https://t.me/moyblog', $links[0]['url']);
+        $this->assertSame('Telegram', $links[0]['label']);
+        // название не заполнено — подставляется домен
+        $this->assertSame('example.com', $links[1]['label']);
+    }
+
+    public function test_invalid_author_link_is_rejected(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->put('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'links' => [['label' => 'Битое', 'url' => 'не ссылка']],
+            ]);
+
+        $response->assertSessionHasErrors('links.0.url');
+        $this->assertNull($user->refresh()->links);
     }
 
     public function test_background_blur_can_be_updated(): void
@@ -187,6 +233,44 @@ class ProfileTest extends TestCase
 
         $this->assertGuest();
         $this->assertNull($user->fresh());
+    }
+
+    public function test_deleting_account_removes_profile_and_article_files(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'avatar' => 'profile/avatars/avatar.jpg',
+            'cover_image' => 'profile/covers/cover.jpg',
+            'background_image' => 'profile/backgrounds/background.jpg',
+        ]);
+
+        Article::factory()->for($user)->create([
+            'content' => '<p><img src="/storage/images/post.jpg"></p>',
+            'card_image_path' => '/storage/images/card.jpg',
+        ]);
+
+        $files = [
+            'profile/avatars/avatar.jpg',
+            'profile/covers/cover.jpg',
+            'profile/backgrounds/background.jpg',
+            'images/post.jpg',
+            'images/card.jpg',
+        ];
+
+        foreach ($files as $file) {
+            Storage::disk('public')->put($file, 'test');
+        }
+
+        $this->actingAs($user)
+            ->delete('/profile/edit', ['password' => 'password'])
+            ->assertRedirect('/');
+
+        foreach ($files as $file) {
+            Storage::disk('public')->assertMissing($file);
+        }
+
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void

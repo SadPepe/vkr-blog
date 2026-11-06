@@ -40,6 +40,14 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'registrationRequiresCode' => (string) config('auth.registration_invite_code') !== '',
+            'legal' => [
+                'operator' => config('legal.operator'),
+                'email' => config('legal.email'),
+                'domain' => config('legal.domain'),
+                'version' => config('legal.version'),
+                'updatedAt' => config('legal.updated_at'),
+            ],
         ];
     }
 }

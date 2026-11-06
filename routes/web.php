@@ -9,9 +9,17 @@ use App\Http\Controllers\LikeController;
 use App\Http\Controllers\PopularArticleController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\LegalController;
 
 
 Route::get('/', [ArticleController::class, 'index'])->name('home');
+
+// Юридические документы (публичные, без авторизации)
+Route::get('/privacy', [LegalController::class, 'privacy'])->name('legal.privacy');
+Route::get('/terms', [LegalController::class, 'terms'])->name('legal.terms');
+Route::get('/consent', [LegalController::class, 'consent'])->name('legal.consent');
+Route::get('/consent-distribution', [LegalController::class, 'distributionConsent'])->name('legal.distribution');
+Route::get('/copyright', [LegalController::class, 'copyright'])->name('legal.copyright');
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 Route::get('/search', [ArticleController::class, 'search'])->name('articles.search');
 
@@ -48,7 +56,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/create', [ArticleController::class, 'create'])->name('create');
     Route::post('/articles', [ArticleController::class, 'store'])->name('articles.store');
-    Route::post('/upload-image', [ImageController::class, 'upload']);
+    Route::post('/upload-image', [ImageController::class, 'upload'])
+        ->middleware('throttle:20,1');
     Route::get('/articles/{article:slug}/edit', [ArticleController::class, 'edit'])->name('articles.edit');
     Route::put('/articles/{article:slug}', [ArticleController::class, 'update'])->name('articles.update');
     Route::delete('/articles/{article:slug}', [ArticleController::class, 'destroy'])->name('articles.destroy');

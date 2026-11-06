@@ -6,6 +6,7 @@ use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Article;
 use App\Models\User;
 use App\Support\PostPreview;
+use App\Traits\HandlesArticles;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,8 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    use HandlesArticles;
+
     /**
      * Display the user's profile form.
      */
@@ -27,12 +30,14 @@ class ProfileController extends Controller
             'status' => session('status'),
             'user' => [
                 'name' => $request->user()->name,
+                'username' => $request->user()->username,
                 'email' => $request->user()->email,
                 'about' => $request->user()->about,
                 'avatar_url' => $request->user()->avatar_url,
                 'cover_url' => $request->user()->cover_url,
                 'background_url' => $request->user()->background_url,
                 'background_blur' => $request->user()->background_blur,
+                'links' => $request->user()->links ?? [],
             ],
 
         ]);
@@ -50,6 +55,8 @@ class ProfileController extends Controller
             unset($data[$field], $data['remove_' . $field]);
         }
 
+        $data['links'] = $this->normalizeLinks((array) ($data['links'] ?? []));
+
         $this->applyProfileImage($request, $user, 'avatar_image', 'profile/avatars', 'avatar');
         $this->applyProfileImage($request, $user, 'cover_image', 'profile/covers');
         $this->applyProfileImage($request, $user, 'background_image', 'profile/backgrounds');
@@ -63,6 +70,51 @@ class ProfileController extends Controller
         $user->save();
 
         return Redirect::to('/profile')->with('success', 'Профиль обновлён');
+    }
+
+    /**
+     * Ссылки автора: пустые строки отбрасываем, схему подставляем, название берём из домена.
+     *
+     * @param  array<int, array{label?: ?string, url?: ?string}>  $links
+     * @return array<int, array{label: string, url: string}>|null
+     */
+    private function normalizeLinks(array $links): ?array
+    {
+        $normalized = [];
+
+        foreach ($links as $link) {
+            $url = trim((string) ($link['url'] ?? ''));
+
+            if ($url === '') {
+                continue;
+            }
+
+            if (!preg_match('#^https?://#i', $url)) {
+                $url = 'https://' . ltrim($url, '/');
+            }
+
+            $label = trim((string) ($link['label'] ?? ''));
+            if ($label === '') {
+                $label = (string) (parse_url($url, PHP_URL_HOST) ?? '');
+                $label = preg_replace('/^www\./', '', $label);
+            }
+
+            $normalized[] = ['label' => $this->limit($label, 40), 'url' => $this->limit($url, 255)];
+
+            if (count($normalized) >= 5) {
+                break;
+            }
+        }
+
+        return $normalized ?: null;
+    }
+
+    /**
+     * Обрезка строки без mbstring-сюрпризов для метки/адреса.
+     */
+    private function limit(string $value, int $length): string
+    {
+        return \Illuminate\Support\Str::limit($value, $length, '');
     }
 
     /**
@@ -110,6 +162,16 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        // Сначала файлы: после удаления пользователя статьи и изображения
+        // останутся в базе без владельца, а файлы — на диске.
+        $user->articles()->get()->each(function (Article $article) {
+            $this->deleteArticleFiles($article);
+        });
+
+        $this->deleteProfileImage($user->avatar);
+        $this->deleteProfileImage($user->cover_image);
+        $this->deleteProfileImage($user->background_image);
+
         Auth::logout();
 
         $user->delete();
@@ -144,16 +206,13 @@ class ProfileController extends Controller
             ],
             'articles' => PostPreview::attachPaginator(
                 $user->articles()
-                    ->with('user:id,name,avatar')
+                    ->with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
                     ->latest()
                     ->select(array_merge(Article::CARD_COLUMNS, ['content']))
                     ->paginate(12)
             ),
-            'media' => $user->articles()
-                ->whereNotNull('card_image_path')
-                ->latest()
-                ->take(6)
-                ->get(['id', 'slug', 'title', 'card_image_path']),
+            // Лучшие статьи автора: рейтинг по просмотрам вместо прежней медиасетки
+            'topArticles' => \App\Models\Article::topFor($user),
         ]);
     }
 }
