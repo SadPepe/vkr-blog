@@ -57,6 +57,13 @@ RUN apk add --no-cache \
         icu-libs \
         oniguruma \
         postgresql-libs \
+<<<<<<< HEAD
+=======
+        libpng \
+        libjpeg-turbo \
+        freetype \
+        libwebp \
+>>>>>>> my-saved-changes
         tzdata \
     && apk add --no-cache --virtual .build-deps \
         $PHPIZE_DEPS \
@@ -64,6 +71,17 @@ RUN apk add --no-cache \
         oniguruma-dev \
         postgresql-dev \
         sqlite-dev \
+<<<<<<< HEAD
+=======
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        libwebp-dev \
+    && docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+        --with-webp \
+>>>>>>> my-saved-changes
     && docker-php-ext-install -j"$(nproc)" \
         pdo_pgsql \
         pdo_sqlite \
@@ -72,6 +90,10 @@ RUN apk add --no-cache \
         bcmath \
         pcntl \
         opcache \
+<<<<<<< HEAD
+=======
+        gd \
+>>>>>>> my-saved-changes
     && apk del .build-deps \
     && rm -rf /var/cache/apk/* /tmp/*
 

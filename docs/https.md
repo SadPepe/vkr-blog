@@ -96,3 +96,11 @@ docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter
 
 `docker compose up -d --build` без профиля `https` поднимает только app+db:
 `http://localhost:8080`. Caddy и сертификаты для локальной разработки не нужны.
+<<<<<<< HEAD
+=======
+
+## Домашний сервер
+
+Если сайт хостится на домашнем ПК с белым IP: проброс 80/443, CGNAT, Windows,
+бэкапы и требования 152-ФЗ — [home-hosting.md](home-hosting.md).
+>>>>>>> my-saved-changes

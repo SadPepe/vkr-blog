@@ -34,6 +34,11 @@ docker compose up -d --build
 DB_SEED=true docker compose up -d --build
 ```
 
+<<<<<<< HEAD
+=======
+Фотографии для статей уже лежат в образе — в `database/seeders/images`. `ArticleSeeder`
+сжимает их в WebP и уменьшает без обрезки, поэтому отдельная папка с фото не нужна.
+>>>>>>> my-saved-changes
 Повторно сиды не запускаются — после первого успеха создаётся маркер `storage/app/.seeded`.
 
 ## Переменные окружения
@@ -55,7 +60,11 @@ DB_SEED=true docker compose up -d --build
 | `APP_ENV` / `APP_DEBUG` | из `.env` (`local`/`true`) | для продакшена — `production`/`false` |
 | `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | из `.env`, иначе `blog`/`blog`/`blog` | одинаково для `app` и `db` |
 | `DB_SEED` | `false` | наполнить БД демо-данными при первом старте |
+<<<<<<< HEAD
 | `SEEDER_IMAGES_DIR` | `/home/anna/Изображения/Wallpapers/Best` | папка с фото для `ArticleSeeder` |
+=======
+| `SEEDER_IMAGES_DIR` | `database/seeders/images` | своя папка с фото для `ArticleSeeder` (необязательно) |
+>>>>>>> my-saved-changes
 
 `APP_URL` должен совпадать с реальным адресом сайта: от него зависят абсолютные ссылки
 и `Storage::url()` для новых картинок. После изменения `.env` — `docker compose restart app`.
@@ -77,14 +86,25 @@ docker compose up -d --build
 ```
 
 Разрешите входящий TCP `8080` в фаерволе ноутбука. Это HTTP без TLS: подходит для
+<<<<<<< HEAD
 демонстрации в доверенной сети, но не для интернета. Для удалённого доступа лучше
 WireGuard/Tailscale или VPS с HTTPS — см. `docs/https.md`.
+=======
+демонстрации в доверенной сети, но не для интернета. Для удалённого доступа без
+публикации портов подойдёт WireGuard/Tailscale; для публичного HTTPS — `docs/https.md`
+(VPS) или [docs/home-hosting.md](home-hosting.md) (домашний ПК с белым IP).
+>>>>>>> my-saved-changes
 
 ## HTTPS
 
 Публичный запуск — через профиль `https`: Caddy получает сертификат Let's Encrypt,
 редиректит HTTP и проксирует в `app`. Нужны домен, свободные 80/443 и переменные
 `APP_DOMAIN`, `ACME_EMAIL`, `APP_URL=https://…`, `SESSION_SECURE_COOKIE=true`.
+<<<<<<< HEAD
+=======
+Домашний сервер с белым IP, пробросом портов и требованиями 152-ФЗ —
+[docs/home-hosting.md](home-hosting.md).
+>>>>>>> my-saved-changes
 Пошагово, с проверками и типовыми ошибками — [docs/https.md](https.md).
 
 ## Данные и тома
@@ -114,16 +134,32 @@ docker compose down                        # остановить (без уда
 
 ## Демо-картинки для статей
 
+<<<<<<< HEAD
 `ArticleSeeder` ищет фотографии в `SEEDER_IMAGES_DIR` и копирует их на диск `public`.
 В образ эта папка не попадает. Если нужны обложки в контейнерной сборке, смонтируйте её:
+=======
+По умолчанию `ArticleSeeder` берёт фото из `database/seeders/images` — эта папка
+уже входит в образ, поэтому демо-обложки появляются сразу после `DB_SEED=true`.
+Каждое фото конвертируется в WebP и уменьшается до 1600 px по большей стороне
+(без обрезки), затем копируется на диск `public` в `article-cards/` и `images/`.
+
+Свои фотографии: положите их в папку и задайте `SEEDER_IMAGES_DIR`. В Docker
+удобнее смонтировать её томом:
+>>>>>>> my-saved-changes
 
 ```yaml
 # docker-compose.yml → services.app.volumes
 - /путь/к/фото:/images:ro
 ```
 
+<<<<<<< HEAD
 и задайте `SEEDER_IMAGES_DIR=/images` (или `/images/Подпапка`) при запуске с `DB_SEED=true`.
 Без этого статьи создадутся без изображений — сайт работает, но карточки будут без обложек.
+=======
+и задать `SEEDER_IMAGES_DIR=/images` (или `/images/Подпапка`) при запуске с `DB_SEED=true`.
+Допустимы JPG/JPEG/PNG/WebP. Если папки нет, статьи создадутся без картинок —
+сайт продолжит работать.
+>>>>>>> my-saved-changes
 
 ## Тесты
 
