@@ -118,11 +118,7 @@
                     <h2 class="text-lg font-semibold text-content">Оформление профиля</h2>
                     <p class="mt-1 text-sm text-muted">
                         Обложка украсит шапку профиля, фон — поля вокруг него. Фон автоматически приглушается и размывается, чтобы текст
-<<<<<<< HEAD
-                        оставался читаемым при любом изображении. Подойдут JPG, PNG или WebP до 5 МБ.
-=======
                         оставался читаемым при любом изображении. Подойдут JPG, PNG или WebP — большие фото сожмём автоматически.
->>>>>>> my-saved-changes
                     </p>
 
                     <div class="mt-5 grid gap-6 sm:grid-cols-2">
@@ -214,11 +210,8 @@
                                 >
                                     Удалить
                                 </button>
-<<<<<<< HEAD
-=======
 
                                 <span v-if="coverProcessing" class="text-sm text-muted">Готовим фото…</span>
->>>>>>> my-saved-changes
                             </div>
 
                             <InputError class="mt-2" :message="form.errors.cover_image" />
@@ -268,11 +261,8 @@
                                 >
                                     Удалить
                                 </button>
-<<<<<<< HEAD
-=======
 
                                 <span v-if="backgroundProcessing" class="text-sm text-muted">Готовим фото…</span>
->>>>>>> my-saved-changes
                             </div>
 
                             <InputError class="mt-2" :message="form.errors.background_image" />
@@ -379,11 +369,8 @@ const avatarObjectUrl = ref(null);
 const coverObjectUrl = ref(null);
 const backgroundObjectUrl = ref(null);
 const avatarProcessing = ref(false);
-<<<<<<< HEAD
-=======
 const coverProcessing = ref(false);
 const backgroundProcessing = ref(false);
->>>>>>> my-saved-changes
 
 const form = useForm({
     name: props.user.name,
@@ -444,20 +431,6 @@ const onAvatarChange = async (event) => {
     }
 };
 
-<<<<<<< HEAD
-const onCoverChange = (event) => {
-    const file = event.target.files?.[0] ?? null;
-    form.cover_image = file;
-    form.remove_cover_image = false;
-    coverObjectUrl.value = previewUrl(file, coverObjectUrl.value);
-};
-
-const onBackgroundChange = (event) => {
-    const file = event.target.files?.[0] ?? null;
-    form.background_image = file;
-    form.remove_background_image = false;
-    backgroundObjectUrl.value = previewUrl(file, backgroundObjectUrl.value);
-=======
 // Обложку и фон сжимаем в браузере: на сервер уходит уже лёгкий файл,
 // а итоговое WebP всё равно собирается на бэкенде.
 const compressLargeImage = async (file) => {
@@ -505,7 +478,6 @@ const onBackgroundChange = async (event) => {
     } finally {
         backgroundProcessing.value = false;
     }
->>>>>>> my-saved-changes
 };
 
 const removeAvatar = () => {
