@@ -3,7 +3,7 @@
         <div class="page-shell pb-10 pt-16 lg:pt-20">
             <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
                 <div class="lg:col-span-2">
-                    <p class="type-h2 max-w-[22ch] text-content">Пишут фотографы, музыканты, художники и авторы текстов.</p>
+                    <p class="type-h2 max-w-[22ch] text-content">Пространство для текстов, фотографий и заметок.</p>
                     <p class="mt-4 max-w-[46ch] text-muted">
                         У каждого свой профиль, своя обложка и своя тема из шестнадцати. Статьи, категории, комментарии и поиск — всё на
                         месте.
