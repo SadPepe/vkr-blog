@@ -8,11 +8,7 @@
             <meta property="og:type" content="website" />
         </Head>
 
-<<<<<<< HEAD
         <div class="page-shell pb-24 pt-10 lg:pt-14">
-=======
-        <div class="page-shell pb-24 pt-5 lg:pt-10">
->>>>>>> my-saved-changes
             <div class="home-layout">
                 <div class="min-w-0">
                     <!-- Заголовок ленты: дата и счётчик в строке с ним, внутри колонки -->
@@ -28,11 +24,7 @@
                     </div>
 
                     <p class="measure mt-6 text-[1.125rem] leading-snug text-content">
-<<<<<<< HEAD
                         Тексты авторов блога: фотографы, музыканты, художники и те, кто пишет словами. Без редакции и повестки.
-=======
-                        Статьи, заметки и истории на разные темы — от практических советов до личных наблюдений.
->>>>>>> my-saved-changes
                     </p>
 
                     <!-- Сортировка: строкой текстовых ссылок, без пилюль. Категории живут в шапке -->

@@ -1,10 +1,6 @@
 <template>
     <div
-<<<<<<< HEAD
-        class="pointer-events-none fixed inset-x-4 top-24 z-50 flex flex-col items-center gap-2 sm:inset-x-auto sm:right-6 sm:items-end"
-=======
         class="pointer-events-none fixed inset-x-4 top-5 z-50 flex flex-col items-center gap-2 sm:inset-x-auto sm:right-6 sm:items-end"
->>>>>>> my-saved-changes
         aria-live="polite"
         aria-atomic="true"
     >

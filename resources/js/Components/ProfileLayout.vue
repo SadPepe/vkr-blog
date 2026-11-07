@@ -1,13 +1,8 @@
 <template>
     <div class="relative pb-24 pt-4">
-<<<<<<< HEAD
-        <!-- Фон профиля: картинка пользователя, приглушённая подложкой -->
-        <div v-if="user.background_url" class="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-=======
         <!-- Фон профиля: картинка пользователя, приглушённая подложкой.
              Фиксируем по высоте окна, чтобы длинная страница не приближала фото. -->
         <div v-if="user.background_url" class="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
->>>>>>> my-saved-changes
             <img
                 :src="user.background_url"
                 alt=""

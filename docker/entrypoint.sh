@@ -66,13 +66,8 @@ if [ "${DB_SEED:-false}" = "true" ] && [ ! -f storage/app/.seeded ]; then
     log "Наполняю базу демо-данными (DB_SEED=true)"
     php artisan db:seed --force --no-interaction
     if [ "${DB_SEED_ARTICLES:-true}" = "true" ]; then
-<<<<<<< HEAD
-        # 40 статей с текстом; картинки появятся, только если смонтирована
-        # папка с фото и задан SEEDER_IMAGES_DIR
-=======
         # 40 статей с текстом и картинками из database/seeders/images.
         # Свою папку с фото можно задать через SEEDER_IMAGES_DIR.
->>>>>>> my-saved-changes
         php artisan db:seed --class=ArticleSeeder --force --no-interaction || \
             log "warn: ArticleSeeder завершился с ошибкой"
     fi

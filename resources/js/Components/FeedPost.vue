@@ -47,24 +47,11 @@
         <!-- Тело поста: авторский порядок блоков, без отдельной обложки -->
         <div
             class="post-content mt-4 text-content"
-<<<<<<< HEAD
-            :class="{ 'feed-body--clamped': article.has_more && !isExpanded }"
-=======
             :class="{ 'feed-body--clamped': article.has_more && !expanded }"
->>>>>>> my-saved-changes
             v-html="postHtml"
         />
 
         <button
-<<<<<<< HEAD
-            v-if="article.has_more || isExpanded"
-            type="button"
-            class="mt-5 inline-flex min-h-11 items-center text-sm text-accent transition-colors hover:text-accent-hover"
-            :aria-expanded="isExpanded"
-            @click="toggleExpand"
-        >
-            {{ isExpanded ? "Свернуть" : busy ? "Загружаю…" : "Развернуть" }}
-=======
             v-if="article.has_more || expanded"
             type="button"
             class="mt-5 inline-flex min-h-11 items-center text-sm text-accent transition-colors hover:text-accent-hover"
@@ -72,7 +59,6 @@
             @click="toggleExpand"
         >
             {{ expanded ? "Свернуть" : loading ? "Загружаю…" : "Развернуть" }}
->>>>>>> my-saved-changes
         </button>
 
         <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[1.0625rem] text-muted">

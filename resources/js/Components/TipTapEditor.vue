@@ -83,11 +83,7 @@
         <!-- ПАНЕЛЬ ИНСТРУМЕНТОВ -->
         <div
             v-if="editor"
-<<<<<<< HEAD
-            class="bg-surface flex flex-wrap items-center rounded-md border mb-6 p-3 shadow-sm sticky top-24 z-10 backdrop-blur-sm bg-surface/95"
-=======
             class="bg-surface flex flex-wrap items-center rounded-md border mb-6 p-3 shadow-sm sticky top-0 z-10 backdrop-blur-sm bg-surface/95"
->>>>>>> my-saved-changes
         >
             <!-- Группа форматирования текста -->
             <div class="flex items-center border-r border-line pr-3 mr-3">

@@ -112,12 +112,8 @@ DB_SEED=true docker compose up -d --build
 Подробности и переменные окружения — в [docs/docker.md](docs/docker.md).
 
 Для HTTPS: домен, A-запись на сервер и `docker compose --profile https up -d --build`;
-<<<<<<< HEAD
-подробности — [docs/https.md](docs/https.md).
-=======
 подробности — [docs/https.md](docs/https.md). Домашний сервер с белым IP, пробросом
 портов и требованиями 152-ФЗ — [docs/home-hosting.md](docs/home-hosting.md).
->>>>>>> my-saved-changes
 
 Локально: `php artisan views:prune` (удаляет детальные просмотры старше 365 дней),
 `php artisan schedule:list` — запланированные задачи (чистка идёт через `schedule:work`
@@ -199,10 +195,7 @@ docs/                     state.md, roadmap.md, docker.md
 - [docs/docker.md](docs/docker.md) — запуск в контейнерах, переменные, тома, тесты.
 - [docs/backup.md](docs/backup.md) — бэкапы БД и файлов, восстановление.
 - [docs/https.md](docs/https.md) — Caddy, Let's Encrypt, первый запуск.
-<<<<<<< HEAD
-=======
 - [docs/home-hosting.md](docs/home-hosting.md) — белый IP, проброс портов, Windows, 152-ФЗ.
->>>>>>> my-saved-changes
 - [docs/legal.md](docs/legal.md) — юридический каркас и чек-лист перед запуском.
 
 ## Лицензия
