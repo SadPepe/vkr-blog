@@ -483,12 +483,62 @@ textarea,
         gap: 2.5rem 3rem;
     }
 
+    /* До 1024 афиша уходит под ленту: всю пару держим по мере и центрируем,
+       иначе справа остаётся пустое поле во всю ширину поста, а полоса афиши
+       торчит шире ленты */
+    @media (max-width: 1023.98px) {
+        .home-layout {
+            max-width: 44rem;
+            margin-inline: auto;
+        }
+
+        /* Статья: одна колонка по мере — заголовок, текст и рейл по одной оси,
+           пустое поле делится на равные поля, а не копится справа */
+        .article-layout {
+            max-width: 40rem;
+            margin-inline: auto;
+        }
+    }
+
     @media (min-width: 1280px) {
         .home-layout {
             max-width: calc(44rem + 3rem + 22rem);
             margin-inline: auto;
             grid-template-columns: minmax(0, 44rem) minmax(0, 22rem);
             align-items: start;
+        }
+    }
+
+    /* 1024–1279: та же пара «колонка + рейл», но рейл уже — без пустой половины экрана */
+    @media (min-width: 1024px) and (max-width: 1279.98px) {
+        .article-layout,
+        .home-layout {
+            margin-inline: auto;
+            align-items: start;
+        }
+
+        .article-layout {
+            max-width: calc(40rem + 2.5rem + 17.5rem);
+            grid-template-columns: minmax(0, 40rem) 17.5rem;
+            gap: 3rem 2.5rem;
+        }
+
+        .home-layout {
+            max-width: calc(44rem + 2.5rem + 16rem);
+            grid-template-columns: minmax(0, 44rem) 16rem;
+            gap: 2.5rem 2.5rem;
+        }
+
+        .article-rail {
+            position: sticky;
+            top: 2rem;
+        }
+    }
+
+    /* Рейл на статье: отбит от текстовой колонки — строкам легче читаться */
+    @media (min-width: 1024px) {
+        .article-rail {
+            padding-left: 1.5rem;
         }
     }
 
@@ -587,17 +637,17 @@ textarea,
         margin-top: 1rem;
     }
 
-    .post-content p,
+    /*.post-content p,
     .post-content ul,
     .post-content ol,
     .post-content blockquote {
         max-width: 60ch;
-    }
+    }*/
 
     .post-content img {
         /* Ширина по снимку: кадр ниже 48vh, но без пустой рамки справа от вертикального фото */
         width: auto;
-        max-width: min(60ch, 100%);
+        /*max-width: min(60ch, 100%);*/
         height: auto;
         /* Вертикальный снимок не растягивается на полтора экрана: вписываем целиком.
            Потолок 54vh бьёт только по вертикальным: альбомные ограничены шириной меры */
@@ -608,6 +658,8 @@ textarea,
         margin: 1.5rem 0;
         border-radius: 0;
         box-shadow: none;
+        /* Клик по фото в посте раскрывает его в лайтбоксе */
+        cursor: zoom-in;
     }
 
     /* В свёрнутом виде видно первые четыре блока поста, остальное открывает кнопка */

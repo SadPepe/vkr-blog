@@ -49,6 +49,7 @@
             class="post-content mt-4 text-content"
             :class="{ 'feed-body--clamped': article.has_more && !expanded }"
             v-html="postHtml"
+            @click="handleContentClick"
         />
 
         <button
@@ -133,6 +134,9 @@
                 <p class="mt-1 line-clamp-2 text-[1rem] leading-snug text-content">{{ article.latest_comment.body }}</p>
             </div>
         </Link>
+
+        <!-- Лайтбокс: фото из поста на полный экран, как на странице статьи -->
+        <ImageLightbox :show="lightboxOpen" :src="lightboxSrc" :alt="lightboxAlt" @close="closeLightbox" />
     </article>
 </template>
 
@@ -141,6 +145,7 @@ import { computed, ref } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 import LikeButton from "@/Components/LikeButton.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
+import ImageLightbox from "@/Components/ImageLightbox.vue";
 
 const props = defineProps({
     article: {
@@ -162,6 +167,29 @@ const expanded = ref(false);
 const copied = ref(false);
 const loading = ref(false);
 const fullHtml = ref("");
+
+// Фото в посте открываются в лайтбоксе по клику — как на странице статьи
+const lightboxOpen = ref(false);
+const lightboxSrc = ref("");
+const lightboxAlt = ref("");
+
+const closeLightbox = () => {
+    lightboxOpen.value = false;
+};
+
+// Делегирование: работает и для превью, и для картинок, догруженных кнопкой «Развернуть»
+const handleContentClick = (event) => {
+    const target = event.target;
+
+    if (!(target instanceof HTMLImageElement)) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    lightboxSrc.value = target.currentSrc || target.src;
+    lightboxAlt.value = target.alt || "";
+    lightboxOpen.value = true;
+};
 
 const articleUrl = computed(() => route("articles.show", props.article.slug));
 

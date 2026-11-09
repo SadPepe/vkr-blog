@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-
 class Comment extends Model
 {
     use HasFactory;
@@ -17,8 +16,26 @@ class Comment extends Model
         'user_id',
         'article_id',
         'parent_id',
-        'likes_count'
+        'likes_count',
+        'hidden_at',
     ];
+
+    protected $casts = [
+        'hidden_at' => 'datetime',
+    ];
+
+    /**
+     * Комментарии без скрытых модератором.
+     */
+    public function scopeVisible($query)
+    {
+        return $query->whereNull('hidden_at');
+    }
+
+    public function isHidden(): bool
+    {
+        return ! is_null($this->hidden_at);
+    }
 
     public function user(): BelongsTo
     {
@@ -48,13 +65,13 @@ class Comment extends Model
     // Проверяем, является ли комментарий ответом
     public function isReply(): bool
     {
-        return !is_null($this->parent_id);
+        return ! is_null($this->parent_id);
     }
 
     // Лайкнул ли текущий пользователь комментарий
     public function getIsLikedAttribute()
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return false;
         }
 

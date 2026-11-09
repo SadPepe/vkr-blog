@@ -66,7 +66,7 @@
 
                 <div class="site-header-actions flex shrink-0 items-center gap-0.5 lg:gap-3">
                     <!-- Тема оформления -->
-                    <div ref="themeDropdown" class="relative">
+                    <div ref="themeDropdown">
                         <button
                             type="button"
                             class="inline-flex h-11 w-11 items-center justify-center text-muted transition-colors hover:text-accent focus-visible:outline-none lg:h-10 lg:w-10"
@@ -91,9 +91,11 @@
                             leave-from-class="opacity-100 translate-y-0"
                             leave-to-class="opacity-0 -translate-y-1"
                         >
+                            <!-- Панель тем привязана к шапке, а не к кнопке: на узких экранах
+                                 иначе уезжает за левый край. Справа — по отступу page-shell -->
                             <div
                                 v-show="isThemeOpen"
-                                class="absolute right-0 top-full z-30 mt-2 grid w-[min(92vw,23rem)] grid-cols-2 gap-x-4 gap-y-3 bg-surface p-4 shadow-lg"
+                                class="absolute right-5 top-full z-30 mt-2 grid max-h-[70vh] w-[min(92vw,23rem)] grid-cols-2 gap-x-4 gap-y-3 overflow-y-auto bg-surface p-4 shadow-lg sm:right-8 lg:right-12"
                             >
                                 <div v-for="group in themeGroups" :key="group.label" class="min-w-0">
                                     <p class="mb-1 text-sm text-muted">{{ group.label }}</p>
@@ -125,7 +127,7 @@
                         </a>
                         <a
                             :href="route('register')"
-                            class="inline-flex items-center justify-center bg-accent px-2.5 py-2 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover lg:px-4 lg:text-sm"
+                            class="hidden items-center justify-center bg-accent px-2.5 py-2 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover lg:inline-flex lg:px-4 lg:text-sm"
                         >
                             Регистрация
                         </a>
@@ -176,6 +178,13 @@
                                 >
                                     Редактировать профиль
                                 </a>
+                                <Link
+                                    v-if="page.props.auth?.can?.moderate"
+                                    :href="route('filament.admin.pages.dashboard')"
+                                    class="mt-1 flex items-center px-3 py-2.5 text-[1.0625rem] font-medium text-content transition-colors hover:bg-surface-muted"
+                                >
+                                    Админка
+                                </Link>
                                 <a
                                     href="#"
                                     class="mt-1 flex items-center px-3 py-2.5 text-[1.0625rem] text-accent transition-colors hover:bg-accent-soft"
@@ -345,6 +354,14 @@
                         <a href="#" class="mt-1 block py-2 text-[1.0625rem] text-content" @click.prevent="goToSettings">
                             Редактировать профиль
                         </a>
+                        <Link
+                            v-if="page.props.auth?.can?.moderate"
+                            :href="route('filament.admin.pages.dashboard')"
+                            class="mt-1 block py-2 text-[1.0625rem] font-medium text-content"
+                            @click="closeMobileMenu"
+                        >
+                            Админка
+                        </Link>
                         <a href="#" class="mt-1 block py-2 text-[1.0625rem] text-accent" @click.prevent="logoutMobile"> Выйти </a>
                     </div>
                 </div>

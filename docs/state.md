@@ -149,7 +149,7 @@ node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматир�
   (аватар до 512 px, обложка/фон до 2400 px) без обрезки; лимиты 2/5/5 МБ,
   JPG/PNG/WebP, файлы в `profile/avatars|covers|backgrounds`.
 - Комментарии без пагинации: все верхнеуровневые и ответы приходят одним списком.
-- Нет черновиков/статусов публикации, тегов, RSS, sitemap, уведомлений.
+- Нет UI для черновиков (колонки `status`/`published_at` уже есть), тегов, RSS, sitemap, уведомлений.
 - `MustVerifyEmail` отключён, почта в `log`.
 - Rate limit: 10 комментариев/мин, 20 правок и удалений комментариев/мин,
   30 лайков (статьи и комментарии)/мин.
@@ -163,7 +163,71 @@ node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматир�
 - Dev: `php artisan serve` (порт может отличаться, проверяй фактический), `npm run dev`
   (Vite, `public/hot`).
 - БД: PostgreSQL `blog` (см. `.env`), демо-данные — `php artisan migrate --seed`.
+- Часовой пояс приложения — `APP_TIMEZONE=Europe/Moscow` (`config/app.php`). Даты в формах админки
+  вводятся и сравниваются в московском времени. До перехода на эту настройку метки времени
+  писались в UTC, поэтому старые записи отображаются на 3 часа раньше фактического времени.
 - Docker: `docker compose up -d --build` → http://localhost:8080, демо-данные —
   `DB_SEED=true docker compose up -d --build`; HTTPS — `docker compose --profile https up -d --build`
   (Caddy + Let's Encrypt, см. `docs/https.md`); подробности в `docs/docker.md`.
 - Симлинк картинок: `php artisan storage:link` (уже создан).
+- Хостовый PHP собран без `intl` (нужен Filament) и без `pdo_sqlite` (нужен тестам).
+  Оба расширения лежат в `/usr/lib/php/modules`, подключаются каталогом `php-ini/`:
+  `make serve` (= `PHP_INI_SCAN_DIR="$PWD/php-ini" php artisan serve --port=8001`).
+  Сервер, запущенный просто `php artisan serve`, отдаёт 500 на таблицах админки.
+- Тесты на хосте не идут без `pdo_sqlite`; в контейнере —
+  `docker compose --profile test run --rm -v "$PWD":/var/www -v /var/www/vendor tests`
+  (монтаж исходников обязателен, иначе образ тестирует свою старую копию).
+
+## Управление сайтом (2026-11, этап 1)
+
+Схема и права готовы, панель управления ещё не установлена (`docs/management.md`).
+
+- `users.role` (`user|moderator|admin`) и `users.blocked_at`; хелперы
+  `isAdmin()`/`isModerator()`/`canModerate()`/`isBlocked()`; роли и блокировка
+  убраны из JSON (`$hidden`). Заблокированный не входит: проверка в `LoginRequest::authenticate()`.
+- `articles.status` (`draft|published|hidden`) + `published_at` (бэкфилл из `created_at`),
+  скоуп `visible()`; `status` добавлен в `CARD_COLUMNS`.
+- `comments.hidden_at` + скоуп `visible()`.
+- Таблицы `announcements` (бегущая строка) и `reports` (жалобы, morph) — без UI.
+- Политики: `hide` (модератор) в `ArticlePolicy`/`CommentPolicy`, удаление чужого —
+  только админ; новые `UserPolicy`, `CategoryPolicy`, `ReportPolicy`, `AnnouncementPolicy`;
+  гейты `moderate` и `admin`. Владелец сохраняет прежние права.
+- Тесты: `ModerationTest` (12), `AdminPanelTest` (9), `ReportTest` (5). Всего 116 passed + 1 skipped.
+
+## Админка на Filament v4 (2026-11)
+
+Панель — `/admin`, отдельный UI-стек (Livewire/Blade), публичная часть остаётся на Inertia.
+
+- Панель: `app/Providers/Filament/AdminPanelProvider.php`, guard `web`, логина своей страницы нет —
+  неавторизованного уводит на `route('login')`; доступ — `User::canAccessPanel()`
+  (moderator/admin, не заблокирован). Заблокированный теряет сессию панели через
+  `EnsureNotBlocked` (алиас `not-blocked`).
+- Ресурсы: `Users` (роль селектом, блокировка действием, без создания/удаления),
+  `Categories` (CRUD, слаг фиксируется после создания — на него ссылаются посты,
+  удаление только у пустой категории), `Articles` (скрыть/вернуть/удалить, фильтры
+  по статусу и автору), `Comments` (скрыть/вернуть/удалить + `syncCommentsCount`).
+  Создание контента из панели отключено (`canCreate(): false`), чужие тексты не редактируются.
+- Публичная часть: `Article::scopeVisible()` в лентах, категориях, поиске, похожих,
+  странице автора и статистике; скрытый пост отдаёт 404 (кроме модератора);
+  `Article::comments()` и `latestComment()` не отдают скрытые комментарии.
+- Дашборд: виджет `ModerationStats` (пользователи, опубликовано, скрыто, жалобы в очереди).
+- Жалобы: `POST /reports` (`throttle:5,1`), морф-карта `article`/`comment` в `AppServiceProvider`;
+  нельзя жаловаться на своё и дублировать открытую жалобу. В интерфейсе — `ReportDialog.vue`
+  в посте и комментарии, причины из общего props `reportReasons`.
+  Раздел «Жалобы» в панели: фильтры по статусу и причине, действия «Скрыть контент»
+  (скрывает цель и закрывает жалобу), «Принять», «Отклонить».
+- Навбар: ссылка «Админка» по `auth.can.moderate`.
+## Объявления и бегущая строка (2026-11)
+
+- Таблица `announcements` (поле `body` до 200 символов, `url`, `is_active`, окно
+  `starts_at`/`ends_at`, `sort_order`); скоупы `active()` и `ordered()`.
+- Панель: раздел «Контент → Объявления» (форма, включение/выключение, даты, приоритет).
+- Общий prop `announcements` — до 5 актуальных записей на всех страницах.
+- Компонент `Components/AnnouncementTicker.vue` в `Layout.vue` над шапкой: бесшовная
+  прокрутка (две копии, скорость от длины текста), пауза при наведении, статичная строка
+  при `prefers-reduced-motion`, закрытие запоминается в `localStorage` по набору id
+  (новое объявление снова показывает строку). Дубликат для прокрутки скрыт от скринридеров,
+  у полосы `aria-label="Объявления сайта"`, у крестика — подпись.
+- В таблице объявлений есть колонка «Сейчас» (`Идёт` / `Запланировано` / `Истекло` / `Выключено`),
+  чтобы было видно, почему строка не показывается.
+- Тесты: `AnnouncementTest` (3). Всего 119 passed + 1 skipped.

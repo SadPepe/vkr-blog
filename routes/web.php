@@ -10,6 +10,7 @@ use App\Http\Controllers\PopularArticleController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\ReportController;
 
 
 Route::get('/', [ArticleController::class, 'index'])->name('home');
@@ -48,6 +49,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:30,1')
         ->name('comments.like.toggle');
 
+
+    Route::post('/reports', [ReportController::class, 'store'])
+        ->middleware('throttle:5,1')
+        ->name('reports.store');
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');

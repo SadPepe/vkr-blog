@@ -18,6 +18,7 @@ class AuthorController extends Controller
 
         $articles = PostPreview::attachPaginator(
             $user->articles()
+                ->visible()
                 ->with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
                 ->select(array_merge(\App\Models\Article::CARD_COLUMNS, ['content']))
                 ->latest()
@@ -25,6 +26,7 @@ class AuthorController extends Controller
         );
 
         $stats = $user->articles()
+            ->visible()
             ->selectRaw('
                 COUNT(*) as articles_count,
                 COALESCE(SUM(views_count), 0) as views_count,

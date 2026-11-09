@@ -1,7 +1,8 @@
 <!-- resources/js/Components/Comments/CommentItem.vue -->
 <template>
     <div
-        class="rounded-md border border-line bg-surface p-4 shadow-sm transition-colors duration-200 hover:border-line-strong dark:border-white/[0.06] dark:bg-surface/[0.03] hover:border-line"
+        :id="'comment-' + comment.id"
+        class="scroll-mt-24 rounded-md border border-line bg-surface p-4 shadow-sm transition-colors duration-200 hover:border-line-strong dark:border-white/[0.06] dark:bg-surface/[0.03] hover:border-line"
     >
         <!-- Шапка: аватар + имя + время -->
         <div class="flex items-center justify-between gap-3">
@@ -131,7 +132,19 @@
                 </svg>
                 {{ replying ? "Закрыть" : "Ответить" }}
             </button>
+
+            <button
+                v-if="authUser && comment.user?.id !== authUser.id"
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted transition-colors duration-150 hover:bg-surface-muted hover:text-accent"
+                title="Пожаловаться"
+                @click="reportOpen = true"
+            >
+                Пожаловаться
+            </button>
         </div>
+
+        <ReportDialog :show="reportOpen" type="comment" :id="comment.id" @close="reportOpen = false" />
 
         <!-- Форма ответа -->
         <form v-if="replying" @submit.prevent="submitReply" class="mt-3 rounded-md bg-surface-muted/70 p-3">
@@ -185,6 +198,7 @@ import { computed, ref } from "vue";
 import { router, usePage } from "@inertiajs/vue3";
 import InputError from "@/Components/InputError.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
+import ReportDialog from "@/Components/ReportDialog.vue";
 
 const page = usePage();
 
@@ -210,6 +224,7 @@ const props = defineProps({
 const emit = defineEmits(["delete"]);
 
 const authUser = computed(() => page.props.auth.user);
+const reportOpen = ref(false);
 
 const liked = ref(!!props.comment.is_liked);
 const likesCount = ref(props.comment.likes_count || 0);

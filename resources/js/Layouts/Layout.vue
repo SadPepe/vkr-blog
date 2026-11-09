@@ -1,5 +1,6 @@
 <template>
     <div class="flex min-h-screen flex-col">
+        <AnnouncementTicker />
         <Navbar />
 
         <FlashMessage />
@@ -15,6 +16,7 @@
 
 <script setup>
 import { usePage } from "@inertiajs/vue3";
+import AnnouncementTicker from "@/Components/AnnouncementTicker.vue";
 import Navbar from "@/Components/Navbar.vue";
 import FlashMessage from "@/Components/FlashMessage.vue";
 import PageTransition from "@/Shared/PageTransition.vue";

@@ -54,6 +54,16 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (Auth::user()?->isBlocked()) {
+            Auth::guard('web')->logout();
+
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'username' => 'Аккаунт заблокирован администратором.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

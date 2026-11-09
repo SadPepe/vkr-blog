@@ -36,6 +36,36 @@
                                 {{ user.name }}
                             </h1>
                             <p class="mt-2 text-[1.125rem] text-muted">{{ subtitle }}</p>
+
+                            <!-- Описание автора сразу под подписью, без заголовка «Об авторе» -->
+                            <template v-if="user.about">
+                                <p
+                                    :id="aboutId"
+                                    class="measure mt-4 whitespace-pre-line text-[1.0625rem] leading-relaxed text-content"
+                                    :class="aboutExpanded ? '' : 'max-h-[9rem] overflow-hidden lg:max-h-none'"
+                                >
+                                    {{ user.about }}
+                                </p>
+                                <button
+                                    v-if="showAboutToggle"
+                                    type="button"
+                                    class="mt-1 inline-flex min-h-11 items-center text-sm text-accent transition-colors hover:text-accent-hover lg:hidden"
+                                    :aria-expanded="aboutExpanded"
+                                    :aria-controls="aboutId"
+                                    @click="aboutExpanded = !aboutExpanded"
+                                >
+                                    {{ aboutExpanded ? "Свернуть" : "Показать полностью" }}
+                                </button>
+                            </template>
+
+                            <!-- Цифры одной строкой: в шапке крупные числа спорили с именем -->
+                            <p v-if="statsItems.length" class="type-meta mt-1 flex flex-wrap items-baseline gap-x-2">
+                                <template v-for="(item, index) in statsItems" :key="item.label">
+                                    <span v-if="index" aria-hidden="true">·</span>
+                                    <span><span class="num">{{ item.value }}</span> {{ item.label }}</span>
+                                </template>
+                            </p>
+
                             </div>
 
                             <!-- Ссылки автора: на одной линии с именем, на узких экранах — под ним -->
@@ -65,47 +95,17 @@
                         <slot name="actions" />
                     </div>
 
-                    <!-- Сетка как на главной: лента слева, рейл «Об авторе» и «Чаще читают» справа -->
+                    <!-- Сетка как на главной: лента слева, «Чаще читают» справа (на узких — под лентой) -->
                     <div class="home-layout mt-12">
                         <section class="min-w-0">
                             <slot />
                         </section>
 
-                        <aside v-if="hasAside" class="min-w-0 xl:sticky xl:top-8 xl:self-start">
-                            <section v-if="user.about">
-                                <h2 class="type-h2 text-content">Об авторе</h2>
-                                <p
-                                    :id="aboutId"
-                                    class="mt-4 whitespace-pre-line text-[1.0625rem] leading-relaxed text-content"
-                                    :class="aboutExpanded ? '' : 'max-h-[9rem] overflow-hidden xl:max-h-none'"
-                                >
-                                    {{ user.about }}
-                                </p>
-                                <button
-                                    v-if="showAboutToggle"
-                                    type="button"
-                                    class="mt-2 inline-flex min-h-11 items-center text-sm text-accent transition-colors hover:text-accent-hover xl:hidden"
-                                    :aria-expanded="aboutExpanded"
-                                    :aria-controls="aboutId"
-                                    @click="aboutExpanded = !aboutExpanded"
-                                >
-                                    {{ aboutExpanded ? "Свернуть" : "Показать полностью" }}
-                                </button>
-
-                                <dl class="mt-7 flex flex-wrap gap-x-10 gap-y-4">
-                                    <div v-for="item in statsItems" :key="item.label" class="flex items-baseline gap-2.5">
-                                        <dd class="num font-display text-[1.75rem] font-bold leading-none text-content">
-                                            {{ item.value }}
-                                        </dd>
-                                        <dt class="text-[0.9375rem] text-muted">{{ item.label }}</dt>
-                                    </div>
-                                </dl>
-                            </section>
-
+                        <aside v-if="hasAside" class="min-w-0 lg:sticky lg:top-8 lg:self-start">
                             <!-- Чаще читают: цифра просмотров крупно, как «Афиша» на главной -->
-                            <section v-if="topArticles.length" class="mt-10">
+                            <section>
                                 <h2 class="type-h2 text-content">Чаще читают</h2>
-                                <ul class="mt-5 flex flex-col gap-5">
+                                <ul class="mt-5 flex flex-col gap-5 sm:grid sm:grid-cols-2 sm:gap-x-8 sm:gap-y-5 lg:flex lg:flex-col lg:gap-5">
                                     <li v-for="article in topArticles" :key="article.id">
                                         <Link
                                             :href="route('articles.show', { article: article.slug })"
@@ -260,6 +260,6 @@ const linkHost = (url) => {
     }
 };
 
-// Рейл нужен, если есть что про автора сказать или показать
-const hasAside = computed(() => Boolean(props.user.about) || props.topArticles.length > 0 || links.value.length > 0);
+// В рейле остались только «Чаще читают»: описание и цифры переехали в шапку
+const hasAside = computed(() => props.topArticles.length > 0);
 </script>

@@ -3,11 +3,13 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -20,6 +22,8 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'username',
+        'role',
+        'blocked_at',
         'email',
         'password',
         'about',
@@ -46,6 +50,8 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'username',
+        'role',
+        'blocked_at',
     ];
 
     /**
@@ -60,6 +66,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'background_blur' => 'integer',
             'links' => 'array',
+            'blocked_at' => 'datetime',
             'terms_accepted_at' => 'datetime',
             'privacy_consent_at' => 'datetime',
             'distribution_consent_at' => 'datetime',
@@ -89,13 +96,13 @@ class User extends Authenticatable
 
     private function profileImageUrl(?string $path): ?string
     {
-        if (!$path) {
+        if (! $path) {
             return null;
         }
 
         return str_starts_with($path, 'http')
             ? $path
-            : asset('storage/' . $path);
+            : asset('storage/'.$path);
     }
 
     public function articles()
@@ -116,5 +123,50 @@ class User extends Authenticatable
     public function hasLiked(Article $article)
     {
         return $this->likes()->where('article_id', $article->id)->exists();
+    }
+
+    // --- Роли и блокировка -------------------------------------------------
+
+    public const ROLE_USER = 'user';
+
+    public const ROLE_MODERATOR = 'moderator';
+
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLES = [
+        self::ROLE_USER => 'Пользователь',
+        self::ROLE_MODERATOR => 'Модератор',
+        self::ROLE_ADMIN => 'Администратор',
+    ];
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isModerator(): bool
+    {
+        return $this->role === self::ROLE_MODERATOR;
+    }
+
+    /**
+     * Модератор или администратор — доступ в панель управления.
+     */
+    public function canModerate(): bool
+    {
+        return $this->isAdmin() || $this->isModerator();
+    }
+
+    public function isBlocked(): bool
+    {
+        return ! is_null($this->blocked_at);
+    }
+
+    /**
+     * Доступ в панель управления: модератор или админ, не заблокированный.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->canModerate() && ! $this->isBlocked();
     }
 }

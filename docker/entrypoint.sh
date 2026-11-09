@@ -74,7 +74,12 @@ if [ "${DB_SEED:-false}" = "true" ] && [ ! -f storage/app/.seeded ]; then
     touch storage/app/.seeded
 fi
 
-# --- 5. Кэш конфига/шаблонов и запуск процессов -------------------------
+# --- 5. Ассеты админки (Filament) ---------------------------------------
+# Стили/скрипты панели копируются в public/{css,js,fonts}/filament и в git не входят.
+# Без этого /admin открывается, но без оформления.
+php artisan filament:assets --no-interaction || log "warn: filament:assets пропущен"
+
+# --- 6. Кэш конфига/шаблонов и запуск процессов -------------------------
 php artisan config:cache --no-interaction || log "warn: config:cache пропущен"
 php artisan view:cache --no-interaction || log "warn: view:cache пропущен"
 

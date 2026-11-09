@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Comment;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class CommentPolicy
 {
@@ -13,7 +12,7 @@ class CommentPolicy
      */
     public function viewAny(User $user): bool
     {
-         return true;
+        return true;
     }
 
     /**
@@ -29,7 +28,7 @@ class CommentPolicy
      */
     public function create(User $user): bool
     {
-        return !is_null($user);
+        return ! is_null($user);
     }
 
     /**
@@ -37,7 +36,7 @@ class CommentPolicy
      */
     public function update(User $user, Comment $comment): bool
     {
-         return $user->id === $comment->user_id;
+        return $user->id === $comment->user_id;
     }
 
     /**
@@ -45,7 +44,17 @@ class CommentPolicy
      */
     public function delete(User $user, Comment $comment): bool
     {
-        return $user->id === $comment->user_id || $user->id === $comment->article->user_id;
+        return $user->id === $comment->user_id
+            || $user->id === $comment->article->user_id
+            || $user->isAdmin();
+    }
+
+    /**
+     * Скрыть комментарий без удаления — модерация.
+     */
+    public function hide(User $user, Comment $comment): bool
+    {
+        return $user->canModerate();
     }
 
     /**

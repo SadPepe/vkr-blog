@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use App\Models\Category;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -34,7 +34,17 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+                'can' => [
+                    'moderate' => (bool) $request->user()?->canModerate(),
+                    'admin' => (bool) $request->user()?->isAdmin(),
+                ],
             ],
+            'reportReasons' => \App\Models\Report::REASONS,
+            // Бегущая строка: только актуальные, не больше пяти
+            'announcements' => fn () => \App\Models\Announcement::active()
+                ->ordered()
+                ->limit(5)
+                ->get(['id', 'body', 'url']),
             'categories' => Category::withCount('articles')->orderBy('name')->get(['id', 'name', 'slug']),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

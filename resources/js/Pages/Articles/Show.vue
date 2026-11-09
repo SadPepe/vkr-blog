@@ -16,7 +16,7 @@
 
         <div class="article-spread page-shell pb-24 pt-8">
             <!-- Хлебные крошки: текстом, без иконок и разделителей -->
-            <nav class="type-meta" aria-label="Хлебные крошки">
+            <nav class="type-meta lg:mx-auto lg:max-w-[60rem] xl:max-w-[65.5rem]" aria-label="Хлебные крошки">
                 <Link :href="route('home')" class="transition-colors hover:text-accent">Все статьи</Link>
                 <template v-if="category">
                     <span aria-hidden="true"> · </span>
@@ -44,7 +44,7 @@
                                 </Link>
                                 <span aria-hidden="true"> · </span>
                             </template>
-                            <span>опубликовано</span>
+                            <span>опубликовано&nbsp;</span>
                             <time :datetime="article.created_at">{{ formatDate(article.created_at) }}</time>
                             <span aria-hidden="true"> · </span>
                             <span class="whitespace-nowrap">{{ readingMinutes }} мин чтения</span>
@@ -80,6 +80,16 @@
                         :comments-count="article.comments.length"
                         class="mt-6"
                     />
+
+                    <div v-if="page.props.auth?.user && page.props.auth.user.id !== article.user.id" class="mt-2">
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-surface-muted hover:text-accent"
+                            @click="reportOpen = true"
+                        >
+                            Пожаловаться
+                        </button>
+                    </div>
 
                     <div
                         ref="contentRef"
@@ -139,7 +149,7 @@
 
                     <template v-if="popularArticles && popularArticles.length > 0">
                         <h2 class="type-h2 mt-12 text-content">Афиша</h2>
-                        <ul class="mt-5 flex flex-col gap-5">
+                        <ul class="mt-5 flex flex-col gap-5 sm:grid sm:grid-cols-2 sm:gap-x-8 sm:gap-y-5 lg:flex lg:flex-col lg:gap-5">
                             <li v-for="item in popularArticles.slice(0, 5)" :key="item.id">
                                 <Link
                                     :href="route('articles.show', item.slug)"
@@ -187,6 +197,8 @@
 
         <!-- Лайтбокс: картинка на полный экран -->
         <ImageLightbox :show="lightboxOpen" :src="lightboxSrc" :alt="article.title || displayTitle" @close="closeLightbox" />
+
+        <ReportDialog :show="reportOpen" type="article" :id="article.id" @close="reportOpen = false" />
     </MainLayout>
 </template>
 
@@ -198,8 +210,10 @@ import CommentSection from "@/Components/Comments/CommentSection.vue";
 import ArticleStats from "@/Components/ArticleStats.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import ImageLightbox from "@/Components/ImageLightbox.vue";
+import ReportDialog from "@/Components/ReportDialog.vue";
 
 const page = usePage();
+const reportOpen = ref(false);
 
 const props = defineProps({
     article: {

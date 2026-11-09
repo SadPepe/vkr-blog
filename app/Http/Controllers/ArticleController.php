@@ -4,23 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\Category;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\DB;
-use App\Traits\HandlesArticles;
 use App\Support\HtmlSanitizer;
 use App\Support\PostPreview;
+use App\Traits\HandlesArticles;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
-
-
-
-
+use Inertia\Inertia;
 
 class ArticleController extends Controller
 {
     use HandlesArticles;
-
 
     public function store(Request $request)
     {
@@ -72,7 +67,7 @@ class ArticleController extends Controller
                 ->with('success', 'Пост удалён');
         } catch (\Exception $e) {
             return response()->json([
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -88,10 +83,9 @@ class ArticleController extends Controller
                 'content' => $article->content,
                 'slug' => $article->slug,
                 'category_slug' => $article->category_slug,
-            ]
+            ],
         ]);
     }
-
 
     public function update(Request $request, Article $article)
     {
@@ -147,6 +141,9 @@ class ArticleController extends Controller
 
     public function show(Article $article)
     {
+        // Скрытые модератором посты доступны только модераторам
+        abort_if(! $article->isVisible() && ! optional(auth()->user())->canModerate(), 404);
+
         // Обновляем метод увеличения просмотров
         $article->incrementViews();
 
@@ -168,7 +165,7 @@ class ArticleController extends Controller
 
         // Похожие статьи из той же категории
         $relatedArticles = $article->category_slug
-            ? Article::where('category_slug', $article->category_slug)
+            ? Article::visible()->where('category_slug', $article->category_slug)
                 ->whereKeyNot($article->id)
                 ->latest()
                 ->limit(4)
@@ -176,7 +173,7 @@ class ArticleController extends Controller
                 ->get()
             : collect();
 
-        $popularArticleController = new \App\Http\Controllers\PopularArticleController();
+        $popularArticleController = new \App\Http\Controllers\PopularArticleController;
 
         return Inertia::render('Articles/Show', [
             'article' => $article,
@@ -202,14 +199,15 @@ class ArticleController extends Controller
 
         $articles = PostPreview::attachPaginator(
             $this->applySort(
-                Article::with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
+                Article::visible()
+                    ->with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
                     ->select(array_merge(Article::CARD_COLUMNS, ['content'])),
                 $sort
             )->paginate(12)
         )->withQueryString();
 
         // Используем PopularArticleController для получения популярных статей
-        $popularArticleController = new \App\Http\Controllers\PopularArticleController();
+        $popularArticleController = new \App\Http\Controllers\PopularArticleController;
         $popularArticles = $popularArticleController->getPopularArticles(5, 'week');
 
         $categories = Category::withCount('articles')->orderBy('name')->get();
@@ -218,7 +216,7 @@ class ArticleController extends Controller
             'articles' => $articles,
             'popularArticles' => $popularArticles,
             'categories' => $categories,
-            'sort' => $sort
+            'sort' => $sort,
         ]);
     }
 
@@ -226,7 +224,7 @@ class ArticleController extends Controller
     {
 
         $request->validate([
-            'query' => 'nullable|string|max:255'
+            'query' => 'nullable|string|max:255',
         ]);
 
         $search = trim((string) $request->input('query'));
@@ -238,6 +236,7 @@ class ArticleController extends Controller
 
         return inertia('SearchResults', [
             'articles' => Article::query()
+                ->visible()
                 ->with('user:id,name,avatar')
                 ->when($search, function ($query) use ($pattern, $likeOp) {
                     $query->where(function ($q) use ($pattern, $likeOp) {
@@ -250,18 +249,14 @@ class ArticleController extends Controller
                 ->latest()
                 ->paginate(12)
                 ->withQueryString(),
-            'searchQuery' => $search ?: null
+            'searchQuery' => $search ?: null,
         ]);
     }
-
-
-
 
     public function create()
     {
         return Inertia::render('Articles/Create');   // Vue component
     }
-
 
     public function articlesByCategory($category = null)
     {
@@ -276,7 +271,8 @@ class ArticleController extends Controller
 
             $articles = PostPreview::attachPaginator(
                 $this->applySort(
-                    Article::where('category_slug', $categorySlug)
+                    Article::visible()
+                        ->where('category_slug', $categorySlug)
                         ->with(['user:id,name,avatar'])
                         ->select(array_merge(Article::CARD_COLUMNS, ['content'])),
                     $sort
@@ -291,7 +287,7 @@ class ArticleController extends Controller
                 'categories' => $categories,
                 'popularArticles' => $popularArticles,
                 'activeCategory' => $categorySlug,
-                'sort' => $sort
+                'sort' => $sort,
             ]);
         }
 

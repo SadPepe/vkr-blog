@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Article;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ArticlePolicy
 {
@@ -45,7 +44,15 @@ class ArticlePolicy
      */
     public function delete(User $user, Article $article): bool
     {
-        return $user->id === $article->user_id;
+        return $user->id === $article->user_id || $user->isAdmin();
+    }
+
+    /**
+     * Скрыть пост без удаления — модерация. Снять с публикации может модератор и админ.
+     */
+    public function hide(User $user, Article $article): bool
+    {
+        return $user->canModerate();
     }
 
     /**

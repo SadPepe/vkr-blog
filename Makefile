@@ -26,3 +26,8 @@ restart:
 
 test:
 	docker compose --profile test run --rm tests
+
+# Локальный dev-сервер. Хостовый PHP собран без intl (нужен Filament)
+# и без pdo_sqlite (нужен тестам) — подключаем расширения через php-ini/.
+serve:
+	PHP_INI_SCAN_DIR="$(CURDIR)/php-ini" php artisan serve --port=8001

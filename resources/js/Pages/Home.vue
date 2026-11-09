@@ -29,7 +29,7 @@
 
                     <!-- Сортировка: строкой текстовых ссылок, без пилюль. Категории живут в шапке -->
                     <nav aria-label="Сортировка" class="mt-8">
-                        <ul class="grid grid-cols-3 items-baseline gap-x-4 gap-y-2 sm:grid-cols-5 lg:flex lg:flex-wrap">
+                        <ul class="flex flex-wrap items-baseline gap-x-4 gap-y-2">
                             <li v-for="option in sortOptions" :key="option.value">
                                 <button
                                     type="button"
@@ -83,9 +83,9 @@
                 </div>
 
                 <!-- Афиша: реальные просмотры крупными цифрами -->
-                <aside v-if="popularArticles.length" class="min-w-0 xl:sticky xl:top-8 xl:self-start">
+                <aside v-if="popularArticles.length" class="min-w-0 lg:sticky lg:top-8 lg:self-start">
                     <h2 class="type-h2 text-content">Афиша: самые читаемые</h2>
-                    <ul class="mt-6 flex flex-col gap-6">
+                    <ul class="mt-6 flex flex-col gap-6 sm:grid sm:grid-cols-2 sm:gap-x-8 lg:flex lg:flex-col lg:gap-6">
                         <li v-for="article in railArticles" :key="article.id">
                             <Link
                                 :href="route('articles.show', article.slug)"
@@ -116,7 +116,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import Layout from "@/Layouts/Layout.vue";
 import FeedPost from "@/Components/FeedPost.vue";
@@ -176,8 +176,6 @@ const pluralArticles = (n) => {
     if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "статьи";
     return "статей";
 };
-
-
 
 const pluralViews = (n) => {
     const mod10 = n % 10;

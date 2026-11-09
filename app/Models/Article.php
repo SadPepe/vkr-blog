@@ -3,11 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Article extends Model
 {
@@ -24,6 +23,7 @@ class Article extends Model
         'excerpt',
         'card_image_path',
         'category_slug',
+        'status',
         'created_at',
         'views_count',
         'likes_count',
@@ -39,24 +39,54 @@ class Article extends Model
         'card_image_path',
         'user_id',
         'category_slug',
+        'status',
+        'published_at',
         'views_count',
         'likes_count',
-        'comments_count'
+        'comments_count',
     ];
+
     protected $dates = [
         'published_at',
         'created_at',
         'updated_at',
-        'deleted_at'
+        'deleted_at',
     ];
+
     protected $casts = [
         'published_at' => 'datetime',
     ];
+
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_PUBLISHED = 'published';
+
+    public const STATUS_HIDDEN = 'hidden';
+
+    public const STATUSES = [
+        self::STATUS_DRAFT => 'Черновик',
+        self::STATUS_PUBLISHED => 'Опубликован',
+        self::STATUS_HIDDEN => 'Скрыт',
+    ];
+
+    /**
+     * Всё, что видят читатели. Черновики и скрытое — только автор и модераторы.
+     */
+    public function scopeVisible($query)
+    {
+        return $query->where('status', self::STATUS_PUBLISHED);
+    }
+
+    public function isVisible(): bool
+    {
+        return $this->status === self::STATUS_PUBLISHED;
+    }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -64,7 +94,10 @@ class Article extends Model
 
     public function comments()
     {
-        return $this->hasMany(Comment::class)->whereNull('parent_id')->orderBy('created_at');
+        return $this->hasMany(Comment::class)
+            ->whereNull('parent_id')
+            ->whereNull('hidden_at')
+            ->orderBy('created_at');
     }
 
     /**
@@ -72,7 +105,7 @@ class Article extends Model
      */
     public function latestComment()
     {
-        return $this->hasOne(Comment::class)->latestOfMany();
+        return $this->hasOne(Comment::class)->whereNull('hidden_at')->latestOfMany();
     }
 
     public function allComments()
@@ -92,10 +125,9 @@ class Article extends Model
 
     // Проверяем, лайкнул ли текущий пользователь статью
 
-
     public function getIsLikedAttribute()
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return false;
         }
 
@@ -143,7 +175,7 @@ class Article extends Model
         ArticleView::create([
             'article_id' => $this->id,
             'ip_address' => $ip,
-            'user_agent' => request()->userAgent()
+            'user_agent' => request()->userAgent(),
         ]);
     }
 
@@ -182,6 +214,7 @@ class Article extends Model
     public static function topFor(User $user, int $limit = 3)
     {
         return $user->articles()
+            ->where('status', self::STATUS_PUBLISHED)
             ->orderByDesc('views_count')
             ->orderByDesc('created_at')
             ->take($limit)
@@ -232,7 +265,7 @@ class Article extends Model
 
         $sub = $sub->getQuery();
 
-        $columns = array_map(fn ($column) => 'popular.' . $column, static::CARD_COLUMNS);
+        $columns = array_map(fn ($column) => 'popular.'.$column, static::CARD_COLUMNS);
 
         return static::hydrate(
             DB::table($sub, 'popular')
@@ -244,5 +277,4 @@ class Article extends Model
                 ->all()
         )->load('user:id,name,avatar');
     }
-
 }
