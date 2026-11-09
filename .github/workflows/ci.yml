@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # Прод-ветка (её тянет сервер) и рабочая: тесты гоняются до выкладки,
+  # а не только в момент мержа. legacy main/develop больше не деплоятся.
   push:
-    branches: [main, develop]
+    branches: [redesign/underground, redesign/underground-dev]
   pull_request:
 
 jobs:

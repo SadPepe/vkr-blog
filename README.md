@@ -6,7 +6,7 @@
 Дипломный проект (ВКР). Монолит на Laravel + Inertia: сервер отдаёт Vue-страницы с props,
 отдельного REST API нет.
 
-[![CI](https://github.com/SadPepe/vkr-blog/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SadPepe/vkr-blog/actions/workflows/ci.yml)
+[![CI](https://github.com/SadPepe/vkr-blog/actions/workflows/ci.yml/badge.svg?branch=redesign%2Funderground)](https://github.com/SadPepe/vkr-blog/actions/workflows/ci.yml)
 
 ## Возможности
 
