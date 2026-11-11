@@ -149,7 +149,7 @@ docker compose --profile test run --rm tests --filter=ProfileTest
 
 Тесты идут на sqlite `:memory:` (`.env.testing` + `phpunit.xml`), PostgreSQL и `.env` для них
 не нужны. В образе есть `pdo_sqlite` (и `dom` для превью постов), поэтому `php artisan test`
-работает так же, как в CI: 90 passed, 1 пропуск.
+работает так же, как в CI: 141 passed, 1 пропуск.
 
 ## Разработка
 
@@ -168,3 +168,35 @@ npm run dev           # :5173, HMR
 - Ключ `APP_KEY` передаётся из локального `.env`. Если `.env` нет, ключ генерируется при каждом
   старте контейнера: пользователи разлогинятся после перезапуска.
 - PHP-настройки (лимиты загрузки, opcache) — `docker/php.ini`; конфиг nginx — `docker/nginx-app.conf`.
+
+## Диск Docker и свободное место
+
+Образы, кэш сборки и данные WSL лежат в `%LOCALAPPDATA%\Docker\wsl` на системном диске и при
+активной работе растут: сборка образа — несколько ГБ, кэш BuildKit — до 15 ГБ. На сервере диск
+`C:` небольшой, поэтому 11.11.2026 он заполнился целиком: Docker Desktop не смог поднять движок
+(`Wsl/Service/CreateInstance/E_FAIL`), сайт лёг.
+
+Сейчас папка Docker перенесена на NVMe-диск `G:` и подменена junction-ссылкой — на медленном HDD
+сборка шла в разы дольше. Docker об этом не знает и продолжает писать в
+`%LOCALAPPDATA%\Docker\wsl`, а файлы фактически лежат на другом диске:
+
+```powershell
+# Остановить Docker Desktop и WSL, затем перенести и связать:
+wsl --shutdown
+robocopy "$env:LOCALAPPDATA\Docker\wsl" "G:\DockerData\wsl" /E
+cmd /c rmdir "$env:LOCALAPPDATA%\Docker\wsl"
+cmd /c mklink /J "$env:LOCALAPPDATA%\Docker\wsl" "G:\DockerData\wsl"
+```
+
+Не удаляйте junction обычным `Remove-Item -Recurse` — так сотрётся содержимое на `G:`; убирать
+ссылку нужно через `cmd /c rmdir "путь"`.
+
+Что проверять при нехватке места:
+
+```bash
+docker system df                  # образы, контейнеры, тома, кэш сборки
+docker builder prune -af          # только кэш сборки, безопасно
+docker image prune -f             # только висячие образы
+```
+
+`docker system prune -a --volumes` не запускать: вместе с кэшем удалит том `vkr-blog-db` с базой.
