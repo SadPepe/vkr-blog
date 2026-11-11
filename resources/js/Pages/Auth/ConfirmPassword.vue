@@ -15,11 +15,7 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthShell
-        head-title="Подтверждение пароля"
-        headline="Ещё один шаг — и можно продолжать."
-        lead="Защищённые действия просим подтверждать паролем."
-    >
+    <AuthShell head-title="Подтверждение пароля">
         <template #title>Подтвердите пароль</template>
         <template #subtitle>Это защищённый раздел. Введите пароль, чтобы продолжить.</template>
 

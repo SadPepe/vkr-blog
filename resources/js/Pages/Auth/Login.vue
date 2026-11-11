@@ -29,12 +29,7 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthShell
-        head-title="Вход"
-        headline="Пишите так, как читали бы сами."
-        lead="«Челны подземка» — блог, где авторы делятся опытом, а читатели отвечают."
-        :items="['Лента статей и разделы', 'Комментарии, ответы и лайки', 'Профиль автора и черновики']"
-    >
+    <AuthShell head-title="Вход">
         <template #title>Вход в аккаунт</template>
         <template #subtitle>Рады видеть вас снова.</template>
         <template #footer>

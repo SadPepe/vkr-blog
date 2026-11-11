@@ -19,11 +19,7 @@ const verificationLinkSent = computed(() => props.status === "verification-link-
 </script>
 
 <template>
-    <AuthShell
-        head-title="Подтверждение почты"
-        headline="Почти всё. Осталось подтвердить адрес."
-        lead="Так мы знаем, что восстановление пароля дойдёт до вас."
-    >
+    <AuthShell head-title="Подтверждение почты">
         <template #title>Подтвердите почту</template>
         <template #subtitle>Перейдите по ссылке из письма. Если письмо не пришло — отправим новое.</template>
 

@@ -19,11 +19,7 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthShell
-        head-title="Восстановление пароля"
-        headline="Пароль забывается. Тексты — нет."
-        lead="Укажите почту, и мы пришлём ссылку для сброса пароля."
-    >
+    <AuthShell head-title="Восстановление пароля">
         <template #title>Сброс пароля</template>
         <template #subtitle>Ссылка действует ограниченное время.</template>
         <template #footer>

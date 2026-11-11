@@ -32,11 +32,7 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthShell
-        head-title="Новый пароль"
-        headline="Новый пароль — новая точка входа."
-        lead="Придумайте пароль, который не используете на других сайтах."
-    >
+    <AuthShell head-title="Новый пароль">
         <template #title>Новый пароль</template>
         <template #subtitle>Почта уже подставлена — осталось задать пароль.</template>
 

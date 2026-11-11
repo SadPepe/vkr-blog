@@ -446,26 +446,10 @@ textarea,
         }
     }
 
-    /* Auth: слева обещание бренда, справа панель формы. На узких — одна колонка по мере формы */
+    /* Auth: одна колонка по мере формы, панель по центру */
     .auth-layout {
-        display: grid;
-        gap: 2.5rem;
         max-width: 30rem;
         margin-inline: auto;
-    }
-
-    @media (min-width: 1024px) {
-        .auth-layout {
-            max-width: 64rem;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 30rem);
-            gap: 4rem;
-            align-items: start;
-        }
-
-        .auth-aside {
-            position: sticky;
-            top: 2rem;
-        }
     }
 
     /* Статья: колонка 40rem, обложка и фото из тела — во всю ширину контейнера */

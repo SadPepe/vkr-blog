@@ -29,12 +29,7 @@ const consentLink = "text-accent underline underline-offset-[3px] transition-col
 </script>
 
 <template>
-    <AuthShell
-        head-title="Регистрация"
-        headline="Стать автором «подземки»."
-        lead="Здесь тексты важнее охватов: пишите то, что знаете, а читатели ответят."
-        :items="['Статьи с фото и черновиками', 'Страница автора со ссылками', 'Ответы на комментарии и лайки']"
-    >
+    <AuthShell head-title="Регистрация">
         <template #title>Создать аккаунт</template>
         <template #subtitle>Это займёт меньше минуты.</template>
         <template #footer>
