@@ -48,22 +48,12 @@ const consentLink = "text-accent underline underline-offset-[3px] transition-col
         </template>
 
         <form class="space-y-5" @submit.prevent="submit">
-            <AuthField
-                id="name"
-                v-model="form.name"
-                label="Имя"
-                placeholder="Как вас зовут?"
-                autocomplete="name"
-                :error="form.errors.name"
-                required
-                autofocus
-            />
+            <AuthField id="name" v-model="form.name" label="Имя" autocomplete="name" :error="form.errors.name" required autofocus />
 
             <AuthField
                 id="username"
                 v-model="form.username"
                 label="Логин"
-                placeholder="chelny_author"
                 autocomplete="username"
                 hint="3–32 символа: латиница, цифры и подчёркивание. Для входа, другим не показывается."
                 :error="form.errors.username"
@@ -76,7 +66,6 @@ const consentLink = "text-accent underline underline-offset-[3px] transition-col
                 v-model="form.email"
                 type="email"
                 label="Email (необязательно)"
-                placeholder="you@example.com"
                 autocomplete="email"
                 hint="Нужен для восстановления пароля и уведомлений. Можно не указывать."
                 :error="form.errors.email"
@@ -88,7 +77,6 @@ const consentLink = "text-accent underline underline-offset-[3px] transition-col
                 id="invite_code"
                 v-model="form.invite_code"
                 label="Код приглашения"
-                placeholder="Код от администратора"
                 autocomplete="off"
                 hint="Регистрация закрыта: код выдаёт администратор."
                 :error="form.errors.invite_code"
@@ -101,8 +89,8 @@ const consentLink = "text-accent underline underline-offset-[3px] transition-col
                 v-model="form.password"
                 label="Пароль"
                 :type="showPassword ? 'text' : 'password'"
-                placeholder="Минимум 8 символов"
                 autocomplete="new-password"
+                hint="Минимум 8 символов."
                 :error="form.errors.password"
                 required
             >
@@ -123,7 +111,6 @@ const consentLink = "text-accent underline underline-offset-[3px] transition-col
                 v-model="form.password_confirmation"
                 label="Подтверждение пароля"
                 :type="showPassword ? 'text' : 'password'"
-                placeholder="Повторите пароль"
                 autocomplete="new-password"
                 :error="form.errors.password_confirmation"
                 required

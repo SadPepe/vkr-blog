@@ -56,7 +56,6 @@ const submit = () => {
                 id="username"
                 v-model="form.username"
                 label="Логин"
-                placeholder="chelny_author"
                 autocomplete="username"
                 :error="form.errors.username"
                 required
@@ -69,7 +68,6 @@ const submit = () => {
                 v-model="form.password"
                 label="Пароль"
                 :type="showPassword ? 'text' : 'password'"
-                placeholder="••••••••"
                 autocomplete="current-password"
                 :error="form.errors.password"
                 required

@@ -57,8 +57,8 @@ const submit = () => {
                 v-model="form.password"
                 label="Пароль"
                 :type="showPassword ? 'text' : 'password'"
-                placeholder="Минимум 8 символов"
                 autocomplete="new-password"
+                hint="Минимум 8 символов."
                 :error="form.errors.password"
                 required
             >
@@ -79,7 +79,6 @@ const submit = () => {
                 v-model="form.password_confirmation"
                 label="Подтверждение пароля"
                 :type="showPassword ? 'text' : 'password'"
-                placeholder="Повторите пароль"
                 autocomplete="new-password"
                 :error="form.errors.password_confirmation"
                 required

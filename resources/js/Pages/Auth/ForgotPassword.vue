@@ -46,7 +46,6 @@ const submit = () => {
                 v-model="form.email"
                 type="email"
                 label="Почта"
-                placeholder="you@example.com"
                 autocomplete="username"
                 hint="Восстановление работает, только если email указан в профиле. Если почты нет — напишите администратору."
                 :error="form.errors.email"
