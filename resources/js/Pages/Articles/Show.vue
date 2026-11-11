@@ -345,6 +345,22 @@ const updateProgress = () => {
     showTopButton.value = window.scrollY > 700;
 };
 
+// Код и карусели: модули грузим лениво, только если на странице они есть
+const enhanceContent = async () => {
+    const root = contentRef.value;
+    if (!root) return;
+
+    if (root.querySelector("pre code")) {
+        const { enhanceCodeBlocks } = await import("@/Support/codeHighlight");
+        enhanceCodeBlocks(root);
+    }
+
+    if (root.querySelector(".image-carousel")) {
+        const { enhanceImageCarousels } = await import("@/Support/imageCarousel");
+        enhanceImageCarousels(root);
+    }
+};
+
 onMounted(() => {
     updateProgress();
     window.addEventListener("scroll", updateProgress, { passive: true });
@@ -355,6 +371,8 @@ onMounted(() => {
         img.setAttribute("loading", "lazy");
         img.setAttribute("decoding", "async");
     });
+
+    enhanceContent();
 });
 
 onBeforeUnmount(() => {

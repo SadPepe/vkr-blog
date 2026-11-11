@@ -66,7 +66,7 @@
 
                 <div class="site-header-actions flex shrink-0 items-center gap-0.5 lg:gap-3">
                     <!-- Тема оформления -->
-                    <div ref="themeDropdown">
+                    <div ref="themeDropdown" class="theme-menu">
                         <button
                             type="button"
                             class="inline-flex h-11 w-11 items-center justify-center text-muted transition-colors hover:text-accent focus-visible:outline-none lg:h-10 lg:w-10"
@@ -91,11 +91,11 @@
                             leave-from-class="opacity-100 translate-y-0"
                             leave-to-class="opacity-0 -translate-y-1"
                         >
-                            <!-- Панель тем привязана к шапке, а не к кнопке: на узких экранах
-                                 иначе уезжает за левый край. Справа — по отступу page-shell -->
+                            <!-- На узких экранах панель привязана к шапке (иначе уезжает за левый край),
+                                 на lg — к самой кнопке, чтобы открываться под ней -->
                             <div
                                 v-show="isThemeOpen"
-                                class="absolute right-5 top-full z-30 mt-2 grid max-h-[70vh] w-[min(92vw,23rem)] grid-cols-2 gap-x-4 gap-y-3 overflow-y-auto bg-surface p-4 shadow-lg sm:right-8 lg:right-12"
+                                class="theme-menu__panel absolute right-5 top-full z-30 mt-2 grid max-h-[70vh] w-[min(92vw,23rem)] grid-cols-2 gap-x-4 gap-y-3 overflow-y-auto bg-surface p-4 shadow-lg sm:right-8"
                             >
                                 <div v-for="group in themeGroups" :key="group.label" class="min-w-0">
                                     <p class="mb-1 text-sm text-muted">{{ group.label }}</p>

@@ -1,23 +1,40 @@
 <template>
     <div class="relative max-w-4xl mx-auto dark:bg-transparent">
-        <!-- Баннер восстановленного черновика -->
+        <!-- Черновик: при правке статьи не подменяем контент, а предлагаем восстановить -->
         <div
-            v-if="restoredDraft"
+            v-if="pendingDraft || restoredDraft"
             class="mb-4 flex items-center justify-between gap-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-500/30 dark:bg-amber-500/10"
         >
             <div class="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
                 <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span> Восстановлен черновик{{ restoredDraft.savedAt ? ` от ${formatSavedTime(restoredDraft.savedAt)}` : "" }} </span>
+                <span>
+                    <template v-if="pendingDraft">
+                        Найден несохранённый черновик{{ pendingDraft.savedAt ? ` от ${formatSavedTime(pendingDraft.savedAt)}` : "" }}
+                    </template>
+                    <template v-else>
+                        Восстановлен черновик{{ restoredDraft.savedAt ? ` от ${formatSavedTime(restoredDraft.savedAt)}` : "" }}
+                    </template>
+                </span>
             </div>
-            <button
-                type="button"
-                @click="discardRestoredDraft"
-                class="rounded-md px-3 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:text-amber-300 amber-500/20"
-            >
-                Отменить
-            </button>
+            <div class="flex shrink-0 items-center gap-2">
+                <button
+                    v-if="pendingDraft"
+                    type="button"
+                    class="rounded-md px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-500/20"
+                    @click="restorePendingDraft"
+                >
+                    Восстановить
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md px-3 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/20"
+                    @click="pendingDraft ? discardPendingDraft() : discardRestoredDraft()"
+                >
+                    {{ pendingDraft ? "Удалить" : "Отменить" }}
+                </button>
+            </div>
         </div>
 
         <!-- Ошибка загрузки/ссылки -->
@@ -244,6 +261,18 @@
                 >
                     <CodeIcon class="w-5 h-5" />
                 </button>
+                <select
+                    v-model="codeLanguage"
+                    :disabled="!inCodeBlock"
+                    aria-label="Язык блока кода"
+                    class="ml-1 max-w-[8.5rem] rounded-md border border-line bg-surface px-2 py-1.5 text-xs text-content transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-45"
+                    @change="setCodeLanguage"
+                >
+                    <option value="">Без подсветки</option>
+                    <option v-for="language in codeLanguages" :key="language.value" :value="language.value">
+                        {{ language.label }}
+                    </option>
+                </select>
                 <button
                     type="button"
                     @click="editor.chain().focus().setHorizontalRule().run()"
@@ -261,6 +290,15 @@
                     data-tooltip="Добавить изображение"
                 >
                     <ImageIcon class="w-5 h-5" />
+                </button>
+                <button
+                    type="button"
+                    @click="addGallery"
+                    :class="'hover:bg-surface-muted text-content p-2 rounded-md'"
+                    class="tooltip"
+                    data-tooltip="Карусель фото"
+                >
+                    <CarouselIcon class="w-5 h-5" />
                 </button>
             </div>
 
@@ -328,7 +366,10 @@
 <script setup>
 import { BubbleMenu, Editor, EditorContent } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
+import { CODE_LANGUAGES } from "@/Support/codeLanguages";
 import Image from "@tiptap/extension-image";
+import ImageCarousel from "@/Utilities/imageCarouselNode";
+import { CAROUSEL_IMAGE_TYPES, MAX_CAROUSEL_IMAGES } from "@/Support/imageCarouselConfig";
 import Heading from "@tiptap/extension-heading";
 import Underline from "@tiptap/extension-underline";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -347,6 +388,7 @@ import AlignJustifyIcon from "vue-material-design-icons/FormatAlignJustify.vue";
 import AlignLeftIcon from "vue-material-design-icons/FormatAlignLeft.vue";
 import AligRightIcon from "vue-material-design-icons/FormatAlignRight.vue";
 import ImageIcon from "vue-material-design-icons/Image.vue";
+import CarouselIcon from "vue-material-design-icons/ViewCarousel.vue";
 import LinkIcon from "vue-material-design-icons/LinkVariant.vue";
 import { nextTick, onMounted, onBeforeUnmount, ref, watch } from "vue";
 import { MAX_DRAFT_SIZE, readDraft, removeDraft, writeDraft } from "@/Utilities/drafts";
@@ -368,9 +410,31 @@ const title = ref(props.initialTitle || "");
 const editor = ref(null);
 const selectedCategory = ref(props.initialCardCategory || "");
 
+// Язык блока кода: селект живёт рядом с кнопкой и активен только внутри блока
+const codeLanguage = ref("");
+const inCodeBlock = ref(false);
+const codeLanguages = CODE_LANGUAGES;
+
+const syncCodeLanguage = () => {
+    if (!editor.value) return;
+
+    inCodeBlock.value = editor.value.isActive("codeBlock");
+    codeLanguage.value = editor.value.getAttributes("codeBlock").language || "";
+};
+
+const setCodeLanguage = () => {
+    if (!editor.value?.isActive("codeBlock")) return;
+
+    editor.value.chain().focus().updateAttributes("codeBlock", { language: codeLanguage.value || null }).run();
+};
+
 const hasContent = ref(false);
 const isDirty = ref(false);
 const restoredDraft = ref(null);
+const pendingDraft = ref(null);
+// Черновики пишем только после инициализации: иначе установка полей при монтировании
+// сама создаёт «черновик» поверх сохранённой статьи.
+let draftTracking = false;
 const editorError = ref("");
 let editorErrorTimer = null;
 
@@ -441,7 +505,7 @@ const saveDraft = debounce(700, () => {
 });
 
 const queueDraftSave = () => {
-    if (!editor.value) return;
+    if (!editor.value || !draftTracking) return;
     isDirty.value = true;
     saveDraft();
 };
@@ -458,6 +522,25 @@ const resetDraft = () => {
 
 const discardRestoredDraft = () => {
     resetDraft();
+};
+
+// Черновик при правке статьи: контент статьи не трогаем, пока пользователь не согласится
+const restorePendingDraft = () => {
+    if (!pendingDraft.value || !editor.value) return;
+
+    title.value = pendingDraft.value.title || "";
+    selectedCategory.value = pendingDraft.value.category || "";
+    editor.value.commands.setContent(pendingDraft.value.content || "", false);
+    syncHasContent();
+
+    restoredDraft.value = { savedAt: pendingDraft.value.savedAt };
+    pendingDraft.value = null;
+    isDirty.value = true;
+};
+
+const discardPendingDraft = () => {
+    removeDraft(props.draftKey);
+    pendingDraft.value = null;
 };
 
 const formatSavedTime = (ts) =>
@@ -488,7 +571,25 @@ const handleKeyDown = (_view, event) => {
 
 onMounted(() => {
     const draft = loadDraft();
-    const restoredContent = draft?.content || props.initialContent || "";
+    const draftContent = draft?.content || "";
+    // Правка существующей статьи: источник правды — сохранённый текст,
+    // черновик лишь предлагаем восстановить кнопкой.
+    const editingExisting = !!(props.initialContent || "").trim();
+    const restoredContent = editingExisting ? props.initialContent || "" : draftContent || props.initialContent || "";
+
+    if (editingExisting) {
+        if (draftContent && draftContent !== (props.initialContent || "")) {
+            pendingDraft.value = {
+                savedAt: draft.savedAt || null,
+                title: draft.title,
+                category: draft.category,
+                content: draftContent,
+            };
+        }
+    } else if (draftContent) {
+        restoredDraft.value = { savedAt: draft.savedAt || Date.now() };
+        isDirty.value = true;
+    }
 
     editor.value = new Editor({
         extensions: [
@@ -525,6 +626,7 @@ onMounted(() => {
                 },
                 allowBase64: true,
             }),
+            ImageCarousel,
         ],
         content: restoredContent,
         editorProps: {
@@ -532,22 +634,27 @@ onMounted(() => {
                 class: "prose prose-lg dark:prose-invert min-h-[600px] max-w-none mx-auto focus:outline-none p-6 border-2 border-dashed border-line  rounded-md bg-surface  shadow-sm hover:border-accent transition-colors duration-300",
             },
             handleKeyDown,
+            handleDrop: (view, event, _slice, moved) => handleImageDrop(view, event, moved),
+            handlePaste: (_view, event) => handleImagePaste(event),
         },
     });
 
-    // Восстанавливаем значения полей
-    title.value = (draft?.title !== undefined ? draft.title : "") || props.initialTitle || "";
-    selectedCategory.value = (draft?.category !== undefined ? draft.category : "") || props.initialCardCategory || "";
-
-    if (draft?.content) {
-        restoredDraft.value = { savedAt: draft.savedAt || Date.now() };
-        isDirty.value = true;
-    }
+    // Восстанавливаем значения полей: при правке — из статьи, при создании — из черновика
+    title.value = editingExisting
+        ? props.initialTitle || ""
+        : (draft?.title !== undefined ? draft.title : "") || props.initialTitle || "";
+    selectedCategory.value = editingExisting
+        ? props.initialCardCategory || ""
+        : (draft?.category !== undefined ? draft.category : "") || props.initialCardCategory || "";
 
     editor.value.on("update", () => {
         syncHasContent();
+        syncCodeLanguage();
         queueDraftSave();
     });
+
+    editor.value.on("selectionUpdate", syncCodeLanguage);
+    syncCodeLanguage();
 
     // Упрощаем вставку из Word/PDF: сбрасываем скрытое форматирование,
     // оставляя только осмысленные структуры (заголовки, списки т.п.)
@@ -558,6 +665,11 @@ onMounted(() => {
     });
 
     syncHasContent();
+
+    // Установка полей при монтировании — не повод писать черновик
+    nextTick(() => {
+        draftTracking = true;
+    });
 
     const handleBeforeUnload = (e) => {
         if (isDirty.value && currentSnapshot() !== initialSnapshot()) {
@@ -719,29 +831,106 @@ const setLink = () => {
     editor.value.chain().focus().extendMarkRange("link").setLink({ href: finalUrl }).run();
 };
 
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = CAROUSEL_IMAGE_TYPES;
+
+// Новые фото живут в редакторе как blob: и уходят на сервер при сохранении
+const imageUrlsFromFiles = (files) => {
+    const urls = [];
+
+    for (const file of files) {
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+            showError("Поддерживаются JPG, PNG или WebP");
+            continue;
+        }
+
+        if (file.size > MAX_IMAGE_SIZE) {
+            showError("Максимальный размер файла - 2MB");
+            continue;
+        }
+
+        urls.push(URL.createObjectURL(file));
+    }
+
+    return urls;
+};
+
+const imageFilesFrom = (dataTransfer) => [...(dataTransfer?.files || [])].filter((file) => file.type.startsWith("image/"));
+
+const insertImageUrls = (urls, pos = null) => {
+    if (!urls.length || !editor.value) return;
+
+    const content = urls.map((src) => ({ type: "image", attrs: { src } }));
+    const chain = editor.value.chain().focus();
+
+    (pos === null ? chain.insertContent(content) : chain.insertContentAt(pos, content)).run();
+};
+
 // Добавление изображения в content
 const addImage = () => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
 
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        if (file.size > 2 * 1024 * 1024) {
-            showError("Максимальный размер файла - 2MB");
-            return;
-        }
-
-        // Создаем временный URL для предпросмотра
-        const blobUrl = URL.createObjectURL(file);
-
-        // Вставляем изображение в редактор
-        editor.value.chain().focus().setImage({ src: blobUrl }).run();
+    input.onchange = (e) => {
+        insertImageUrls(imageUrlsFromFiles([...(e.target.files || [])]));
     };
 
     input.click();
+};
+
+// Карусель: два и больше фото, максимум 8
+const addGallery = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.multiple = true;
+
+    input.onchange = (e) => {
+        const files = [...(e.target.files || [])];
+
+        if (files.length < 2) {
+            showError("Для карусели нужно минимум два фото");
+            return;
+        }
+
+        if (files.length > MAX_CAROUSEL_IMAGES) {
+            showError(`В карусель можно добавить не больше ${MAX_CAROUSEL_IMAGES} фото`);
+            return;
+        }
+
+        const srcs = imageUrlsFromFiles(files);
+        if (srcs.length < 2) return;
+
+        editor.value.chain().focus().insertContent({ type: "imageCarousel", attrs: { srcs } }).run();
+    };
+
+    input.click();
+};
+
+// Фото можно перетащить или вставить из буфера; внутреннее перемещение узлов не трогаем
+const handleImageDrop = (view, event, moved) => {
+    if (moved) return false;
+
+    const files = imageFilesFrom(event.dataTransfer);
+    if (!files.length) return false;
+
+    event.preventDefault();
+
+    const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
+    insertImageUrls(imageUrlsFromFiles(files), coords?.pos ?? null);
+
+    return true;
+};
+
+const handleImagePaste = (event) => {
+    const files = imageFilesFrom(event.clipboardData);
+    if (!files.length) return false;
+
+    event.preventDefault();
+    insertImageUrls(imageUrlsFromFiles(files));
+
+    return true;
 };
 
 const prepareArticleData = async () => {
@@ -962,25 +1151,30 @@ defineExpose({
     background: rgb(var(--c-surface-muted));
     border-radius: 0.75rem;
     color: rgb(var(--c-content));
-    font-family: "JetBrains Mono", monospace;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.875rem;
+    line-height: 1.65;
     margin: 1.5rem 0;
-    padding: 1.5rem;
+    padding: 0.95rem 1.15rem;
     overflow-x: auto;
     border: 1px solid rgb(var(--c-line));
 }
 
 .prose code {
     background: rgb(var(--c-surface-muted));
-    color: rgb(var(--c-accent));
-    padding: 0.25rem 0.5rem;
+    border: 1px solid rgb(var(--c-line));
+    color: rgb(var(--c-content));
+    padding: 0.12em 0.4em;
     border-radius: 0.375rem;
-    font-size: 0.875rem;
+    font-size: 0.875em;
 }
 
 .prose pre code {
     background: none;
+    border: none;
     color: inherit;
     padding: 0;
+    border-radius: 0;
 }
 
 .prose hr {

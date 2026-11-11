@@ -13,11 +13,16 @@ class Comment extends Model
 
     protected $fillable = [
         'content',
+        'image_path',
         'user_id',
         'article_id',
         'parent_id',
         'likes_count',
         'hidden_at',
+    ];
+
+    protected $appends = [
+        'image_url',
     ];
 
     protected $casts = [
@@ -54,7 +59,7 @@ class Comment extends Model
 
     public function replies(): HasMany
     {
-        return $this->hasMany(Comment::class, 'parent_id')->orderBy('created_at');
+        return $this->hasMany(Comment::class, 'parent_id')->whereNull('hidden_at')->orderBy('created_at');
     }
 
     public function likes(): HasMany
@@ -86,5 +91,17 @@ class Comment extends Model
     public function markLikedByCurrentUser(): void
     {
         $this->is_liked = $this->getIsLikedAttribute();
+    }
+
+    // Публичная ссылка на прикреплённое фото (или null, если фото нет)
+    public function getImageUrlAttribute(): ?string
+    {
+        $path = $this->image_path;
+
+        if (! $path) {
+            return null;
+        }
+
+        return str_starts_with($path, 'http') ? $path : asset('storage/'.$path);
     }
 }

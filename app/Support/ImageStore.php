@@ -6,6 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 /**
@@ -66,25 +67,93 @@ class ImageStore
 
         try {
             $manager = self::manager();
+            $webpPath = $directory . '/' . $baseName . '.webp';
 
             if ($manager !== null) {
                 $image = $manager->read($source);
                 $image->orient();
                 $image->scaleDown(width: $maxWidth, height: $maxHeight);
 
-                $path = $directory . '/' . $baseName . '.webp';
-                Storage::disk('public')->put($path, (string) $image->toWebp($quality));
+                Storage::disk('public')->put($webpPath, (string) $image->toWebp($quality));
 
-                return $path;
+                return $webpPath;
             }
         } catch (Throwable) {
-            // Нет поддержки WebP или файл не читается — ниже сохраним оригинал.
+            // Нет поддержки WebP или файл не читается — пробуем ImageMagick ниже.
+        }
+
+        // На хосте без GD/Imagick конвертируем через CLI, чтобы не отдавать исходный JPEG
+        if (self::convertWithCli($source, $webpPath, $maxWidth, $maxHeight, $quality)) {
+            return $webpPath;
         }
 
         $path = $directory . '/' . $baseName . '.' . $extension;
         Storage::disk('public')->put($path, file_get_contents($source));
 
         return $path;
+    }
+
+    /**
+     * Запасной конвертер для окружений без GD/Imagick: ImageMagick CLI.
+     * В Docker с GD сюда не доходит; нужен локальному PHP и хосту без расширений.
+     */
+    private static function convertWithCli(string $source, string $path, int $maxWidth, int $maxHeight, int $quality): bool
+    {
+        $binary = self::cliBinary();
+
+        if ($binary === null) {
+            return false;
+        }
+
+        $temp = tempnam(sys_get_temp_dir(), 'image-webp-');
+
+        if ($temp === false) {
+            return false;
+        }
+
+        try {
+            $process = new Process([
+                $binary,
+                $source,
+                '-auto-orient',
+                '-resize',
+                $maxWidth . 'x' . $maxHeight . '>',
+                '-quality',
+                (string) $quality,
+                'webp:' . $temp,
+            ]);
+            $process->setTimeout(30);
+            $process->run();
+
+            if (! $process->isSuccessful() || ! is_file($temp) || filesize($temp) === 0) {
+                return false;
+            }
+
+            Storage::disk('public')->put($path, (string) file_get_contents($temp));
+
+            return true;
+        } catch (Throwable) {
+            return false;
+        } finally {
+            if (is_file($temp)) {
+                @unlink($temp);
+            }
+        }
+    }
+
+    private static function cliBinary(): ?string
+    {
+        if (! function_exists('proc_open')) {
+            return null;
+        }
+
+        foreach (['/usr/bin/magick', '/usr/bin/convert', '/usr/local/bin/magick', '/usr/local/bin/convert'] as $binary) {
+            if (is_executable($binary)) {
+                return $binary;
+            }
+        }
+
+        return null;
     }
 
     private static function randomBaseName(): string

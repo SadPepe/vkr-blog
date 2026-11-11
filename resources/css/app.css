@@ -591,10 +591,19 @@ textarea,
     }
 
     .article-body img {
+        /* Ширина по снимку, чтобы вертикальный кадр не растягивался на колонку */
+        width: auto;
         max-width: 100%;
         height: auto;
+        /* Вертикальное фото не выше 70vh: альбомные и так ограничены шириной меры */
+        max-height: 70vh;
+        object-fit: contain;
+        /* Вписанный по высоте кадр держим по левому краю текста */
+        object-position: left center;
         border-radius: 0;
         box-shadow: none;
+        /* Клик по фото в статье раскрывает его в лайтбоксе */
+        cursor: zoom-in;
     }
 
     .article-body figcaption {
@@ -619,17 +628,38 @@ textarea,
         text-align: left;
     }
 
-    .article-body pre {
-        overflow-x: auto;
-        padding: 1rem;
+    /* Код: одна оптика на статье и в ленте — панель на muted-подложке,
+       рамка линии и моноширинный набор; длинные строки скроллятся внутри */
+    .article-body pre,
+    .post-content pre {
+        margin: 1.25rem 0;
+        padding: 0.95rem 1.15rem;
+        border: 1px solid rgb(var(--c-line));
+        border-radius: 0.75rem;
         background: rgb(var(--c-surface-muted));
-        font-size: 0.9375rem;
-        line-height: 1.5;
+        color: rgb(var(--c-content));
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+        font-size: 0.875rem;
+        line-height: 1.65;
+        tab-size: 4;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
     }
 
-    .article-body code {
-        font-size: 0.9375rem;
+    /* Инлайн-код — чипс, чтобы отличался от текста, но не спорил с блоком */
+    .article-body :not(pre) > code,
+    .post-content :not(pre) > code {
+        padding: 0.12em 0.4em;
+        border: 1px solid rgb(var(--c-line));
+        border-radius: 0.375rem;
+        background: rgb(var(--c-surface-muted));
+        color: rgb(var(--c-content));
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+        font-size: 0.875em;
     }
+
+    /* Рамку и подложку блока кода рисует JS-обёртка .code-block (ниже, вне
+       слоя), поэтому здесь pre остаётся запасным вариантом без оформления */
 
     .article-body a {
         color: rgb(var(--c-accent));
@@ -640,6 +670,21 @@ textarea,
     /* Тело статьи, вставленное в ленту: типографика автора, рамки и тени гасим */
     .post-content > * + * {
         margin-top: 1rem;
+    }
+
+    /* Последний блок не добавляет пустоту перед строкой действий под постом */
+    .post-content > :last-child {
+        margin-bottom: 0;
+    }
+
+    /* В свёрнутом посте последний видимый блок — четвёртый, даже если за ним есть скрытые */
+    .post-content.feed-body--clamped > *:nth-child(4) {
+        margin-bottom: 0;
+    }
+
+    /* Запасной вариант, если пустой абзац всё же доехал до ленты */
+    .post-content > p:last-child:empty {
+        display: none;
     }
 
     /*.post-content p,
@@ -824,5 +869,435 @@ textarea,
 
     .legal strong {
         font-weight: 600;
+    }
+}
+
+/* ------------------------------------------------------------------
+   Подсветка кода (highlight.js). Вне @layer components: эти классы
+   появляются в DOM из JS, и Tailwind вычистил бы их как неиспользуемые.
+   Три тона из токенов; акцент подмешан к content, поэтому контраст на
+   muted-подложке держится во всех 16 палитрах (чистый accent в части
+   тем ниже 4.5:1).
+   ------------------------------------------------------------------ */
+
+.hljs-comment,
+.hljs-quote {
+    color: color-mix(in oklab, rgb(var(--c-muted)) 75%, rgb(var(--c-content)));
+    font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-tag,
+.hljs-name,
+.hljs-built_in,
+.hljs-literal,
+.hljs-type {
+    color: color-mix(in oklab, rgb(var(--c-accent)) 35%, rgb(var(--c-content)));
+    font-weight: 600;
+}
+
+.hljs-string,
+.hljs-attr,
+.hljs-attribute,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-addition,
+.hljs-selector-attr {
+    color: rgb(var(--c-content));
+}
+
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-regexp,
+.hljs-meta,
+.hljs-selector-class,
+.hljs-selector-id,
+.hljs-link {
+    color: color-mix(in oklab, rgb(var(--c-accent)) 22%, rgb(var(--c-content)));
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-title.function_,
+.hljs-title.class_,
+.hljs-function .hljs-title,
+.hljs-property {
+    color: rgb(var(--c-content));
+    font-weight: 600;
+}
+
+.hljs-variable,
+.hljs-params,
+.hljs-subst,
+.hljs-operator,
+.hljs-punctuation {
+    color: color-mix(in oklab, rgb(var(--c-muted)) 45%, rgb(var(--c-content)));
+}
+
+.hljs-deletion {
+    color: color-mix(in oklab, rgb(var(--c-accent)) 55%, rgb(var(--c-content)));
+}
+
+.hljs-emphasis {
+    font-style: italic;
+}
+
+.hljs-strong {
+    font-weight: 600;
+}
+
+/* ------------------------------------------------------------------
+   Панель блока кода. Тоже вне @layer components: обёртку, шапку и кнопку
+   создаёт JS, и Tailwind иначе вычистил бы эти классы.
+   Рамку и подложку держит обёртка, внутренний pre — только набор и скролл.
+   ------------------------------------------------------------------ */
+
+.code-block {
+    margin: 1.25rem 0;
+    border: 1px solid rgb(var(--c-line));
+    border-radius: 0.75rem;
+    background: rgb(var(--c-surface-muted));
+    overflow: hidden;
+}
+
+.code-block__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.3rem 0.4rem 0.3rem 1rem;
+    border-bottom: 1px solid rgb(var(--c-line));
+    background: rgb(var(--c-surface));
+}
+
+.code-block__lang {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.6875rem;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, rgb(var(--c-muted)) 55%, rgb(var(--c-content)));
+}
+
+.code-block__copy {
+    padding: 0.35rem 0.6rem;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    line-height: 1;
+    color: rgb(var(--c-content));
+    cursor: pointer;
+    transition:
+        color 150ms,
+        border-color 150ms,
+        background-color 150ms;
+}
+
+.code-block__copy:hover {
+    color: rgb(var(--c-accent));
+    border-color: rgb(var(--c-line-strong));
+    background: rgb(var(--c-surface-muted));
+}
+
+.code-block__copy:focus-visible {
+    outline: 2px solid rgb(var(--c-accent));
+    outline-offset: 2px;
+}
+
+.code-block__copy[data-copied="true"] {
+    color: rgb(var(--c-accent));
+}
+
+/* Внутри обёртки pre не рисует вторую рамку и не спорит с отступами */
+.article-body .code-block > pre,
+.post-content .code-block > pre {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+/* ------------------------------------------------------------------
+   Карусель фото. Разметку и классы создают редактор и JS, поэтому
+   правила вне @layer components.
+   ------------------------------------------------------------------ */
+
+.image-carousel-shell {
+    margin: 1.5rem 0;
+}
+
+.image-carousel {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    border-radius: 0.75rem;
+    background: rgb(var(--c-surface-muted));
+}
+
+/* Кадры одной высоты, с небольшим зазором — лента, но не сплошное полотно */
+.image-carousel > img {
+    flex: 0 0 auto;
+    width: auto;
+    height: clamp(16rem, 50vh, 38rem);
+    min-width: 0;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    border-radius: 0;
+    object-fit: cover;
+    cursor: zoom-in;
+    box-shadow: none;
+}
+
+.image-carousel__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    color: color-mix(in oklab, rgb(var(--c-muted)) 55%, rgb(var(--c-content)));
+}
+
+.image-carousel__counter {
+    letter-spacing: 0.04em;
+}
+
+.image-carousel__nav {
+    display: inline-flex;
+    gap: 0.25rem;
+}
+
+.image-carousel__nav-button {
+    padding: 0.25rem 0.55rem;
+    border: 1px solid rgb(var(--c-line));
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    line-height: 1;
+    color: rgb(var(--c-content));
+    cursor: pointer;
+    transition:
+        color 150ms,
+        border-color 150ms,
+        background-color 150ms;
+}
+
+.image-carousel__nav-button:hover:not(:disabled) {
+    color: rgb(var(--c-accent));
+    border-color: rgb(var(--c-line-strong));
+    background: rgb(var(--c-surface-muted));
+}
+
+.image-carousel__nav-button:focus-visible {
+    outline: 2px solid rgb(var(--c-accent));
+    outline-offset: 2px;
+}
+
+.image-carousel__nav-button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* В редакторе — плитка с переносом: видно все кадры, ничего не нужно скроллить.
+   Это запасной вид, если NodeView недоступен; рабочий вид — .editor-carousel ниже. */
+.prose div.image-carousel {
+    flex-wrap: wrap;
+    overflow: visible;
+}
+
+.prose div.image-carousel > img {
+    height: 9rem;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* ---- Карусель в редакторе: горизонтальная лента с плиткой «+» ---- */
+.editor-carousel {
+    margin: 1.5rem 0;
+    border-radius: 0.5rem;
+    outline: none;
+}
+
+.editor-carousel.is-selected {
+    box-shadow: 0 0 0 2px rgb(var(--c-accent));
+}
+
+.editor-carousel__strip {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-behavior: smooth;
+    padding-bottom: 0.5rem;
+}
+
+.editor-carousel__frame {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+/* Кадр ограничен и по высоте, и по ширине: панорама не растягивается на всю страницу */
+.editor-carousel .editor-carousel__photo {
+    display: block;
+    width: auto;
+    height: 10rem;
+    max-width: 18rem;
+    margin: 0;
+    border: 1px solid rgb(var(--c-line));
+    border-radius: 0.375rem;
+    object-fit: cover;
+    box-shadow: none;
+}
+
+.editor-carousel__remove {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 1px solid rgb(var(--c-line));
+    border-radius: 999px;
+    background: rgb(var(--c-surface));
+    color: rgb(var(--c-muted));
+    cursor: pointer;
+    transition:
+        color 150ms,
+        border-color 150ms;
+}
+
+.editor-carousel__remove:hover {
+    color: rgb(var(--c-accent));
+    border-color: rgb(var(--c-accent));
+}
+
+.editor-carousel__remove svg {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+.editor-carousel__add {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    width: 7rem;
+    height: 10rem;
+    padding: 0 0.5rem;
+    border: 1px dashed rgb(var(--c-line-strong));
+    border-radius: 0.375rem;
+    background: transparent;
+    color: rgb(var(--c-muted));
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+    transition:
+        color 150ms,
+        border-color 150ms;
+}
+
+.editor-carousel__add:hover {
+    color: rgb(var(--c-accent));
+    border-color: rgb(var(--c-accent));
+}
+
+.editor-carousel__add svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.editor-carousel__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem 0.75rem;
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    color: rgb(var(--c-muted));
+}
+
+.editor-carousel__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.editor-carousel__nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid rgb(var(--c-line));
+    border-radius: 0.25rem;
+    background: transparent;
+    color: rgb(var(--c-content));
+    cursor: pointer;
+    transition:
+        color 150ms,
+        border-color 150ms,
+        background-color 150ms;
+}
+
+.editor-carousel__nav:hover {
+    color: rgb(var(--c-accent));
+    border-color: rgb(var(--c-line-strong));
+    background: rgb(var(--c-surface-muted));
+}
+
+.editor-carousel__nav--danger {
+    margin-left: 0.25rem;
+    color: rgb(var(--c-muted));
+}
+
+.editor-carousel__nav--danger:hover {
+    color: rgb(var(--c-accent));
+    border-color: rgb(var(--c-accent));
+}
+
+.editor-carousel__nav svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.editor-carousel__notice {
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    color: rgb(var(--c-accent));
+}
+
+@media (min-width: 640px) {
+    .editor-carousel .editor-carousel__photo,
+    .editor-carousel .editor-carousel__add {
+        height: 12rem;
+    }
+
+    .editor-carousel .editor-carousel__photo {
+        max-width: 24rem;
+    }
+}
+
+/* Панель тем: на десктопе открывается под кнопкой, на узких экранах — от шапки */
+@media (min-width: 1024px) {
+    .theme-menu {
+        position: relative;
+    }
+
+    .theme-menu .theme-menu__panel {
+        right: 0;
     }
 }

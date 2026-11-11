@@ -111,7 +111,21 @@ class PostPreview
             $textLength += $plainLength;
         }
 
-        return ['html' => trim($out), 'complete' => $complete];
+        return ['html' => self::trimEmptyEdges($out), 'complete' => $complete];
+    }
+
+    /**
+     * Tiptap оставляет по краям пустые <p></p> (и <p><br></p>): в ленте они
+     * добавляют пустую строку между телом поста и действиями под ним.
+     */
+    private static function trimEmptyEdges(string $html): string
+    {
+        $emptyParagraph = '<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>';
+
+        $html = preg_replace('/^(?:\s*'.$emptyParagraph.')+/iu', '', $html) ?? $html;
+        $html = preg_replace('/(?:\s*'.$emptyParagraph.')+\s*$/iu', '', $html) ?? $html;
+
+        return trim($html);
     }
 
     /**

@@ -97,7 +97,9 @@ class Article extends Model
         return $this->hasMany(Comment::class)
             ->whereNull('parent_id')
             ->whereNull('hidden_at')
-            ->orderBy('created_at');
+            // Свежие обсуждения сверху: новый комментарий сразу виден под формой
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
     }
 
     /**

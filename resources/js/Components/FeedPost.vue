@@ -64,6 +64,7 @@
         </h3>
 
         <div
+            ref="bodyRef"
             class="post-content px-4 pb-2 text-content sm:px-5"
             :class="[heading ? 'pt-3' : '', { 'feed-body--clamped': article.has_more && !expanded }]"
             v-html="postHtml"
@@ -107,7 +108,7 @@
                     <span class="text-muted"> · </span>
                     <span class="text-muted">последний комментарий</span>
                 </p>
-                <p class="mt-0.5 line-clamp-2 text-[0.9375rem] leading-snug text-content">{{ article.latest_comment.body }}</p>
+                <p class="mt-0.5 line-clamp-2 break-words text-[0.9375rem] leading-snug text-content">{{ article.latest_comment.body }}</p>
             </div>
         </Link>
 
@@ -161,7 +162,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 import LikeButton from "@/Components/LikeButton.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
@@ -238,6 +239,32 @@ const demoteHeadings = (html) =>
     (html || "").replace(/<(\/?)h([1-6])\b[^>]*>/gi, (_, close) => (close ? "</p>" : '<p class="post-subhead">'));
 
 const postHtml = computed(() => demoteHeadings(expanded.value ? fullHtml.value : props.article.preview));
+
+// Код и карусели в ленте: модули грузим лениво, только когда они нужны
+const bodyRef = ref(null);
+
+const enhanceContent = async () => {
+    const root = bodyRef.value;
+    if (!root) return;
+
+    if (root.querySelector("pre code")) {
+        const { enhanceCodeBlocks } = await import("@/Support/codeHighlight");
+        enhanceCodeBlocks(root);
+    }
+
+    if (root.querySelector(".image-carousel")) {
+        const { enhanceImageCarousels } = await import("@/Support/imageCarousel");
+        enhanceImageCarousels(root);
+    }
+};
+
+onMounted(enhanceContent);
+
+// При раскрытии поста HTML меняется целиком — оформляем блоки заново
+watch(postHtml, async () => {
+    await nextTick();
+    enhanceContent();
+});
 
 const toggleExpand = async () => {
     if (expanded.value) {

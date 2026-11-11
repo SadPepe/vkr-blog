@@ -1,56 +1,47 @@
 <!-- resources/js/Components/Comments/CommentSection.vue -->
 <template>
-    <div class="mt-14">
-        <!-- Заголовок: название и счётчик в одну строку, без линий и пилюль -->
-        <div class="mt-16 flex items-baseline gap-3">
-            <h2 class="type-h2 text-content">Комментарии</h2>
-            <span class="num text-[1.0625rem] text-muted">{{ comments.length }}</span>
+    <section id="comments" class="mt-16 scroll-mt-24" aria-labelledby="comments-title">
+        <!-- Заголовок: название и число комментариев, без линий и пилюль -->
+        <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <h2 id="comments-title" class="type-h2 text-content">Обсуждение</h2>
+            <span v-if="comments.length" class="num text-[0.9375rem] text-muted">
+                {{ comments.length }} {{ plural(comments.length, ["комментарий", "комментария", "комментариев"]) }}
+                <template v-if="repliesCount"> · {{ repliesCount }} {{ plural(repliesCount, ["ответ", "ответа", "ответов"]) }} </template>
+            </span>
         </div>
 
-        <!-- Форма добавления комментария -->
-        <div v-if="authUser" class="mt-8">
-            <form @submit.prevent="submitComment">
-                <div class="flex items-start gap-3">
-                    <UserAvatar :user="authUser" :size="40" class="mt-1 shrink-0" />
-                    <div class="min-w-0 flex-1">
-                        <textarea
-                            v-model="newComment"
-                            placeholder="Поделитесь мыслями"
-                            rows="3"
-                            class="w-full resize-none border-0 border-b border-line bg-transparent px-0 py-2 text-[1.0625rem] text-content outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-0"
-                            :class="{ 'border-accent': errors.content }"
-                        />
-                        <InputError :message="errors.content" class="mt-2" />
-                    </div>
-                </div>
-                <div class="mt-4 flex justify-end">
-                    <button
-                        type="submit"
-                        :disabled="!newComment.trim() || loading"
-                        class="inline-flex min-h-11 items-center bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <span>{{ loading ? "Отправка…" : "Оставить комментарий" }}</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-        <p v-else class="mt-6 text-muted">
-            <Link :href="route('login')" class="text-accent transition-colors hover:text-accent-hover">Войдите</Link>, чтобы оставить
-            комментарий
-        </p>
-
-        <!-- Список комментариев -->
-        <div v-if="comments.length" class="space-y-4">
-            <CommentItem
-                v-for="comment in comments"
-                :key="comment.id"
-                :comment="comment"
-                :article-author-id="articleAuthorId"
-                :article-slug="articleSlug"
-                @delete="deleteComment"
+        <!-- Форма — низкая полоска с рамкой; стрелка отправки появляется с вводом -->
+        <form v-if="authUser" class="mt-8" @submit.prevent="submitComment">
+            <CommentInput
+                id="new-comment"
+                v-model="newComment"
+                v-model:image="newImage"
+                label="Ваш комментарий"
+                placeholder="Что вы об этом думаете? Можно прикрепить фото."
+                submit-label="Отправить комментарий"
+                :loading="loading"
+                :error="errors.content"
+                :image-error="errors.image"
+                :hint="hint"
             />
+        </form>
+
+        <div v-else class="mt-8">
+            <p class="text-[1.0625rem] text-muted">
+                Чтобы присоединиться к обсуждению,
+                <Link :href="route('login')" class="text-accent transition-colors hover:text-accent-hover">войдите</Link>
+                или
+                <Link :href="route('register')" class="text-accent transition-colors hover:text-accent-hover">зарегистрируйтесь</Link>.
+            </p>
         </div>
-        <p v-else class="mt-8 text-muted">Пока нет комментариев. Будьте первыми.</p>
+
+        <!-- Список комментариев: без панелей, ритм задают отступы -->
+        <ol v-if="comments.length" class="mt-10 space-y-9" aria-label="Комментарии">
+            <li v-for="comment in comments" :key="comment.id">
+                <CommentItem :comment="comment" :article-author-id="articleAuthorId" :article-slug="articleSlug" @delete="deleteComment" />
+            </li>
+        </ol>
+        <p v-else class="mt-8 text-[1.0625rem] text-muted">Пока никто не высказался. Начните обсуждение — первый комментарий задаёт тон.</p>
 
         <ConfirmDialog
             :show="pendingDeleteId !== null"
@@ -59,16 +50,18 @@
             @confirm="confirmDelete"
             @cancel="pendingDeleteId = null"
         />
-    </div>
+    </section>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { computed, nextTick, reactive, ref } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
+import CommentInput from "@/Components/Comments/CommentInput.vue";
 import CommentItem from "@/Components/Comments/CommentItem.vue";
 import ConfirmDialog from "@/Components/ConfirmDialog.vue";
-import InputError from "@/Components/InputError.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
+
+const MAX_LENGTH = 1000;
 
 const page = usePage();
 
@@ -89,6 +82,7 @@ const props = defineProps({
 });
 
 const newComment = ref("");
+const newImage = ref(null);
 const loading = ref(false);
 const errors = reactive({});
 
@@ -103,29 +97,51 @@ const plural = (count, [one, few, many]) => {
 
 const authUser = computed(() => page.props.auth.user);
 const articleAuthorId = computed(() => props.article.user.id);
-
+// В счётчике статьи — только верхний уровень; ответы показываем отдельным числом
+const repliesCount = computed(() =>
+    props.comments.reduce((total, comment) => total + (comment.replies || []).filter((reply) => !reply.hidden_at).length, 0),
+);
+const remaining = computed(() => MAX_LENGTH - newComment.value.length);
+// Счётчик появляется только у предела, чтобы полоска оставалась низкой
+const hint = computed(() =>
+    remaining.value <= 200 ? `${remaining.value} ${plural(remaining.value, ["символ", "символа", "символов"])} осталось` : "",
+);
+// Новые комментарии показываются сверху — свежий оказывается сразу под формой
 const submitComment = async () => {
+    if ((!newComment.value.trim() && !newImage.value) || loading.value) return;
+
     loading.value = true;
     errors.content = "";
+    errors.image = "";
+
+    const countBefore = props.comments.length;
+    const payload = { content: newComment.value };
+    if (newImage.value) payload.image = newImage.value;
 
     try {
-        await router.post(
-            route("comments.store", props.articleSlug),
-            {
-                content: newComment.value,
+        await router.post(route("comments.store", props.articleSlug), payload, {
+            preserveScroll: true,
+            forceFormData: !!newImage.value,
+            onSuccess: async () => {
+                newComment.value = "";
+                newImage.value = null;
+
+                await nextTick();
+
+                // Страховка: если список не обновился, дотягиваем страницу вручную
+                if (props.comments.length === countBefore) {
+                    router.reload({ only: ["article"], preserveScroll: true });
+                }
             },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    newComment.value = "";
-                },
-                onError: (err) => {
-                    if (err.content) {
-                        errors.content = err.content[0];
-                    }
-                },
+            onError: (err) => {
+                if (err.content) {
+                    errors.content = err.content[0];
+                }
+                if (err.image) {
+                    errors.image = err.image[0];
+                }
             },
-        );
+        });
     } finally {
         loading.value = false;
     }

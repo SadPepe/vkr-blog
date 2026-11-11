@@ -63,6 +63,15 @@ class PostPreviewTest extends TestCase
         $this->assertStringContainsString('<p>', $excerpt['html']);
     }
 
+    public function test_preview_drops_empty_paragraphs_on_edges(): void
+    {
+        $html = '<p></p><p>Текст</p><p></p><p><br></p>';
+
+        $preview = PostPreview::make($html);
+
+        $this->assertSame('<p>Текст</p>', $preview);
+    }
+
     public function test_excerpt_stays_within_its_limit(): void
     {
         $html = str_repeat('<p>'.str_repeat('Слово ', 90).'</p>', 200);

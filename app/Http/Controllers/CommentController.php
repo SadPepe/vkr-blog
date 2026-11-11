@@ -5,19 +5,33 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Article;
 use App\Models\Comment;
+use App\Support\ImageStore;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class CommentController extends Controller
 {
     public function store(Request $request, Article $article)
     {
         $validated = $request->validate([
-            'content' => 'required|string|max:1000',
+            'content' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'parent_id' => 'nullable|exists:comments,id'
         ]);
 
+        $content = trim((string) ($validated['content'] ?? ''));
+        $hasImage = $request->hasFile('image');
+
+        if ($content === '' && ! $hasImage) {
+            throw ValidationException::withMessages([
+                'content' => 'Добавьте текст или фото — пустой комментарий отправить нельзя.',
+            ]);
+        }
+
         $comment = $article->comments()->create([
-            'content' => $validated['content'],
+            'content' => $content,
+            'image_path' => $hasImage ? ImageStore::storeUploaded($request->file('image'), 'comments') : null,
             'user_id' => auth()->id(),
             'parent_id' => $validated['parent_id'] ?? null
         ]);
@@ -42,10 +56,36 @@ class CommentController extends Controller
         Gate::authorize('update', $comment);
 
         $validated = $request->validate([
-            'content' => 'required|string|max:1000'
+            'content' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'remove_image' => 'nullable|boolean',
         ]);
 
-        $comment->update($validated);
+        $content = trim((string) ($validated['content'] ?? ''));
+        $hasImage = $request->hasFile('image');
+        $removeImage = ! $hasImage && $request->boolean('remove_image');
+        $keepsImage = $hasImage || ($comment->image_path && ! $removeImage);
+
+        if ($content === '' && ! $keepsImage) {
+            throw ValidationException::withMessages([
+                'content' => 'Добавьте текст или фото — пустой комментарий сохранить нельзя.',
+            ]);
+        }
+
+        $imagePath = $comment->image_path;
+
+        if ($hasImage) {
+            self::deleteImage($comment->image_path);
+            $imagePath = ImageStore::storeUploaded($request->file('image'), 'comments');
+        } elseif ($removeImage) {
+            self::deleteImage($comment->image_path);
+            $imagePath = null;
+        }
+
+        $comment->update([
+            'content' => $content,
+            'image_path' => $imagePath,
+        ]);
 
         if ($request->wantsJson()) {
             return response()->json($comment);
@@ -60,7 +100,13 @@ class CommentController extends Controller
 
         $article = $comment->article;
 
+        // Ответы удаляются каскадом в БД, поэтому забираем их файлы заранее
+        $imagePaths = Comment::where('parent_id', $comment->id)->pluck('image_path')
+            ->push($comment->image_path);
+
         $comment->delete();
+
+        $imagePaths->each(fn (?string $path) => self::deleteImage($path));
 
         // Обновляем счетчик комментариев статьи (только для верхнего уровня)
         if (!$comment->isReply()) {
@@ -90,5 +136,15 @@ class CommentController extends Controller
             'liked' => $liked,
             'likes_count' => $comment->fresh()->likes_count
         ]);
+    }
+
+    // Удаляет файл из публичного диска; внешние ссылки не трогаем
+    private static function deleteImage(?string $path): void
+    {
+        if (! $path || str_starts_with($path, 'http')) {
+            return;
+        }
+
+        Storage::disk('public')->delete($path);
     }
 }

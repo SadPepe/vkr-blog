@@ -9,7 +9,7 @@
     />
     <span
         v-else
-        class="inline-flex shrink-0 select-none items-center justify-center bg-surface-muted font-semibold text-content"
+        class="inline-flex shrink-0 select-none items-center justify-center bg-surface-muted font-semibold leading-none text-content"
         :class="square ? '' : 'rounded-full'"
         :style="{
             width: `${size}px`,
