@@ -312,6 +312,13 @@ body {
     background-color: rgb(var(--c-page));
 }
 
+/* Класс, который старый редактор писал в HTML поста: Inter не подключён,
+   и без семейства браузер брал засечный фолбэк — держим шрифт сайта.
+   Вне @layer, иначе Tailwind вычистит неиспользуемый класс из сборки. */
+.font-\[Inter\] {
+    font-family: inherit;
+}
+
 h1,
 h2,
 h3,
@@ -585,11 +592,6 @@ textarea,
         font-weight: 600;
         font-size: 1.125rem;
         line-height: 1.35;
-    }
-
-    /* Обложка уже показана сверху — её дубль в теле скрываем */
-    .article-body--hero img:first-of-type {
-        display: none;
     }
 
     .article-body img {

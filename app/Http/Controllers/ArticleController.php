@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\Category;
+use App\Support\ContentNormalizer;
 use App\Support\HtmlSanitizer;
 use App\Support\PostPreview;
 use App\Traits\HandlesArticles;
@@ -26,7 +27,8 @@ class ArticleController extends Controller
         ]);
 
         // Санитизация HTML от XSS (вырезаются script, on* , javascript: и т.п.)
-        $content = HtmlSanitizer::sanitize($validated['content']);
+        // и разведение абзацев: вставка из буфера приходит одним <p> с <br>
+        $content = ContentNormalizer::paragraphs(HtmlSanitizer::sanitize($validated['content']));
 
         if ($this->contentIsEmpty($content)) {
             throw ValidationException::withMessages([
@@ -80,7 +82,7 @@ class ArticleController extends Controller
             'article' => [
                 'id' => $article->id,
                 'title' => $article->title,
-                'content' => $article->content,
+                'content' => ContentNormalizer::paragraphs((string) $article->content),
                 'slug' => $article->slug,
                 'category_slug' => $article->category_slug,
             ],
@@ -99,8 +101,8 @@ class ArticleController extends Controller
 
         $oldContent = $article->content;
 
-        // Санитизация HTML от XSS
-        $content = HtmlSanitizer::sanitize($validated['content']);
+        // Санитизация HTML от XSS и разведение абзацев (см. store)
+        $content = ContentNormalizer::paragraphs(HtmlSanitizer::sanitize($validated['content']));
 
         if ($this->contentIsEmpty($content)) {
             throw ValidationException::withMessages([
@@ -156,6 +158,9 @@ class ArticleController extends Controller
         ]);
 
         $article->is_liked = auth()->check() ? $article->getIsLikedAttribute() : false;
+
+        // Старые посты могли сохраниться одним <p> с <br>: на показе разводим по абзацам
+        $article->content = ContentNormalizer::paragraphs((string) $article->content);
 
         // Помечаем комментарии: лайкнул ли их текущий пользователь
         $article->comments->each(function ($comment) {

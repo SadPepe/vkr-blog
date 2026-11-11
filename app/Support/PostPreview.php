@@ -49,6 +49,9 @@ class PostPreview
             return ['html' => '', 'complete' => true];
         }
 
+        // Строки через <br> — в отдельные абзацы, иначе в превью они слипаются
+        $html = ContentNormalizer::paragraphs($html);
+
         $doc = new DOMDocument();
         $previous = libxml_use_internal_errors(true);
         $doc->loadHTML(

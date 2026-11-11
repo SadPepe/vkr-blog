@@ -83,7 +83,9 @@
         <!-- ПАНЕЛЬ ИНСТРУМЕНТОВ -->
         <div
             v-if="editor"
-            class="bg-surface flex flex-wrap items-center rounded-md border mb-6 p-3 shadow-sm sticky top-0 z-10 backdrop-blur-sm bg-surface/95"
+            ref="toolbarRef"
+            class="editor-toolbar bg-surface flex flex-nowrap items-center overflow-x-auto rounded-md border mb-6 p-2 shadow-sm sticky top-0 z-10 backdrop-blur-sm bg-surface/95 [&>*]:shrink-0 md:flex-wrap md:overflow-visible md:p-3"
+            :style="toolbarStyle"
         >
             <!-- Группа форматирования текста -->
             <div class="flex items-center border-r border-line pr-3 mr-3">
@@ -267,8 +269,17 @@
             </span>
         </div>
 
+        <!-- Панель стала fixed при открытой клавиатуре — держим её место в потоке -->
+        <div v-if="toolbarSpacerHeight" :style="{ height: `${toolbarSpacerHeight}px` }" aria-hidden="true"></div>
+
         <!-- BUBBLE МЕНЮ -->
-        <bubble-menu :editor="editor" :tippy-options="{ duration: 100, maxWidth: 'none' }" v-if="editor" class="bubble-menu">
+        <bubble-menu
+            v-if="editor"
+            :editor="editor"
+            :should-show="showBubbleMenu"
+            :tippy-options="{ duration: 100, maxWidth: 'none' }"
+            class="bubble-menu"
+        >
             <div
                 class="flex items-center bg-surface rounded-md shadow-lg border border-line p-2 backdrop-blur-sm bg-surface/95"
             >
@@ -337,7 +348,7 @@ import AlignLeftIcon from "vue-material-design-icons/FormatAlignLeft.vue";
 import AligRightIcon from "vue-material-design-icons/FormatAlignRight.vue";
 import ImageIcon from "vue-material-design-icons/Image.vue";
 import LinkIcon from "vue-material-design-icons/LinkVariant.vue";
-import { onMounted, onBeforeUnmount, ref, watch } from "vue";
+import { nextTick, onMounted, onBeforeUnmount, ref, watch } from "vue";
 import { MAX_DRAFT_SIZE, readDraft, removeDraft, writeDraft } from "@/Utilities/drafts";
 
 const props = defineProps({
@@ -556,10 +567,31 @@ onMounted(() => {
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     window.__tiptapBeforeUnload = handleBeforeUnload;
+
+    // Панель редактора держим в видимой области, когда открыта клавиатура
+    syncToolbarPosition();
+    window.visualViewport?.addEventListener("resize", syncToolbarPosition);
+    window.visualViewport?.addEventListener("scroll", syncToolbarPosition);
+    window.addEventListener("resize", syncToolbarPosition);
+    window.addEventListener("orientationchange", syncToolbarPosition);
+});
+
+// Панель появляется вместе с редактором — привязываемся к ней, как только он готов
+watch(editor, (instance) => {
+    if (instance) {
+        nextTick(syncToolbarPosition);
+    }
 });
 
 // Очистка
 onBeforeUnmount(() => {
+    window.visualViewport?.removeEventListener("resize", syncToolbarPosition);
+    window.visualViewport?.removeEventListener("scroll", syncToolbarPosition);
+    window.removeEventListener("resize", syncToolbarPosition);
+    window.removeEventListener("orientationchange", syncToolbarPosition);
+    toolbarResizeObserver?.disconnect();
+    toolbarResizeObserver = null;
+
     const handler = window.__tiptapBeforeUnload;
     if (handler) {
         window.removeEventListener("beforeunload", handler);
@@ -578,6 +610,79 @@ const categoryOptions = ref([
     { name: "Путешествия", slug: "travel" },
     { name: "Искусство", slug: "art" },
 ]);
+
+// На тач-устройствах всплывающее меню накладывается на системное меню
+// выделения («Копировать/Вырезать»), а форматирование доступно в верхней панели.
+const showBubbleMenu = () => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+        return true;
+    }
+
+    return !window.matchMedia("(pointer: coarse)").matches;
+};
+
+const isCoarsePointer = () =>
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(pointer: coarse)").matches;
+
+// Клавиатура на телефоне уменьшает visual viewport, а не layout: sticky-панель
+// остаётся выше видимой области. Пока клавиатура открыта, переносим панель
+// в fixed и привязываем к верху экрана.
+const toolbarRef = ref(null);
+const toolbarStyle = ref({});
+const toolbarSpacerHeight = ref(0);
+
+const KEYBOARD_GAP = 80;
+
+let toolbarResizeObserver = null;
+
+const observeToolbar = () => {
+    if (toolbarResizeObserver || typeof ResizeObserver === "undefined" || !toolbarRef.value) {
+        return;
+    }
+
+    toolbarResizeObserver = new ResizeObserver(() => syncToolbarPosition());
+    toolbarResizeObserver.observe(toolbarRef.value);
+};
+
+const syncToolbarPosition = () => {
+    const element = toolbarRef.value;
+    const viewport = typeof window !== "undefined" ? window.visualViewport : null;
+
+    if (!element || !viewport || !isCoarsePointer()) {
+        toolbarStyle.value = {};
+        toolbarSpacerHeight.value = 0;
+        return;
+    }
+
+    observeToolbar();
+
+    const keyboardOpen = viewport.height < window.innerHeight - KEYBOARD_GAP || viewport.offsetTop > 0;
+
+    if (!keyboardOpen) {
+        toolbarStyle.value = {};
+        toolbarSpacerHeight.value = 0;
+        return;
+    }
+
+    // Высота панели + её mb-6 (1.5rem), чтобы контент не прыгал под панель
+    toolbarSpacerHeight.value = Math.round(element.offsetHeight + 24);
+
+    // Панель на всю ширину экрана: скругления и боковые границы тут лишние.
+    // top: 0 — браузеры сами держат fixed у верха видимой части экрана.
+    toolbarStyle.value = {
+        position: "fixed",
+        top: "0px",
+        left: "0px",
+        right: "0px",
+        zIndex: 50,
+        marginBottom: "0px",
+        borderRadius: "0px",
+        borderLeftWidth: "0px",
+        borderRightWidth: "0px",
+    };
+};
 
 const setLink = () => {
     const previousUrl = editor.value.getAttributes("link").href || "";
@@ -904,9 +1009,28 @@ defineExpose({
     transition: transform 0.3s ease;
 }
 
+/* Панель инструментов на телефоне — одна строка с горизонтальной прокруткой */
+.editor-toolbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior-x: contain;
+}
+
+.editor-toolbar::-webkit-scrollbar {
+    display: none;
+}
+
 /* Bubble menu стили */
 .bubble-menu {
     animation: slideDown 0.2s ease-out;
+}
+
+/* На тач-экранах системное меню выделения перекрывается панелью —
+   прячем её, форматирование остаётся в верхней панели редактора */
+@media (pointer: coarse) {
+    .bubble-menu {
+        display: none !important;
+    }
 }
 
 @keyframes slideDown {

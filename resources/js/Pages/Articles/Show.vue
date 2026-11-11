@@ -36,67 +36,17 @@
                             {{ article.title }}
                         </h1>
 
-                        <!-- Категория и дата — строкой после заголовка -->
+                        <!-- Дата и время чтения — строкой после заголовка.
+                             Категория уже есть в хлебных крошках, поэтому здесь её нет -->
                         <p class="type-meta mt-4">
-                            <template v-if="category">
-                                <Link :href="route('articlesByCategory', category.slug)" class="transition-colors hover:text-accent">
-                                    {{ category.name }}
-                                </Link>
-                                <span aria-hidden="true"> · </span>
-                            </template>
-                            <span>опубликовано&nbsp;</span>
                             <time :datetime="article.created_at">{{ formatDate(article.created_at) }}</time>
                             <span aria-hidden="true"> · </span>
                             <span class="whitespace-nowrap">{{ readingMinutes }} мин чтения</span>
                         </p>
                     </div>
 
-                    <!-- Обложка во всю ширину контейнера -->
-                    <figure v-if="article.card_image_path" class="mt-10">
-                        <img
-                            :src="article.card_image_path"
-                            :alt="article.title || displayTitle"
-                            class="max-h-[70vh] w-full cursor-zoom-in object-contain"
-                            :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
-                            fetchpriority="high"
-                            @load="imageLoaded = true"
-                            @error="onImageError"
-                            @click="openLightbox(article.card_image_path)"
-                        />
-                    </figure>
-
-                    <div class="mt-6 flex items-center gap-3">
-                        <UserAvatar :user="article.user" :size="40" />
-                        <Link :href="authorUrl" class="text-[1.0625rem] font-medium text-content transition-colors hover:text-accent">
-                            {{ article.user.name }}
-                        </Link>
-                    </div>
-
-                    <ArticleStats
-                        :article="article"
-                        :views-count="article.views_count"
-                        :initial-liked="article.is_liked"
-                        :initial-likes-count="article.likes_count"
-                        :comments-count="article.comments.length"
-                        class="mt-6"
-                    />
-
-                    <div v-if="page.props.auth?.user && page.props.auth.user.id !== article.user.id" class="mt-2">
-                        <button
-                            type="button"
-                            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-surface-muted hover:text-accent"
-                            @click="reportOpen = true"
-                        >
-                            Пожаловаться
-                        </button>
-                    </div>
-
-                    <div
-                        ref="contentRef"
-                        class="article-body mt-12 text-content"
-                        :class="{ 'article-body--hero': article.card_image_path }"
-                        v-html="article.content"
-                    ></div>
+                    <!-- Картинки показываем как есть — в том месте текста, куда их вставил автор -->
+                    <div ref="contentRef" class="article-body mt-12 text-content" v-html="article.content"></div>
 
                     <div class="article-measure mx-auto">
                         <!-- Поделиться: текстовые ссылки -->
@@ -131,44 +81,70 @@
 
                 <!-- Рейл: похожие и афиша закрывают правую сторону -->
                 <aside class="article-rail">
-                    <!-- Автор статьи: кто это и куда идти дальше -->
-                    <div class="flex items-start gap-4">
+                    <!-- Автор статьи: аватар и имя одной строкой, описание — ниже во всю ширину -->
+                    <div class="flex items-center gap-3">
                         <UserAvatar :user="article.user" :size="56" class="shrink-0" />
-                        <div class="min-w-0">
-                            <Link :href="authorUrl" class="text-[1.0625rem] font-medium text-content transition-colors hover:text-accent">
-                                {{ article.user.name }}
-                            </Link>
-                            <p v-if="article.user.about" class="mt-1.5 text-muted">
-                                {{ article.user.about }}
-                            </p>
-                            <Link :href="authorUrl" class="mt-2 inline-block text-sm text-accent transition-colors hover:text-accent-hover">
-                                Все статьи автора
-                            </Link>
-                        </div>
+                        <Link
+                            :href="authorUrl"
+                            class="min-w-0 text-[1.0625rem] font-medium text-content transition-colors hover:text-accent"
+                        >
+                            {{ article.user.name }}
+                        </Link>
+                    </div>
+                    <p v-if="article.user.about" class="mt-3 text-muted">
+                        {{ article.user.about }}
+                    </p>
+                    <Link :href="authorUrl" class="mt-2 inline-block text-sm text-accent transition-colors hover:text-accent-hover">
+                        Все статьи автора
+                    </Link>
+
+                    <!-- Метрики и действия — рядом с автором; на узких экранах рейл уходит под статью -->
+                    <ArticleStats
+                        :article="article"
+                        :views-count="article.views_count"
+                        :initial-liked="article.is_liked"
+                        :initial-likes-count="article.likes_count"
+                        :comments-count="article.comments.length"
+                        class="mt-6"
+                    />
+
+                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                        <Link
+                            v-if="isOwner"
+                            :href="route('articles.edit', { article: article.slug })"
+                            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-surface-muted hover:text-accent"
+                        >
+                            <svg
+                                class="h-[1.125rem] w-[1.125rem]"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
+                                />
+                            </svg>
+                            Редактировать
+                        </Link>
+                        <button
+                            v-else-if="page.props.auth?.user"
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-surface-muted hover:text-accent"
+                            @click="reportOpen = true"
+                        >
+                            Пожаловаться
+                        </button>
                     </div>
 
-                    <template v-if="popularArticles && popularArticles.length > 0">
-                        <h2 class="type-h2 mt-12 text-content">Афиша</h2>
-                        <ul class="mt-5 flex flex-col gap-5 sm:grid sm:grid-cols-2 sm:gap-x-8 sm:gap-y-5 lg:flex lg:flex-col lg:gap-5">
-                            <li v-for="item in popularArticles.slice(0, 5)" :key="item.id">
-                                <Link
-                                    :href="route('articles.show', item.slug)"
-                                    class="group flex flex-wrap items-baseline gap-x-2.5 gap-y-1"
-                                >
-                                    <span
-                                        class="num font-display text-[1.75rem] font-bold leading-none tracking-[-0.02em] text-content transition-colors group-hover:text-accent"
-                                    >
-                                        {{ item.views_count }}
-                                    </span>
-                                    <span
-                                        class="basis-full text-[1.0625rem] font-medium leading-snug text-content transition-colors group-hover:text-accent"
-                                    >
-                                        {{ item.title }}
-                                    </span>
-                                </Link>
-                            </li>
-                        </ul>
-                    </template>
+                    <PosterRail
+                        v-if="popularArticles && popularArticles.length > 0"
+                        class="mt-12"
+                        :articles="popularArticles.slice(0, 5)"
+                    />
                 </aside>
             </div>
         </div>
@@ -210,6 +186,7 @@ import CommentSection from "@/Components/Comments/CommentSection.vue";
 import ArticleStats from "@/Components/ArticleStats.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import ImageLightbox from "@/Components/ImageLightbox.vue";
+import PosterRail from "@/Components/PosterRail.vue";
 import ReportDialog from "@/Components/ReportDialog.vue";
 
 const page = usePage();
@@ -230,6 +207,9 @@ const props = defineProps({
     },
 });
 
+// Владелец может править статью прямо со страницы просмотра
+const isOwner = computed(() => page.props.auth?.user?.id === props.article.user.id);
+
 // Своя страница автора не нужна: у себя ведём в профиль
 const authorUrl = computed(() =>
     page.props.auth?.user?.id === props.article.user.id ? route("profile") : route("authors.show", props.article.user.id),
@@ -243,24 +223,17 @@ const displayTitle = computed(() => {
     return excerpt ? excerpt.slice(0, 70) : "Пост";
 });
 
-// Превью карточки — первая картинка из текста, поэтому на странице поста
-// её не дублируем: показываем отдельный hero только для старых обложек
-const showHeroImage = computed(() => {
-    const image = props.article.card_image_path;
-    if (!image) return false;
-    return !String(props.article.content || "").includes(image);
-});
-
 const category = computed(() => {
     if (!props.article.category_slug) return null;
     const categories = page.props.categories ?? [];
     return categories.find((c) => c.slug === props.article.category_slug) ?? null;
 });
 
+// Дата без года: свежие посты читают в основном в том же году,
+// а год только удлинял строку меты
 const formatDate = (dateString) => {
     const date = new Date(dateString);
     const day = date.toLocaleDateString("ru-RU", {
-        year: "numeric",
         month: "long",
         day: "numeric",
     });
@@ -279,12 +252,6 @@ const readingMinutes = computed(() => {
     const words = text ? text.split(" ").length : 0;
     return Math.max(1, Math.round(words / 200));
 });
-
-const imageLoaded = ref(false);
-
-const onImageError = (event) => {
-    event.target.style.display = "none";
-};
 
 const description = computed(() => {
     const text = (props.article.excerpt || "").trim();
