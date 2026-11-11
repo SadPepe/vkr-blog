@@ -11,47 +11,45 @@
         <div class="page-shell pb-24 pt-10 lg:pt-14">
             <div class="home-layout">
                 <div class="min-w-0">
-                    <!-- Заголовок ленты: дата и счётчик в строке с ним, внутри колонки -->
-                    <div class="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-                        <h1 class="type-display-xl text-content">
-                            {{ activeCategoryTitle || "Лента" }}
-                        </h1>
-                        <p class="type-meta">
-                            <time :datetime="todayISO">{{ todayLabel }}</time>
-                            <span aria-hidden="true"> · </span>
-                            <span class="num">{{ articles.total }}</span> {{ pluralArticles(articles.total) }}
-                        </p>
-                    </div>
+                    <!-- Заголовок доски: имя и счётчик одной строкой, без журнального лида -->
+                    <header class="border-b border-line pb-4">
+                        <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+                            <h1 class="type-display-l text-content">
+                                {{ activeCategoryTitle || "Лента" }}
+                            </h1>
+                            <p class="type-meta pb-1">
+                                <span class="num">{{ articles.total }}</span> {{ pluralArticles(articles.total) }}
+                                <span aria-hidden="true"> · </span>
+                                <time :datetime="todayISO">{{ todayLabel }}</time>
+                            </p>
+                        </div>
+                        <p class="mt-2 text-[1.125rem] leading-snug text-content">{{ pageLead }}</p>
+                    </header>
 
-                    <p class="measure mt-6 text-[1.125rem] leading-snug text-content">
-                        Тексты, фотографии и заметки о городе, людях и культуре.
-                    </p>
-
-                    <!-- Сортировка: строкой текстовых ссылок, без пилюль. Категории живут в шапке -->
-                    <nav aria-label="Сортировка" class="mt-8">
-                        <ul class="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-                            <li v-for="option in sortOptions" :key="option.value">
-                                <button
-                                    type="button"
-                                    class="inline-flex min-h-11 items-center text-sm transition-colors hover:text-accent lg:min-h-0"
-                                    :class="sort === option.value ? 'text-content underline decoration-2 underline-offset-4' : 'text-muted'"
-                                    :aria-current="sort === option.value ? 'true' : undefined"
-                                    @click="onSortChange(option.value)"
-                                >
-                                    {{ option.label }}
-                                </button>
-                            </li>
-                        </ul>
+                    <!-- Сортировка: сегменты на подложке, как переключатель разделов на форуме -->
+                    <nav aria-label="Сортировка" class="mt-4 flex gap-1 overflow-x-auto bg-surface-muted p-1">
+                        <button
+                            v-for="option in sortOptions"
+                            :key="option.value"
+                            type="button"
+                            class="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap px-3 text-sm transition-colors"
+                            :class="sort === option.value ? 'bg-accent font-medium text-accent-contrast' : 'text-content hover:bg-surface'"
+                            :aria-current="sort === option.value ? 'true' : undefined"
+                            @click="onSortChange(option.value)"
+                        >
+                            {{ option.label }}
+                        </button>
                     </nav>
 
-                    <ul v-if="feed.length" class="mt-2 flex flex-col">
-                        <li v-for="article in feed" :key="article.id" class="border-t border-line/60 py-8 first:border-t-0 first:pt-0">
+                    <!-- Лента как на DTF: панели с радиусом, между ними шов --layout-feed-gap-y (4px) -->
+                    <ul v-if="feed.length" class="mt-5 flex flex-col gap-[var(--layout-feed-gap-y)]">
+                        <li v-for="article in feed" :key="article.id">
                             <FeedPost :article="article" :categories="categories" />
                         </li>
                     </ul>
 
                     <!-- Пустая лента: намеренная композиция, а не заглушка -->
-                    <div v-if="articles.data.length === 0" class="mt-16 max-w-[46rem]">
+                    <div v-if="articles.data.length === 0" class="mt-5 max-w-[46rem] border border-line bg-surface p-6 sm:p-8">
                         <p class="type-display-l text-content">{{ emptyTitle }}</p>
                         <p class="measure mt-5 text-muted">{{ emptyText }}</p>
                         <div class="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
@@ -84,31 +82,37 @@
 
                 <!-- Афиша: реальные просмотры крупными цифрами -->
                 <aside v-if="popularArticles.length" class="min-w-0 lg:sticky lg:top-8 lg:self-start">
-                    <h2 class="type-h2 text-content">Афиша: самые читаемые</h2>
-                    <ul class="mt-6 flex flex-col gap-6 sm:grid sm:grid-cols-2 sm:gap-x-8 lg:flex lg:flex-col lg:gap-6">
-                        <li v-for="article in railArticles" :key="article.id">
-                            <Link
-                                :href="route('articles.show', article.slug)"
-                                class="group flex flex-wrap items-baseline gap-x-2.5 gap-y-1"
-                            >
-                                <span
-                                    class="num font-display text-[1.75rem] font-bold leading-none tracking-[-0.02em] text-content transition-colors group-hover:text-accent"
+                    <div class="border border-line bg-surface">
+                        <h2 class="border-b border-line bg-surface-muted px-4 py-2.5 text-[0.9375rem] font-semibold text-content">
+                            По просмотрам
+                        </h2>
+                        <ul>
+                            <li v-for="article in railArticles" :key="article.id">
+                                <Link
+                                    :href="route('articles.show', article.slug)"
+                                    class="group block px-4 py-3 transition-colors hover:bg-surface-muted"
                                 >
-                                    {{ formatCount(article.views_count) }}
-                                </span>
-                                <span class="text-[1.0625rem] text-muted">{{ pluralViews(article.views_count) }}</span>
-                                <span
-                                    class="basis-full text-[1.0625rem] font-medium leading-snug text-content transition-colors group-hover:text-accent"
-                                >
-                                    {{ article.title }}
-                                </span>
-                                <span class="mt-1 flex basis-full items-center gap-2 text-[0.9375rem] text-muted">
-                                    <span class="hidden sm:inline-flex"><UserAvatar :user="article.user" :size="20" /></span>
-                                    <span>{{ article.user.name }}</span>
-                                </span>
-                            </Link>
-                        </li>
-                    </ul>
+                                    <span class="flex items-baseline gap-1.5">
+                                        <span
+                                            class="num font-display text-[1.25rem] font-bold leading-none tracking-[-0.02em] text-content transition-colors group-hover:text-accent"
+                                        >
+                                            {{ formatCount(article.views_count) }}
+                                        </span>
+                                        <span class="text-[0.8125rem] text-muted">{{ pluralViews(article.views_count) }}</span>
+                                    </span>
+                                    <span
+                                        class="mt-1 block text-[0.9375rem] font-medium leading-snug text-content transition-colors group-hover:text-accent"
+                                    >
+                                        {{ article.title }}
+                                    </span>
+                                    <span class="mt-1 flex items-center gap-2 text-[0.8125rem] text-muted">
+                                        <span class="hidden sm:inline-flex"><UserAvatar :user="article.user" :size="18" /></span>
+                                        <span>{{ article.user.name }}</span>
+                                    </span>
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
                 </aside>
             </div>
         </div>
@@ -194,6 +198,11 @@ const todayLabel = new Intl.DateTimeFormat("ru-RU", {
 }).format(today);
 
 const formatCount = (n) => new Intl.NumberFormat("ru-RU").format(n ?? 0);
+
+// Подзаголовок страницы: h1 — имя доски, под ним одной строкой, что здесь лежит
+const pageLead = computed(() =>
+    props.activeCategory ? `Все статьи раздела «${activeCategoryTitle.value}».` : "Статьи авторов блога и обсуждения под ними.",
+);
 
 const emptyTitle = computed(() => (props.activeCategory ? `Тут пока пусто` : "Здесь пока нет статей"));
 

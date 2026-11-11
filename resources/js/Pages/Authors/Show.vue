@@ -15,14 +15,14 @@
             <h2 class="type-h2 text-content">Статьи</h2>
 
             <!-- Та же лента, что на главной: тело поста целиком, «Развернуть», счётчики -->
-            <ul v-if="articles.data.length" class="mt-8 flex flex-col">
-                <li v-for="article in articles.data" :key="article.id" class="border-t border-line/60 py-8 first:border-t-0 first:pt-0">
+            <ul v-if="articles.data.length" class="mt-5 flex flex-col gap-[var(--layout-feed-gap-y)]">
+                <li v-for="article in articles.data" :key="article.id">
                     <FeedPost :article="article" :categories="categories" :show-author="false" />
                 </li>
             </ul>
 
             <!-- Пустое состояние: крупный текст и действие -->
-            <div v-else class="mt-10 max-w-[40rem]">
+            <div v-else class="mt-5 max-w-[40rem] border border-line bg-surface p-6 sm:p-8">
                 <p class="type-display-l text-content">У автора пока нет статей</p>
                 <p class="measure mt-4 text-muted">Загляните позже — здесь появятся новые публикации.</p>
             </div>
@@ -63,7 +63,9 @@ const page = usePage();
 
 const categories = computed(() => page.props.categories ?? []);
 
-const authorDescription = computed(() => (props.author.about || "").trim() || `Статьи автора ${props.author.name} на сайте «Челны подземка».`);
+const authorDescription = computed(
+    () => (props.author.about || "").trim() || `Статьи автора ${props.author.name} на сайте «Челны подземка».`,
+);
 
 const metaDescription = computed(() => authorDescription.value.slice(0, 160));
 </script>

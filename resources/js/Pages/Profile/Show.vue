@@ -6,8 +6,8 @@
             <h2 class="type-h2 text-content">Мои статьи</h2>
 
             <!-- Та же лента, что на главной и у автора; свои посты можно править и удалять -->
-            <ul v-if="articles.data.length" class="mt-8 flex flex-col">
-                <li v-for="article in articles.data" :key="article.id" class="border-t border-line/60 py-8 first:border-t-0 first:pt-0">
+            <ul v-if="articles.data.length" class="mt-5 flex flex-col gap-[var(--layout-feed-gap-y)]">
+                <li v-for="article in articles.data" :key="article.id">
                     <FeedPost :article="article" :categories="categories" :show-author="false">
                         <template #actions>
                             <Link
@@ -16,7 +16,14 @@
                                 title="Редактировать"
                                 :aria-label="`Редактировать: ${article.slug}`"
                             >
-                                <svg class="h-[1.125rem] w-[1.125rem]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                                <svg
+                                    class="h-[1.125rem] w-[1.125rem]"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                >
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
@@ -31,7 +38,14 @@
                                 aria-label="Удалить статью"
                                 @click="deleteArticle(article)"
                             >
-                                <svg class="h-[1.125rem] w-[1.125rem]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                                <svg
+                                    class="h-[1.125rem] w-[1.125rem]"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                >
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
@@ -45,7 +59,7 @@
             </ul>
 
             <!-- Пустое состояние: как у автора, без карточки -->
-            <div v-else class="mt-8 max-w-[46rem]">
+            <div v-else class="mt-5 max-w-[46rem] border border-line bg-surface p-6 sm:p-8">
                 <p class="type-display-l text-content">Пока нет статей</p>
                 <p class="measure mt-4 text-muted">Напишите первую статью — она появится здесь и в общей ленте блога.</p>
                 <Link
@@ -62,7 +76,9 @@
         <ConfirmDialog
             :show="articleToDelete !== null"
             title="Удалить статью?"
-            :text="articleToDelete ? `«${articleToDelete.title || articleToDelete.slug}» и комментарии к ней будут удалены безвозвратно.` : ''"
+            :text="
+                articleToDelete ? `«${articleToDelete.title || articleToDelete.slug}» и комментарии к ней будут удалены безвозвратно.` : ''
+            "
             @confirm="confirmDeleteArticle"
             @cancel="articleToDelete = null"
         />

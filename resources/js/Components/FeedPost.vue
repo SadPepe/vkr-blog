@@ -1,53 +1,71 @@
 <!-- resources/js/Components/FeedPost.vue -->
 <template>
-    <article>
-        <!-- Автор, категория и дата одной строкой; на странице автора строка автора не нужна -->
-        <header v-if="showAuthor" class="flex items-center gap-3">
-            <UserAvatar :user="article.user" :size="44" />
-            <p class="min-w-0 text-[1.0625rem] leading-snug">
-                <Link :href="route('authors.show', article.user.id)" class="font-medium text-content transition-colors hover:text-accent">
+    <!-- Пост в ленте — по образцу dtf.ru (.content/.content-header/.content-footer):
+         панель с заливкой и радиусом, шапка 16/20, футер 54px без фона, шов между постами
+         --layout-feed-gap-y (4px, resources/css/app.css) -->
+    <article class="rounded-2xl bg-surface pb-2 sm:rounded-3xl">
+        <!-- Шапка: аватар слева, имя, под ним категория; справа на той же строке — дата/время и просмотры -->
+        <header class="flex items-start gap-3 px-4 pb-3 pt-4 leading-snug text-muted sm:px-5 sm:pt-5">
+            <UserAvatar v-if="showAuthor" :user="article.user" :size="28" class="mt-0.5" />
+            <div class="min-w-0 flex-1">
+                <Link
+                    v-if="showAuthor"
+                    :href="route('authors.show', article.user.id)"
+                    class="block truncate text-[0.9375rem] font-medium text-content transition-colors hover:text-accent"
+                >
                     {{ article.user.name }}
                 </Link>
-                <span class="text-muted" aria-hidden="true"> · </span>
-                <Link
-                    v-if="article.category_slug"
-                    :href="route('articlesByCategory', article.category_slug)"
-                    class="text-muted transition-colors hover:text-accent"
-                >
-                    {{ categoryName }}
-                </Link>
-                <span v-else class="text-muted">Без категории</span>
-                <span class="text-muted" aria-hidden="true"> · </span>
-                <time :datetime="article.created_at" class="whitespace-nowrap text-muted">{{ formatDate(article.created_at) }}</time>
-            </p>
-        </header>
+                <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem]">
+                    <Link
+                        v-if="article.category_slug"
+                        :href="route('articlesByCategory', article.category_slug)"
+                        class="transition-colors hover:text-accent"
+                    >
+                        {{ categoryName }}
+                    </Link>
+                    <span v-else>Без категории</span>
 
-        <p v-else class="text-[1.0625rem] leading-snug text-muted">
-            <Link
-                v-if="article.category_slug"
-                :href="route('articlesByCategory', article.category_slug)"
-                class="transition-colors hover:text-accent"
-            >
-                {{ categoryName }}
-            </Link>
-            <span v-else>Без категории</span>
-            <span aria-hidden="true"> · </span>
-            <time :datetime="article.created_at" class="whitespace-nowrap">{{ formatDate(article.created_at) }}</time>
-        </p>
+                    <time :datetime="article.created_at" class="num tracking-[0.02em]">
+                        {{ formatDateTime(article.created_at) }}
+                    </time>
+
+                    <span
+                        class="ml-auto inline-flex items-center gap-1"
+                        :aria-label="`${article.views_count} ${pluralViews(article.views_count)}`"
+                    >
+                        <svg
+                            class="h-4 w-4 shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                        </svg>
+                        <span class="num font-medium">{{ article.views_count }}</span>
+                    </span>
+                </div>
+            </div>
+        </header>
 
         <h3
             v-if="heading"
-            class="mt-4 font-display text-[1.75rem] font-bold leading-[1.15] tracking-[-0.02em] text-content"
+            class="px-4 font-display text-[1.5rem] font-bold leading-[1.2] tracking-[-0.02em] text-content sm:px-5 sm:text-[1.75rem]"
         >
             <Link :href="route('articles.show', article.slug)" class="transition-colors hover:text-accent">
                 {{ heading }}
             </Link>
         </h3>
 
-        <!-- Тело поста: авторский порядок блоков, без отдельной обложки -->
         <div
-            class="post-content mt-4 text-content"
-            :class="{ 'feed-body--clamped': article.has_more && !expanded }"
+            class="post-content px-4 pb-2 text-content sm:px-5"
+            :class="[heading ? 'pt-3' : 'pt-1', { 'feed-body--clamped': article.has_more && !expanded }]"
             v-html="postHtml"
             @click="handleContentClick"
         />
@@ -55,85 +73,76 @@
         <button
             v-if="article.has_more || expanded"
             type="button"
-            class="mt-5 inline-flex min-h-11 items-center text-sm text-accent transition-colors hover:text-accent-hover"
+            class="mt-3 inline-flex min-h-11 items-center px-4 text-sm font-medium text-accent transition-colors hover:text-accent-hover sm:px-5"
             :aria-expanded="expanded"
             @click="toggleExpand"
         >
-            {{ expanded ? "Свернуть" : loading ? "Загружаю…" : "Развернуть" }}
+            {{ expanded ? "Свернуть" : loading ? "Загружаю…" : "Читать дальше" }}
         </button>
 
-        <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[1.0625rem] text-muted">
-            <span
-                class="inline-flex items-center gap-1.5"
-                :aria-label="`${article.views_count} ${pluralViews(article.views_count)}`"
-            >
-                <svg class="h-[1.125rem] w-[1.125rem]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                </svg>
-                <span class="num">{{ article.views_count }}</span>
-            </span>
+        <!-- Последний комментарий: строка обсуждения под телом поста -->
+        <Link
+            v-if="article.latest_comment"
+            :href="articleUrl + '#comments'"
+            class="group mt-2 flex items-start gap-3 border-t border-line px-4 py-3 transition-colors hover:bg-surface-muted sm:px-5"
+            aria-label="Читать обсуждение поста"
+        >
+            <UserAvatar :user="article.latest_comment.user" :size="24" class="mt-0.5" />
+            <div class="min-w-0">
+                <p class="text-[0.9375rem] leading-snug">
+                    <span class="font-medium text-content transition-colors group-hover:text-accent">{{
+                        article.latest_comment.user.name
+                    }}</span>
+                    <span class="text-muted"> · </span>
+                    <span class="text-muted">последний комментарий</span>
+                </p>
+                <p class="mt-0.5 line-clamp-2 text-[0.9375rem] leading-snug text-content">{{ article.latest_comment.body }}</p>
+            </div>
+        </Link>
 
-            <LikeButton :article="article" :initial-liked="Boolean(article.is_liked)" :initial-likes-count="article.likes_count ?? 0" />
+        <!-- Действия: футер поста как .content-footer на DTF — 54px, без фона, пункты через 20px.
+             Просмотры переехали в шапку, здесь остаются лайки, комментарии и «поделиться». -->
+        <footer class="flex min-h-[54px] flex-wrap items-center gap-x-5 gap-y-2 px-4 pt-1 sm:px-5">
+            <LikeButton
+                :article="article"
+                :initial-liked="Boolean(article.is_liked)"
+                :initial-likes-count="article.likes_count ?? 0"
+                pill
+            />
 
             <Link
-                :href="`${articleUrl}#comments`"
-                class="inline-flex items-center gap-1.5 transition-colors hover:text-accent"
+                :href="articleUrl + '#comments'"
+                class="inline-flex items-center gap-1 text-[0.9375rem] text-content transition-colors hover:text-accent"
                 :aria-label="`${article.comments_count} ${pluralComments(article.comments_count)} — к обсуждению`"
             >
-                <svg class="h-[1.125rem] w-[1.125rem]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                     />
                 </svg>
-                <span class="num">{{ article.comments_count }}</span>
+                <span class="num font-medium">{{ article.comments_count }}</span>
             </Link>
 
             <button
                 type="button"
-                class="inline-flex items-center gap-1.5 transition-colors hover:text-accent"
-                :aria-label="copied ? 'Ссылка скопирована' : 'Поделиться ссылкой'"
+                class="-ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted text-content transition-colors hover:bg-accent-soft hover:text-accent"
+                :aria-label="copied ? 'Ссылка скопирована' : 'Скопировать ссылку на пост'"
                 @click="share"
             >
-                <svg class="h-[1.125rem] w-[1.125rem]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 11-5.656-5.656l1.5-1.5m9.656-1.5l1.5-1.5a4 4 0 10-5.656-5.656l-3 3a4 4 0 000 5.656"
                     />
                 </svg>
-                <span>{{ copied ? "Скопировано" : "Поделиться" }}</span>
             </button>
 
             <!-- Свои посты: править и удалить — справа -->
             <span v-if="$slots.actions" class="ml-auto flex items-center gap-1"><slot name="actions" /></span>
-        </div>
-
-        <!-- Один комментарий под постом: отбит линией и кеглем, чтобы не читался как ещё один пост -->
-        <Link
-            v-if="article.latest_comment"
-            :href="`${articleUrl}#comments`"
-            class="group mt-6 flex items-start gap-3 border-l-2 border-line pl-4"
-            aria-label="Читать обсуждение поста"
-        >
-            <UserAvatar :user="article.latest_comment.user" :size="24" class="mt-0.5" />
-            <div class="min-w-0">
-                <p class="text-[0.9375rem] leading-snug text-muted">
-                    <span class="font-medium text-content transition-colors group-hover:text-accent">{{
-                        article.latest_comment.user.name
-                    }}</span>
-                    <span aria-hidden="true"> · </span>
-                    <span>комментарий</span>
-                </p>
-                <p class="mt-1 line-clamp-2 text-[1rem] leading-snug text-content">{{ article.latest_comment.body }}</p>
-            </div>
-        </Link>
+        </footer>
 
         <!-- Лайтбокс: фото из поста на полный экран, как на странице статьи -->
         <ImageLightbox :show="lightboxOpen" :src="lightboxSrc" :alt="lightboxAlt" @close="closeLightbox" />
@@ -177,7 +186,7 @@ const closeLightbox = () => {
     lightboxOpen.value = false;
 };
 
-// Делегирование: работает и для превью, и для картинок, догруженных кнопкой «Развернуть»
+// Делегирование: работает и для превью, и для картинок, догруженных кнопкой «Читать дальше»
 const handleContentClick = (event) => {
     const target = event.target;
 
@@ -195,7 +204,7 @@ const articleUrl = computed(() => route("articles.show", props.article.slug));
 
 // «Поделиться» = скопировать ссылку на пост, чтобы её можно было отправить куда угодно
 const share = async () => {
-    const url = `${window.location.origin}${articleUrl.value}`;
+    const url = window.location.origin + articleUrl.value;
 
     try {
         await navigator.clipboard.writeText(url);
@@ -214,7 +223,8 @@ const heading = computed(() => (props.article.title ?? "").trim());
 
 // Авторские подзаголовки не должны конкурировать с заголовками страницы:
 // оставляем их визуально, но как абзацы, а не как h2/h3
-const demoteHeadings = (html) => (html || "").replace(/<(\/?)h([1-6])\b[^>]*>/gi, (_, close) => (close ? "</p>" : '<p class="post-subhead">'));
+const demoteHeadings = (html) =>
+    (html || "").replace(/<(\/?)h([1-6])\b[^>]*>/gi, (_, close) => (close ? "</p>" : '<p class="post-subhead">'));
 
 const postHtml = computed(() => demoteHeadings(expanded.value ? fullHtml.value : props.article.preview));
 
@@ -231,7 +241,7 @@ const toggleExpand = async () => {
             const response = await fetch(route("articles.excerpt", props.article.slug), {
                 headers: { Accept: "application/json" },
             });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            if (!response.ok) throw new Error("HTTP " + response.status);
             const data = await response.json();
             fullHtml.value = data.html || props.article.preview;
         } catch {
@@ -245,7 +255,14 @@ const toggleExpand = async () => {
     expanded.value = true;
 };
 
-const formatDate = (value) => new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" }).format(new Date(value));
+// Дата и время в шапке — по-русски, без года: 4 ноября, 14:20
+const MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+
+const formatDateTime = (value) => {
+    const date = new Date(value);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${date.getDate()} ${MONTHS[date.getMonth()]}, ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
 
 const pluralize = (n, [one, few, many]) => {
     const mod10 = n % 10;
@@ -256,6 +273,5 @@ const pluralize = (n, [one, few, many]) => {
 };
 
 const pluralViews = (n) => pluralize(n, ["просмотр", "просмотра", "просмотров"]);
-const pluralLikes = (n) => pluralize(n, ["лайк", "лайка", "лайков"]);
 const pluralComments = (n) => pluralize(n, ["комментарий", "комментария", "комментариев"]);
 </script>

@@ -1,18 +1,26 @@
 <!-- resources/js/Components/LikeButton.vue -->
 <template>
+    <!-- Лайк: в ленте — «пилюля» с подложкой, как reaction-item на DTF -->
     <button
         @click="toggleLike"
         :disabled="loading"
-        :class="[ 'inline-flex items-center gap-1.5 text-muted transition-colors ', liked ? 'text-red-500 dark:text-red-400' : 'hover:text-red-500 dark:hover:text-red-400', ]"
+        :class="[
+            'inline-flex items-center gap-1 transition-colors',
+            pill ? 'min-h-[30px] rounded-full px-2 text-[0.9375rem] font-medium' : 'text-[0.9375rem]',
+            liked ? 'text-accent' : 'text-content hover:text-accent',
+            pill ? (liked ? 'bg-accent-soft' : 'bg-surface-muted') : '',
+        ]"
+        :aria-pressed="liked"
         :aria-label="liked ? 'Убрать лайк' : 'Поставить лайк'"
     >
         <svg
-            class="h-4 w-4 transition-transform duration-300"
+            class="h-5 w-5 shrink-0 transition-transform duration-300"
             :class="{ 'scale-110': liked, 'scale-100': !liked }"
             :fill="liked ? 'currentColor' : 'none'"
             stroke="currentColor"
             stroke-width="1.5"
             viewBox="0 0 24 24"
+            aria-hidden="true"
         >
             <path
                 stroke-linecap="round"
@@ -20,7 +28,7 @@
                 d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
             />
         </svg>
-        <span>{{ likesCount }}</span>
+        <span class="num">{{ likesCount }}</span>
     </button>
 </template>
 
@@ -42,6 +50,11 @@ const props = defineProps({
     initialLikesCount: {
         type: Number,
         default: 0,
+    },
+    // В ленте лайк рисуется «пилюлей» с подложкой (как reaction-item на DTF)
+    pill: {
+        type: Boolean,
+        default: false,
     },
 });
 
