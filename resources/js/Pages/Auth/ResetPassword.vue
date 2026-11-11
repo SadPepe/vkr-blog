@@ -1,10 +1,8 @@
 <script setup>
-import GuestLayout from "@/Layouts/Layout.vue";
-import InputError from "@/Components/InputError.vue";
-import InputLabel from "@/Components/InputLabel.vue";
-import PrimaryButton from "@/Components/PrimaryButton.vue";
-import TextInput from "@/Components/TextInput.vue";
-import { Head, useForm } from "@inertiajs/vue3";
+import AuthField from "@/Components/AuthField.vue";
+import AuthShell from "@/Components/AuthShell.vue";
+import { useForm } from "@inertiajs/vue3";
+import { ref } from "vue";
 
 const props = defineProps({
     email: {
@@ -24,6 +22,8 @@ const form = useForm({
     password_confirmation: "",
 });
 
+const showPassword = ref(false);
+
 const submit = () => {
     form.post(route("password.store"), {
         onFinish: () => form.reset("password", "password_confirmation"),
@@ -32,60 +32,66 @@ const submit = () => {
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Новый пароль" />
-        <div class="mx-auto w-full max-w-md py-8 md:py-12">
-            <form @submit.prevent="submit">
-                <div>
-                    <InputLabel for="email" value="Почта" />
+    <AuthShell
+        head-title="Новый пароль"
+        headline="Новый пароль — новая точка входа."
+        lead="Придумайте пароль, который не используете на других сайтах."
+    >
+        <template #title>Новый пароль</template>
+        <template #subtitle>Почта уже подставлена — осталось задать пароль.</template>
 
-                    <TextInput
-                        id="email"
-                        type="email"
-                        class="mt-1 block w-full"
-                        v-model="form.email"
-                        required
-                        autofocus
-                        autocomplete="username"
-                    />
+        <form class="space-y-5" @submit.prevent="submit">
+            <AuthField
+                id="email"
+                v-model="form.email"
+                type="email"
+                label="Почта"
+                autocomplete="username"
+                :error="form.errors.email"
+                required
+                autofocus
+            />
 
-                    <InputError class="mt-2" :message="form.errors.email" />
-                </div>
+            <AuthField
+                id="password"
+                v-model="form.password"
+                label="Пароль"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Минимум 8 символов"
+                autocomplete="new-password"
+                :error="form.errors.password"
+                required
+            >
+                <template #aside>
+                    <button
+                        type="button"
+                        class="text-[0.8125rem] text-accent transition-colors hover:text-accent-hover"
+                        :aria-pressed="showPassword"
+                        @click="showPassword = !showPassword"
+                    >
+                        {{ showPassword ? "Скрыть" : "Показать" }}
+                    </button>
+                </template>
+            </AuthField>
 
-                <div class="mt-4">
-                    <InputLabel for="password" value="Пароль" />
+            <AuthField
+                id="password_confirmation"
+                v-model="form.password_confirmation"
+                label="Подтверждение пароля"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Повторите пароль"
+                autocomplete="new-password"
+                :error="form.errors.password_confirmation"
+                required
+            />
 
-                    <TextInput
-                        id="password"
-                        type="password"
-                        class="mt-1 block w-full"
-                        v-model="form.password"
-                        required
-                        autocomplete="new-password"
-                    />
-
-                    <InputError class="mt-2" :message="form.errors.password" />
-                </div>
-
-                <div class="mt-4">
-                    <InputLabel for="password_confirmation" value="Подтверждение пароля" />
-
-                    <TextInput
-                        id="password_confirmation"
-                        type="password"
-                        class="mt-1 block w-full"
-                        v-model="form.password_confirmation"
-                        required
-                        autocomplete="new-password"
-                    />
-
-                    <InputError class="mt-2" :message="form.errors.password_confirmation" />
-                </div>
-
-                <div class="mt-4 flex items-center justify-end">
-                    <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing"> Сохранить пароль </PrimaryButton>
-                </div>
-            </form>
-        </div>
-    </GuestLayout>
+            <button
+                type="submit"
+                :disabled="form.processing"
+                class="w-full bg-accent px-5 py-3 text-[1.0625rem] font-semibold text-accent-contrast transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+                {{ form.processing ? "Сохраняем…" : "Сохранить пароль" }}
+            </button>
+        </form>
+    </AuthShell>
 </template>

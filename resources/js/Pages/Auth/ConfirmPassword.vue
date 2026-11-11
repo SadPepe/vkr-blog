@@ -1,10 +1,7 @@
 <script setup>
-import GuestLayout from "@/Layouts/Layout.vue";
-import InputError from "@/Components/InputError.vue";
-import InputLabel from "@/Components/InputLabel.vue";
-import PrimaryButton from "@/Components/PrimaryButton.vue";
-import TextInput from "@/Components/TextInput.vue";
-import { Head, useForm } from "@inertiajs/vue3";
+import AuthField from "@/Components/AuthField.vue";
+import AuthShell from "@/Components/AuthShell.vue";
+import { useForm } from "@inertiajs/vue3";
 
 const form = useForm({
     password: "",
@@ -18,32 +15,33 @@ const submit = () => {
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Подтверждение пароля" />
-        <div class="mx-auto w-full max-w-md py-8 md:py-12">
-            <div class="mb-4 text-sm text-muted">Это защищённый раздел. Подтвердите пароль, чтобы продолжить.</div>
+    <AuthShell
+        head-title="Подтверждение пароля"
+        headline="Ещё один шаг — и можно продолжать."
+        lead="Защищённые действия просим подтверждать паролем."
+    >
+        <template #title>Подтвердите пароль</template>
+        <template #subtitle>Это защищённый раздел. Введите пароль, чтобы продолжить.</template>
 
-            <form @submit.prevent="submit">
-                <div>
-                    <InputLabel for="password" value="Пароль" />
-                    <TextInput
-                        id="password"
-                        type="password"
-                        class="mt-1 block w-full"
-                        v-model="form.password"
-                        required
-                        autocomplete="current-password"
-                        autofocus
-                    />
-                    <InputError class="mt-2" :message="form.errors.password" />
-                </div>
+        <form class="space-y-5" @submit.prevent="submit">
+            <AuthField
+                id="password"
+                v-model="form.password"
+                type="password"
+                label="Пароль"
+                autocomplete="current-password"
+                :error="form.errors.password"
+                required
+                autofocus
+            />
 
-                <div class="mt-4 flex justify-end">
-                    <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                        Подтвердить
-                    </PrimaryButton>
-                </div>
-            </form>
-        </div>
-    </GuestLayout>
+            <button
+                type="submit"
+                :disabled="form.processing"
+                class="w-full bg-accent px-5 py-3 text-[1.0625rem] font-semibold text-accent-contrast transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+                {{ form.processing ? "Проверяем…" : "Подтвердить" }}
+            </button>
+        </form>
+    </AuthShell>
 </template>

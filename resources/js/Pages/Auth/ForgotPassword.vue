@@ -1,10 +1,7 @@
 <script setup>
-import GuestLayout from "@/Layouts/Layout.vue";
-import InputError from "@/Components/InputError.vue";
-import InputLabel from "@/Components/InputLabel.vue";
-import PrimaryButton from "@/Components/PrimaryButton.vue";
-import TextInput from "@/Components/TextInput.vue";
-import { Head, useForm } from "@inertiajs/vue3";
+import AuthField from "@/Components/AuthField.vue";
+import AuthShell from "@/Components/AuthShell.vue";
+import { Link, useForm } from "@inertiajs/vue3";
 
 defineProps({
     status: {
@@ -22,39 +19,48 @@ const submit = () => {
 </script>
 
 <template>
-    <GuestLayout>
-        <div class="mx-auto mt-4 px-4 w-full max-w-[550px] flex flex-col items-center justify-center">
-            <Head title="Восстановление пароля" />
+    <AuthShell
+        head-title="Восстановление пароля"
+        headline="Пароль забывается. Тексты — нет."
+        lead="Укажите почту, и мы пришлём ссылку для сброса пароля."
+    >
+        <template #title>Сброс пароля</template>
+        <template #subtitle>Ссылка действует ограниченное время.</template>
+        <template #footer>
+            Вспомнили пароль?
+            <Link
+                :href="route('login')"
+                class="font-semibold text-accent underline underline-offset-[3px] transition-colors hover:text-accent-hover"
+            >
+                Войти
+            </Link>
+        </template>
 
-            <div class="mb-4 text-sm text-muted">
-                Забыли пароль? Укажите почту, и мы отправим ссылку для сброса — по ней вы зададите новый пароль.
-            </div>
+        <p v-if="status" class="mb-5 border-l-2 border-accent bg-surface-muted px-4 py-3 text-[0.9375rem] text-content">
+            {{ status }}
+        </p>
 
-            <div v-if="status" class="mb-4 text-sm font-medium text-accent">
-                {{ status }}
-            </div>
+        <form class="space-y-5" @submit.prevent="submit">
+            <AuthField
+                id="email"
+                v-model="form.email"
+                type="email"
+                label="Почта"
+                placeholder="you@example.com"
+                autocomplete="username"
+                hint="Восстановление работает, только если email указан в профиле. Если почты нет — напишите администратору."
+                :error="form.errors.email"
+                required
+                autofocus
+            />
 
-            <form @submit.prevent="submit">
-                <div>
-                    <InputLabel for="email" value="Почта" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        class="mt-1 block w-full"
-                        v-model="form.email"
-                        required
-                        autofocus
-                        autocomplete="username"
-                    />
-
-                    <InputError class="mt-2" :message="form.errors.email" />
-                </div>
-
-                <div class="mt-4 flex items-center justify-center">
-                    <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing"> Отправить ссылку </PrimaryButton>
-                </div>
-            </form>
-        </div>
-    </GuestLayout>
+            <button
+                type="submit"
+                :disabled="form.processing"
+                class="w-full bg-accent px-5 py-3 text-[1.0625rem] font-semibold text-accent-contrast transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+                {{ form.processing ? "Отправляем…" : "Отправить ссылку" }}
+            </button>
+        </form>
+    </AuthShell>
 </template>

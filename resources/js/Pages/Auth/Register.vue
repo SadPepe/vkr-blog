@@ -1,7 +1,8 @@
 <script setup>
-import Layout from "@/Layouts/Layout.vue";
+import AuthField from "@/Components/AuthField.vue";
+import AuthShell from "@/Components/AuthShell.vue";
 import InputError from "@/Components/InputError.vue";
-import { Head, Link, useForm } from "@inertiajs/vue3";
+import { Link, useForm } from "@inertiajs/vue3";
 import { ref } from "vue";
 
 const form = useForm({
@@ -23,327 +24,178 @@ const submit = () => {
         onFinish: () => form.reset("password", "password_confirmation"),
     });
 };
+
+const consentLink = "text-accent underline underline-offset-[3px] transition-colors hover:text-accent-hover";
 </script>
 
 <template>
-    <Layout>
-        <Head title="Регистрация" />
+    <AuthShell
+        head-title="Регистрация"
+        headline="Стать автором «подземки»."
+        lead="Здесь тексты важнее охватов: пишите то, что знаете, а читатели ответят."
+        :items="['Статьи с фото и черновиками', 'Страница автора со ссылками', 'Ответы на комментарии и лайки']"
+    >
+        <template #title>Создать аккаунт</template>
+        <template #subtitle>Это займёт меньше минуты.</template>
+        <template #footer>
+            Уже есть аккаунт?
+            <Link
+                :href="route('login')"
+                class="font-semibold text-accent underline underline-offset-[3px] transition-colors hover:text-accent-hover"
+            >
+                Войти
+            </Link>
+        </template>
 
-        <div class="mx-auto flex w-full max-w-md items-center justify-center py-8 md:py-12">
-            <div class="w-full max-w-md rounded-md border border-line bg-surface/90 p-8 shadow-xl shadow-black/5 backdrop-blur sm:p-10">
-                <!-- Логотип -->
-                <div class="mb-8 text-center">
-                    <span
-                        class="inline-flex h-12 w-12 items-center justify-center rounded-md bg-gradient-to-br from-accent to-accent-2 text-accent-contrast shadow-lg"
-                    >
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"
-                            />
-                        </svg>
-                    </span>
-                    <h1 class="mt-4 text-2xl font-bold tracking-tight text-content dark:text-white">Создать аккаунт</h1>
-                    <p class="mt-1.5 text-sm text-muted">Присоединяйтесь к нашему блогу — это займёт меньше минуты</p>
-                </div>
+        <form class="space-y-5" @submit.prevent="submit">
+            <AuthField
+                id="name"
+                v-model="form.name"
+                label="Имя"
+                placeholder="Как вас зовут?"
+                autocomplete="name"
+                :error="form.errors.name"
+                required
+                autofocus
+            />
 
-                <form @submit.prevent="submit" class="space-y-5">
-                    <!-- Имя -->
-                    <div>
-                        <label for="name" class="mb-1.5 block text-sm font-medium text-content"> Имя </label>
-                        <div class="relative">
-                            <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-                                    />
-                                </svg>
-                            </span>
-                            <input
-                                id="name"
-                                type="text"
-                                class="w-full rounded-md border border-line bg-surface-muted py-2.5 pl-11 pr-3.5 text-sm text-content outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                placeholder="Как вас зовут?"
-                                v-model="form.name"
-                                required
-                                autofocus
-                                autocomplete="name"
-                            />
-                        </div>
-                        <InputError class="mt-1.5" :message="form.errors.name" />
-                    </div>
+            <AuthField
+                id="username"
+                v-model="form.username"
+                label="Логин"
+                placeholder="chelny_author"
+                autocomplete="username"
+                hint="3–32 символа: латиница, цифры и подчёркивание. Для входа, другим не показывается."
+                :error="form.errors.username"
+                required
+                spellcheck="false"
+            />
 
-                    <!-- Логин -->
-                    <div>
-                        <label for="username" class="mb-1.5 block text-sm font-medium text-content"> Логин </label>
-                        <div class="relative">
-                            <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-                                    />
-                                </svg>
-                            </span>
-                            <input
-                                id="username"
-                                type="text"
-                                class="w-full rounded-md border border-line bg-surface-muted py-2.5 pl-11 pr-3.5 text-sm text-content outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                placeholder="chelny_author"
-                                v-model="form.username"
-                                required
-                                autocomplete="username"
-                            />
-                        </div>
-                        <p class="mt-1 text-xs text-muted">
-                            3–32 символа: латиница, цифры и подчёркивание. Для входа, другим не показывается.
-                        </p>
-                        <InputError class="mt-1.5" :message="form.errors.username" />
-                    </div>
+            <AuthField
+                id="email"
+                v-model="form.email"
+                type="email"
+                label="Email (необязательно)"
+                placeholder="you@example.com"
+                autocomplete="email"
+                hint="Нужен для восстановления пароля и уведомлений. Можно не указывать."
+                :error="form.errors.email"
+            />
 
-                    <!-- Email -->
-                    <div>
-                        <label for="email" class="mb-1.5 block text-sm font-medium text-content">
-                            Email <span class="font-normal text-muted">(необязательно)</span>
-                        </label>
-                        <div class="relative">
-                            <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                                    />
-                                </svg>
-                            </span>
-                            <input
-                                id="email"
-                                type="email"
-                                class="w-full rounded-md border border-line bg-surface-muted py-2.5 pl-11 pr-3.5 text-sm text-content outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                placeholder="you@example.com"
-                                v-model="form.email"
-                                autocomplete="email"
-                            />
-                        </div>
-                        <p class="mt-1 text-xs text-muted">Нужен для восстановления пароля и уведомлений. Можно не указывать.</p>
-                        <InputError class="mt-1.5" :message="form.errors.email" />
-                    </div>
+            <!-- Код приглашения: включается, когда бета закрыта -->
+            <AuthField
+                v-if="$page.props.registrationRequiresCode"
+                id="invite_code"
+                v-model="form.invite_code"
+                label="Код приглашения"
+                placeholder="Код от администратора"
+                autocomplete="off"
+                hint="Регистрация закрыта: код выдаёт администратор."
+                :error="form.errors.invite_code"
+                required
+                spellcheck="false"
+            />
 
-                    <!-- Код приглашения: включается, когда бета закрыта -->
-                    <div v-if="$page.props.registrationRequiresCode">
-                        <label for="invite_code" class="mb-1.5 block text-sm font-medium text-content"> Код приглашения </label>
-                        <div class="relative">
-                            <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
-                                    />
-                                </svg>
-                            </span>
-                            <input
-                                id="invite_code"
-                                type="text"
-                                class="w-full rounded-md border border-line bg-surface-muted py-2.5 pl-11 pr-3.5 text-sm text-content outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                placeholder="Код от администратора"
-                                v-model="form.invite_code"
-                                required
-                                autocomplete="off"
-                                spellcheck="false"
-                            />
-                        </div>
-                        <p class="mt-1 text-xs text-muted">Регистрация закрыта: код выдаёт администратор.</p>
-                        <InputError class="mt-1.5" :message="form.errors.invite_code" />
-                    </div>
-
-                    <!-- Пароль -->
-                    <div>
-                        <label for="password" class="mb-1.5 block text-sm font-medium text-content"> Пароль </label>
-                        <div class="relative">
-                            <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
-                                    />
-                                </svg>
-                            </span>
-                            <input
-                                id="password"
-                                :type="showPassword ? 'text' : 'password'"
-                                class="w-full rounded-md border border-line bg-surface-muted py-2.5 pl-11 pr-11 text-sm text-content outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                placeholder="Минимум 8 символов"
-                                v-model="form.password"
-                                required
-                                autocomplete="new-password"
-                            />
-                            <button
-                                type="button"
-                                @click="showPassword = !showPassword"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted transition-colors hover:text-accent dark:hover:text-accent"
-                                :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
-                                :title="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
-                            >
-                                <svg
-                                    v-if="showPassword"
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
-                                    />
-                                </svg>
-                                <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
-                                    />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                            </button>
-                        </div>
-                        <InputError class="mt-1.5" :message="form.errors.password" />
-                    </div>
-
-                    <!-- Подтверждение пароля -->
-                    <div>
-                        <label for="password_confirmation" class="mb-1.5 block text-sm font-medium text-content">
-                            Подтверждение пароля
-                        </label>
-                        <div class="relative">
-                            <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
-                                    />
-                                </svg>
-                            </span>
-                            <input
-                                id="password_confirmation"
-                                :type="showPassword ? 'text' : 'password'"
-                                class="w-full rounded-md border border-line bg-surface-muted py-2.5 pl-11 pr-3.5 text-sm text-content outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                placeholder="Повторите пароль"
-                                v-model="form.password_confirmation"
-                                required
-                                autocomplete="new-password"
-                            />
-                        </div>
-                        <InputError class="mt-1.5" :message="form.errors.password_confirmation" />
-                    </div>
-
-                    <!-- Согласия: отдельные документы, чекбоксы не предзаполнены -->
-                    <div class="space-y-4 rounded-md border border-line bg-surface-muted/60 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Согласия</p>
-
-                        <div>
-                            <label class="flex items-start gap-3 text-sm leading-relaxed text-content">
-                                <input
-                                    v-model="form.accept_terms"
-                                    type="checkbox"
-                                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-line-strong text-accent focus:ring-accent"
-                                />
-                                <span>
-                                    Принимаю
-                                    <Link
-                                        :href="route('legal.terms')"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="text-accent underline underline-offset-2 hover:text-accent-hover"
-                                    >
-                                        Пользовательское соглашение
-                                    </Link>
-                                </span>
-                            </label>
-                            <InputError class="mt-1.5" :message="form.errors.accept_terms" />
-                        </div>
-
-                        <div>
-                            <label class="flex items-start gap-3 text-sm leading-relaxed text-content">
-                                <input
-                                    v-model="form.accept_privacy"
-                                    type="checkbox"
-                                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-line-strong text-accent focus:ring-accent"
-                                />
-                                <span>
-                                    Даю
-                                    <Link
-                                        :href="route('legal.consent')"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="text-accent underline underline-offset-2 hover:text-accent-hover"
-                                    >
-                                        согласие на обработку персональных данных
-                                    </Link>
-                                    и подтверждаю, что ознакомлен(а) с
-                                    <Link
-                                        :href="route('legal.privacy')"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="text-accent underline underline-offset-2 hover:text-accent-hover"
-                                    >
-                                        Политикой
-                                    </Link>
-                                </span>
-                            </label>
-                            <InputError class="mt-1.5" :message="form.errors.accept_privacy" />
-                        </div>
-
-                        <div>
-                            <label class="flex items-start gap-3 text-sm leading-relaxed text-content">
-                                <input
-                                    v-model="form.accept_distribution"
-                                    type="checkbox"
-                                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-line-strong text-accent focus:ring-accent"
-                                />
-                                <span>
-                                    Согласен(на) на публикацию профиля — имя, аватар, «о себе» и ссылки будут видны всем. Условия:
-                                    <Link
-                                        :href="route('legal.distribution')"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="text-accent underline underline-offset-2 hover:text-accent-hover"
-                                    >
-                                        согласие на распространение
-                                    </Link>
-                                </span>
-                            </label>
-                            <InputError class="mt-1.5" :message="form.errors.accept_distribution" />
-                        </div>
-                    </div>
-
+            <AuthField
+                id="password"
+                v-model="form.password"
+                label="Пароль"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Минимум 8 символов"
+                autocomplete="new-password"
+                :error="form.errors.password"
+                required
+            >
+                <template #aside>
                     <button
-                        type="submit"
-                        :disabled="form.processing"
-                        class="w-full rounded-md bg-accent hover:bg-accent-hover px-5 py-3 text-sm font-semibold text-accent-contrast shadow-md transition-all duration-200 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                        type="button"
+                        class="text-[0.8125rem] text-accent transition-colors hover:text-accent-hover"
+                        :aria-pressed="showPassword"
+                        @click="showPassword = !showPassword"
                     >
-                        {{ form.processing ? "Регистрация..." : "Создать аккаунт" }}
+                        {{ showPassword ? "Скрыть" : "Показать" }}
                     </button>
-                </form>
+                </template>
+            </AuthField>
 
-                <p class="mt-6 text-center text-sm text-muted">
-                    Уже есть аккаунт?
-                    <Link
-                        :href="route('login')"
-                        class="font-semibold text-accent transition-colors hover:text-accent dark:hover:text-accent"
-                    >
-                        Войти
-                    </Link>
-                </p>
-            </div>
-        </div>
-    </Layout>
+            <AuthField
+                id="password_confirmation"
+                v-model="form.password_confirmation"
+                label="Подтверждение пароля"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Повторите пароль"
+                autocomplete="new-password"
+                :error="form.errors.password_confirmation"
+                required
+            />
+
+            <!-- Согласия: отдельные документы, чекбоксы не предзаполнены -->
+            <fieldset class="border border-line bg-page p-4">
+                <legend class="px-2 text-[0.875rem] font-semibold text-content">Согласия</legend>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="flex items-start gap-3 text-[0.9375rem] leading-relaxed text-content">
+                            <input
+                                v-model="form.accept_terms"
+                                type="checkbox"
+                                class="mt-1 h-4 w-4 shrink-0 border-line-strong accent-accent"
+                            />
+                            <span>
+                                Принимаю
+                                <Link :href="route('legal.terms')" target="_blank" rel="noopener" :class="consentLink">
+                                    Пользовательское соглашение
+                                </Link>
+                            </span>
+                        </label>
+                        <InputError class="mt-1.5" :message="form.errors.accept_terms" />
+                    </div>
+
+                    <div>
+                        <label class="flex items-start gap-3 text-[0.9375rem] leading-relaxed text-content">
+                            <input
+                                v-model="form.accept_privacy"
+                                type="checkbox"
+                                class="mt-1 h-4 w-4 shrink-0 border-line-strong accent-accent"
+                            />
+                            <span>
+                                Даю
+                                <Link :href="route('legal.consent')" target="_blank" rel="noopener" :class="consentLink">
+                                    согласие на обработку персональных данных
+                                </Link>
+                                и подтверждаю, что ознакомлен(а) с
+                                <Link :href="route('legal.privacy')" target="_blank" rel="noopener" :class="consentLink"> Политикой </Link>
+                            </span>
+                        </label>
+                        <InputError class="mt-1.5" :message="form.errors.accept_privacy" />
+                    </div>
+
+                    <div>
+                        <label class="flex items-start gap-3 text-[0.9375rem] leading-relaxed text-content">
+                            <input
+                                v-model="form.accept_distribution"
+                                type="checkbox"
+                                class="mt-1 h-4 w-4 shrink-0 border-line-strong accent-accent"
+                            />
+                            <span>
+                                Согласен(на) на публикацию профиля — имя, аватар, «о себе» и ссылки будут видны всем. Условия:
+                                <Link :href="route('legal.distribution')" target="_blank" rel="noopener" :class="consentLink">
+                                    согласие на распространение
+                                </Link>
+                            </span>
+                        </label>
+                        <InputError class="mt-1.5" :message="form.errors.accept_distribution" />
+                    </div>
+                </div>
+            </fieldset>
+
+            <button
+                type="submit"
+                :disabled="form.processing"
+                class="w-full bg-accent px-5 py-3 text-[1.0625rem] font-semibold text-accent-contrast transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+                {{ form.processing ? "Регистрация…" : "Создать аккаунт" }}
+            </button>
+        </form>
+    </AuthShell>
 </template>
