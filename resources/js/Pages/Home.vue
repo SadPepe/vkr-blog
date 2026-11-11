@@ -80,39 +80,9 @@
                     <Pagination v-if="articles.links && articles.links.length > 3" :links="articles.links" class="mt-10" />
                 </div>
 
-                <!-- Афиша: реальные просмотры крупными цифрами -->
+                <!-- Афиша: тот же блок, что на статье и в профиле -->
                 <aside v-if="popularArticles.length" class="min-w-0 lg:sticky lg:top-8 lg:self-start">
-                    <div class="border border-line bg-surface">
-                        <h2 class="border-b border-line bg-surface-muted px-4 py-2.5 text-[0.9375rem] font-semibold text-content">
-                            По просмотрам
-                        </h2>
-                        <ul>
-                            <li v-for="article in railArticles" :key="article.id">
-                                <Link
-                                    :href="route('articles.show', article.slug)"
-                                    class="group block px-4 py-3 transition-colors hover:bg-surface-muted"
-                                >
-                                    <span class="flex items-baseline gap-1.5">
-                                        <span
-                                            class="num font-display text-[1.25rem] font-bold leading-none tracking-[-0.02em] text-content transition-colors group-hover:text-accent"
-                                        >
-                                            {{ formatCount(article.views_count) }}
-                                        </span>
-                                        <span class="text-[0.8125rem] text-muted">{{ pluralViews(article.views_count) }}</span>
-                                    </span>
-                                    <span
-                                        class="mt-1 block text-[0.9375rem] font-medium leading-snug text-content transition-colors group-hover:text-accent"
-                                    >
-                                        {{ article.title }}
-                                    </span>
-                                    <span class="mt-1 flex items-center gap-2 text-[0.8125rem] text-muted">
-                                        <span class="hidden sm:inline-flex"><UserAvatar :user="article.user" :size="18" /></span>
-                                        <span>{{ article.user.name }}</span>
-                                    </span>
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
+                    <PosterRail :articles="railArticles" title="По просмотрам" />
                 </aside>
             </div>
         </div>
@@ -124,7 +94,7 @@ import { computed } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import Layout from "@/Layouts/Layout.vue";
 import FeedPost from "@/Components/FeedPost.vue";
-import UserAvatar from "@/Components/UserAvatar.vue";
+import PosterRail from "@/Components/PosterRail.vue";
 import Pagination from "@/Components/Pagination.vue";
 
 const page = usePage();
@@ -180,14 +150,6 @@ const pluralArticles = (n) => {
     return "статей";
 };
 
-const pluralViews = (n) => {
-    const mod10 = n % 10;
-    const mod100 = n % 100;
-    if (mod10 === 1 && mod100 !== 11) return "просмотр";
-    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "просмотра";
-    return "просмотров";
-};
-
 const today = new Date();
 const todayISO = today.toISOString().slice(0, 10);
 const todayLabel = new Intl.DateTimeFormat("ru-RU", {
@@ -195,8 +157,6 @@ const todayLabel = new Intl.DateTimeFormat("ru-RU", {
     month: "long",
     year: "numeric",
 }).format(today);
-
-const formatCount = (n) => new Intl.NumberFormat("ru-RU").format(n ?? 0);
 
 // Подзаголовок страницы: h1 — имя доски, под ним одной строкой, что здесь лежит
 const pageLead = computed(() =>

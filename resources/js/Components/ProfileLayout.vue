@@ -102,32 +102,8 @@
                         </section>
 
                         <aside v-if="hasAside" class="min-w-0 lg:sticky lg:top-8 lg:self-start">
-                            <!-- Чаще читают: цифра просмотров крупно, как «Афиша» на главной -->
-                            <section>
-                                <h2 class="type-h2 text-content">Чаще читают</h2>
-                                <ul class="mt-5 flex flex-col gap-5 sm:grid sm:grid-cols-2 sm:gap-x-8 sm:gap-y-5 lg:flex lg:flex-col lg:gap-5">
-                                    <li v-for="article in topArticles" :key="article.id">
-                                        <Link
-                                            :href="route('articles.show', { article: article.slug })"
-                                            class="group flex flex-wrap items-baseline gap-x-2.5 gap-y-1"
-                                        >
-                                            <span
-                                                class="num font-display text-[1.75rem] font-bold leading-none tracking-[-0.02em] text-content transition-colors group-hover:text-accent"
-                                            >
-                                                {{ formatCount(article.views_count) }}
-                                            </span>
-                                            <span class="text-[1.0625rem] text-muted">
-                                                {{ plural(article.views_count ?? 0, ["просмотр", "просмотра", "просмотров"]) }}
-                                            </span>
-                                            <span
-                                                class="basis-full text-[1.0625rem] font-medium leading-snug text-content transition-colors group-hover:text-accent"
-                                            >
-                                                {{ article.label }}
-                                            </span>
-                                        </Link>
-                                    </li>
-                                </ul>
-                            </section>
+                            <!-- Чаще читают: та же афиша, только без строки автора -->
+                            <PosterRail :articles="topArticles" title="Чаще читают" :show-author="false" />
                         </aside>
                     </div>
                 </div>
@@ -138,8 +114,8 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { Link } from "@inertiajs/vue3";
 import UserAvatar from "@/Components/UserAvatar.vue";
+import PosterRail from "@/Components/PosterRail.vue";
 
 const props = defineProps({
     user: {
@@ -218,7 +194,6 @@ function measureBackground(event) {
     }
 }
 
-const formatCount = (value) => new Intl.NumberFormat("ru-RU").format(value ?? 0);
 
 // Подпись одной строкой: она же отвечает на вопрос «что это за страница»
 const subtitle = computed(() => (memberSince.value ? `Автор блога · на блоге с ${memberSince.value}` : "Автор блога"));

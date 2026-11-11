@@ -552,12 +552,8 @@ textarea,
         }
     }
 
-    /* Рейл на статье: отбит от текстовой колонки — строкам легче читаться */
-    @media (min-width: 1024px) {
-        .article-rail {
-            padding-left: 1.5rem;
-        }
-    }
+    /* Рейл на статье: отступ от текстовой колонки даёт gap `.article-layout`.
+       Своего padding-left нет — иначе афиша на статье уже, чем на главной и в профиле. */
 
     .article-head {
         max-width: var(--measure);

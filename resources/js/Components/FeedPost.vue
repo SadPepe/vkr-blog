@@ -65,20 +65,31 @@
 
         <div
             class="post-content px-4 pb-2 text-content sm:px-5"
-            :class="[heading ? 'pt-3' : 'pt-1', { 'feed-body--clamped': article.has_more && !expanded }]"
+            :class="[heading ? 'pt-3' : '', { 'feed-body--clamped': article.has_more && !expanded }]"
             v-html="postHtml"
             @click="handleContentClick"
         />
 
-        <button
-            v-if="article.has_more || expanded"
-            type="button"
-            class="mt-3 inline-flex min-h-11 items-center px-4 text-sm font-medium text-accent transition-colors hover:text-accent-hover sm:px-5"
-            :aria-expanded="expanded"
-            @click="toggleExpand"
-        >
-            {{ expanded ? "Свернуть" : loading ? "Загружаю…" : "Читать дальше" }}
-        </button>
+        <!-- Действия под телом поста: «Читать дальше» и ссылка на сам пост.
+             Ссылка есть у всех постов, в том числе с заголовком. -->
+        <div class="mt-3 flex flex-wrap items-center gap-x-5 px-4 sm:px-5">
+            <button
+                v-if="article.has_more || expanded"
+                type="button"
+                class="inline-flex min-h-11 items-center text-sm font-medium text-accent transition-colors hover:text-accent-hover"
+                :aria-expanded="expanded"
+                @click="toggleExpand"
+            >
+                {{ expanded ? "Свернуть" : loading ? "Загружаю…" : "Читать дальше" }}
+            </button>
+
+            <Link
+                :href="articleUrl"
+                class="inline-flex min-h-11 items-center text-sm font-medium text-accent transition-colors hover:text-accent-hover"
+            >
+                Открыть пост
+            </Link>
+        </div>
 
         <!-- Последний комментарий: строка обсуждения под телом поста -->
         <Link

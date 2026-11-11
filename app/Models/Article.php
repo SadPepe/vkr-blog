@@ -198,13 +198,32 @@ class Article extends Model
      */
     public function label(int $limit = 60): string
     {
-        if (filled($this->title)) {
-            return (string) $this->title;
+        return self::labelFor($this->title, $this->content, $limit);
+    }
+
+    /**
+     * Та же метка для выборок, где не грузится content: заголовок, иначе начало
+     * текста (excerpt), иначе «Фотопост». Пустой ответ не бывает — в афише
+     * у поста всегда есть подпись.
+     */
+    public static function labelFor(?string $title, ?string $text, int $limit = 60): string
+    {
+        if (filled($title)) {
+            return (string) $title;
         }
 
-        $text = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $this->content)));
+        $plain = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $text)));
 
-        return $text === '' ? 'Фотопост' : Str::limit($text, $limit);
+        return $plain === '' ? 'Фотопост' : Str::limit($plain, $limit, '…');
+    }
+
+    /**
+     * Пост без заголовка и без текста — «фотопост»: в афише у него вместо
+     * подписи показывается миниатюра первой картинки.
+     */
+    public function isPhotoPost(): bool
+    {
+        return blank($this->title) && trim((string) $this->excerpt) === '';
     }
 
     /**
@@ -218,12 +237,14 @@ class Article extends Model
             ->orderByDesc('views_count')
             ->orderByDesc('created_at')
             ->take($limit)
-            ->get(['id', 'slug', 'title', 'content', 'views_count'])
+            ->get(['id', 'slug', 'title', 'excerpt', 'card_image_path', 'views_count'])
             ->map(fn (self $article) => [
                 'id' => $article->id,
                 'slug' => $article->slug,
                 'views_count' => (int) $article->views_count,
-                'label' => $article->label(),
+                'card_image_path' => $article->card_image_path,
+                'label' => self::labelFor($article->title, $article->excerpt),
+                'is_photo_post' => $article->isPhotoPost(),
             ]);
     }
 
@@ -275,6 +296,12 @@ class Article extends Model
                 ->limit($limit)
                 ->get()
                 ->all()
-        )->load('user:id,name,avatar');
+        )->load('user:id,name,avatar')->each(function (self $article) {
+            // Афиша: подпись есть всегда — заголовок, начало текста или «Фотопост»
+            $article->label = self::labelFor($article->title, $article->excerpt);
+            $article->is_photo_post = $article->isPhotoPost();
+
+            return $article;
+        });
     }
 }
