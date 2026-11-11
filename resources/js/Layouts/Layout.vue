@@ -11,6 +11,8 @@
             </main>
         </PageTransition>
         <Footer />
+
+        <CookieNotice />
     </div>
 </template>
 
@@ -21,6 +23,7 @@ import Navbar from "@/Components/Navbar.vue";
 import FlashMessage from "@/Components/FlashMessage.vue";
 import PageTransition from "@/Shared/PageTransition.vue";
 import Footer from "@/Components/Footer.vue";
+import CookieNotice from "@/Components/CookieNotice.vue";
 
 const page = usePage();
 </script>
