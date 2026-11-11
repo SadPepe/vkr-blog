@@ -168,10 +168,9 @@ const activeCategoryTitle = computed(() => {
 
 const railArticles = computed(() => [...props.popularArticles].sort((a, b) => (b.views_count ?? 0) - (a.views_count ?? 0)).slice(0, 5));
 
-// Лид — только на первой странице пагинатора: на второй-третьей лента идёт списком
-const isFirstPage = computed(() => (props.articles.current_page ?? 1) === 1);
-
-const feed = computed(() => (isFirstPage.value ? props.articles.data.slice(1) : props.articles.data));
+// Лента = все статьи страницы: лид из старого дизайна убран, иначе первая
+// статья пропадала (при одной статье лента оставалась пустой)
+const feed = computed(() => props.articles.data);
 
 const pluralArticles = (n) => {
     const mod10 = n % 10;

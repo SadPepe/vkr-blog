@@ -452,11 +452,9 @@ textarea,
         margin-inline: auto;
     }
 
-    /* Статья: колонка 40rem, обложка и фото из тела — во всю ширину контейнера */
+    /* Статья: колонка 40rem. Фото в теле живут по ширине колонки — не шире ленты */
     .article-spread {
         --measure: 40rem;
-        /* Фото выступает за текст, но не на всю ширину: не больше 7rem в каждую сторону */
-        --bleed: max(20px, min(7rem, calc((min(100vw, 1440px) - 96px - var(--measure)) / 2)));
     }
 
     .article-measure {
@@ -558,13 +556,10 @@ textarea,
         max-width: var(--measure);
     }
 
-    .article-bleed,
-    .article-body > figure,
-    .article-body > img,
-    .article-body > p > img {
-        width: calc(100% + 2 * var(--bleed));
-        margin-inline: calc(var(--bleed) * -1);
-        max-width: none;
+    /* Картинка не может быть шире текстовой колонки: автор вставляет её как есть */
+    .article-body img,
+    .article-body figure {
+        max-width: 100%;
     }
 
     .article-body {
@@ -598,6 +593,7 @@ textarea,
     }
 
     .article-body img {
+        max-width: 100%;
         height: auto;
         border-radius: 0;
         box-shadow: none;
@@ -606,7 +602,6 @@ textarea,
     .article-body figcaption {
         max-width: var(--measure);
         margin-top: 0.75rem;
-        margin-left: var(--bleed);
         font-size: 0.9375rem;
         line-height: 1.5;
         color: rgb(var(--c-muted));
