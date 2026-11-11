@@ -156,8 +156,15 @@
             <span v-if="$slots.actions" class="ml-auto flex items-center gap-1"><slot name="actions" /></span>
         </footer>
 
-        <!-- Лайтбокс: фото из поста на полный экран, как на странице статьи -->
-        <ImageLightbox :show="lightboxOpen" :src="lightboxSrc" :alt="lightboxAlt" @close="closeLightbox" />
+        <!-- Лайтбокс: фото из поста на полный экран, карусель листается по кадрам -->
+        <ImageLightbox
+            :show="lightboxOpen"
+            :src="lightboxSrc"
+            :alt="lightboxAlt"
+            :images="lightboxImages"
+            :index="lightboxIndex"
+            @close="closeLightbox"
+        />
     </article>
 </template>
 
@@ -193,6 +200,8 @@ const fullHtml = ref("");
 const lightboxOpen = ref(false);
 const lightboxSrc = ref("");
 const lightboxAlt = ref("");
+const lightboxImages = ref([]);
+const lightboxIndex = ref(0);
 
 const closeLightbox = () => {
     lightboxOpen.value = false;
@@ -206,6 +215,14 @@ const handleContentClick = (event) => {
 
     event.preventDefault();
     event.stopPropagation();
+
+    // Фото из карусели открываем вместе с соседними кадрами — их можно листать
+    const carousel = target.closest(".image-carousel");
+    const frames = carousel ? [...carousel.querySelectorAll(":scope > img")] : [];
+    const index = frames.indexOf(target);
+
+    lightboxImages.value = frames.map((img) => ({ src: img.currentSrc || img.src, alt: img.alt || "" }));
+    lightboxIndex.value = index >= 0 ? index : 0;
 
     lightboxSrc.value = target.currentSrc || target.src;
     lightboxAlt.value = target.alt || "";

@@ -171,8 +171,15 @@
             </button>
         </Transition>
 
-        <!-- Лайтбокс: картинка на полный экран -->
-        <ImageLightbox :show="lightboxOpen" :src="lightboxSrc" :alt="article.title || displayTitle" @close="closeLightbox" />
+        <!-- Лайтбокс: картинка на полный экран, карусель листается по кадрам -->
+        <ImageLightbox
+            :show="lightboxOpen"
+            :src="lightboxSrc"
+            :alt="article.title || displayTitle"
+            :images="lightboxImages"
+            :index="lightboxIndex"
+            @close="closeLightbox"
+        />
 
         <ReportDialog :show="reportOpen" type="article" :id="article.id" @close="reportOpen = false" />
     </MainLayout>
@@ -316,6 +323,8 @@ const scrollToTop = () => {
 };
 const lightboxOpen = ref(false);
 const lightboxSrc = ref("");
+const lightboxImages = ref([]);
+const lightboxIndex = ref(0);
 const contentRef = ref(null);
 
 const openLightbox = (src) => {
@@ -331,11 +340,20 @@ const closeLightbox = () => {
 
 const handleContentImageClick = (event) => {
     const target = event.target;
-    if (target && target.tagName === "IMG") {
-        event.preventDefault();
-        event.stopPropagation();
-        openLightbox(target.currentSrc || target.src);
-    }
+    if (!target || target.tagName !== "IMG") return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Фото из карусели открываем вместе с соседними кадрами — их можно листать
+    const carousel = target.closest(".image-carousel");
+    const frames = carousel ? [...carousel.querySelectorAll(":scope > img")] : [];
+    const index = frames.indexOf(target);
+
+    lightboxImages.value = frames.map((img) => ({ src: img.currentSrc || img.src, alt: img.alt || "" }));
+    lightboxIndex.value = index >= 0 ? index : 0;
+
+    openLightbox(target.currentSrc || target.src);
 };
 
 const updateProgress = () => {
