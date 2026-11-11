@@ -11,21 +11,28 @@ ARG COMPOSER_NO_DEV=1
 WORKDIR /build
 
 COPY composer.json composer.lock ./
+# ext-intl ставится на этапе runtime; в образе composer:2 его нет,
+# а Filament 4 без него не разрешается — на время сборки vendor игнорируем.
+# --prefer-source: на домашнем сервере api.github.com/codeload.github.com отдают
+# подменённый сертификат, dist-архивы не скачиваются, а Composer не откатывается
+# на git сам. Клонирование с github.com работает, поэтому ставим из исходников.
 RUN if [ "$COMPOSER_NO_DEV" = "1" ]; then \
         composer install \
             --no-dev \
             --no-scripts \
             --no-interaction \
             --no-progress \
-            --prefer-dist \
-            --optimize-autoloader; \
+            --prefer-source \
+            --optimize-autoloader \
+            --ignore-platform-req=ext-intl; \
     else \
         composer install \
             --no-scripts \
             --no-interaction \
             --no-progress \
-            --prefer-dist \
-            --optimize-autoloader; \
+            --prefer-source \
+            --optimize-autoloader \
+            --ignore-platform-req=ext-intl; \
     fi
 
 ############################################################
