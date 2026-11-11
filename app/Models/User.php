@@ -35,6 +35,14 @@ class User extends Authenticatable implements FilamentUser
     ];
 
     /**
+     * Своё письмо для сброса пароля вместо стандартного английского.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
+    }
+
+    /**
      * Вычисляемые поля, которые всегда попадают в JSON (нужны для аватара в лентах и комментариях).
      *
      * @var list<string>
