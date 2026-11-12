@@ -65,9 +65,10 @@ class ImageStore
             $extension = 'jpg';
         }
 
+        $webpPath = $directory . '/' . $baseName . '.webp';
+
         try {
             $manager = self::manager();
-            $webpPath = $directory . '/' . $baseName . '.webp';
 
             if ($manager !== null) {
                 $image = $manager->read($source);

@@ -36,8 +36,9 @@ php artisan route:list --path=articles
 node_modules/.bin/prettier --write "resources/js/**/*.vue"
 ```
 
-Локальный PHP собран **без `intl` и `pdo_sqlite`** — оба расширения подключаются каталогом `php-ini/`
-(см. `make serve`). Без него тесты на хосте падают, а Filament не стартует.
+Локальный PHP собран **без `intl`, `pdo_sqlite` и `exif`** — расширения подключаются каталогом
+`php-ini/` (см. `make serve`). Без него тесты на хосте падают, Filament не стартует, а `ImageStore`
+не применяет EXIF-ориентацию (повёрнутые фото с телефона сохраняются боком).
 
 ## Карта репозитория
 

@@ -92,6 +92,7 @@ RUN apk add --no-cache \
         pcntl \
         opcache \
         gd \
+        exif \
     && apk del .build-deps \
     && rm -rf /var/cache/apk/* /tmp/*
 
