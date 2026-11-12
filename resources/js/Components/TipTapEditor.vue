@@ -425,7 +425,7 @@
             <form class="p-6" @submit.prevent="insertVideo">
                 <h2 class="text-xl font-semibold text-content">Вставить видео</h2>
                 <p class="mt-2 text-sm leading-relaxed text-muted">
-                    Вставьте ссылку на видео YouTube, Rutube или VK Video. Видео останется на внешней площадке.
+                    Вставьте ссылку на видео Rutube или VK Video. Видео останется на внешней площадке.
                 </p>
 
                 <label for="video-embed-url" class="mt-5 block text-sm font-medium text-content">Ссылка на видео</label>
@@ -436,12 +436,12 @@
                     type="url"
                     inputmode="url"
                     autocomplete="off"
-                    placeholder="https://youtube.com/watch?v=..."
+                    placeholder="https://rutube.ru/video/..."
                     class="mt-2 h-11 w-full rounded-md border border-line-strong bg-surface px-3 text-sm text-content placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                     @input="videoError = ''"
                 />
                 <p v-if="videoError" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">{{ videoError }}</p>
-                <p class="mt-2 text-xs text-muted">Поддерживаются YouTube, Rutube и VK Video.</p>
+                <p class="mt-2 text-xs text-muted">Поддерживаются Rutube и VK Video.</p>
 
                 <div class="mt-6 flex justify-end gap-2.5">
                     <button

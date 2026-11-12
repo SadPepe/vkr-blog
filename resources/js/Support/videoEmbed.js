@@ -1,17 +1,15 @@
 // Встраивание видео с внешних площадок.
 //
 // В статье хранится только безопасная обёртка:
-// <div class="video-embed" data-video-provider="youtube" data-video-id="..."></div>
+// <div class="video-embed" data-video-provider="rutube" data-video-id="..."></div>
 // Сам iframe создаётся на клиенте по белому списку провайдеров. Это не даёт
 // авторам вставлять произвольные iframe и скрипты через HTML статьи.
 
 export const VIDEO_PROVIDER_LABELS = {
-    youtube: "YouTube",
     rutube: "Rutube",
     vk: "VK Video",
 };
 
-const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const RUTUBE_ID_PATTERN = /^[A-Za-z0-9]{16,64}$/;
 const VK_VIDEO_ID_PATTERN = /^-?\d+_\d+$/;
 const VK_HASH_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -56,24 +54,6 @@ export const parseVideoUrl = (input) => {
     const host = url.hostname.toLowerCase().replace(/^www\./, "");
     const path = url.pathname.replace(/\/+$/, "");
 
-    // YouTube: обычные ссылки, Shorts, live и уже готовые embed-ссылки.
-    if (host === "youtu.be" || host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com" || host === "youtube-nocookie.com") {
-        let videoId = "";
-
-        if (host === "youtu.be") {
-            videoId = path.split("/").filter(Boolean)[0] || "";
-        } else if (path === "/watch") {
-            videoId = url.searchParams.get("v") || "";
-        } else {
-            const match = path.match(/^\/(?:embed|shorts|live|v)\/([^/]+)/);
-            videoId = match?.[1] || "";
-        }
-
-        if (YOUTUBE_ID_PATTERN.test(videoId)) {
-            return { ok: true, provider: "youtube", videoId, hash: "" };
-        }
-    }
-
     // Rutube: страница видео и embed-ссылка.
     if (host === "rutube.ru") {
         const match = path.match(/^\/(?:video|play\/embed)\/([^/]+)/);
@@ -107,17 +87,13 @@ export const parseVideoUrl = (input) => {
         }
     }
 
-    return invalid("Поддерживаются ссылки YouTube, Rutube и VK Video.");
+    return invalid("Поддерживаются ссылки Rutube и VK Video.");
 };
 
 export const buildVideoEmbedUrl = ({ provider, videoId, hash = "" } = {}) => {
     const normalizedProvider = String(provider || "").toLowerCase();
     const normalizedId = String(videoId || "");
     const normalizedHash = String(hash || "");
-
-    if (normalizedProvider === "youtube" && YOUTUBE_ID_PATTERN.test(normalizedId)) {
-        return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(normalizedId)}?rel=0`;
-    }
 
     if (normalizedProvider === "rutube" && RUTUBE_ID_PATTERN.test(normalizedId)) {
         return `https://rutube.ru/play/embed/${encodeURIComponent(normalizedId)}/`;
@@ -137,9 +113,52 @@ export const buildVideoEmbedUrl = ({ provider, videoId, hash = "" } = {}) => {
     return "";
 };
 
+const PLAY_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 5.5v13l10-6.5-10-6.5z" /></svg>';
+
+/** Карточка «смотреть»: до нажатия на странице нет ни одного запроса к провайдеру. */
+const createFacade = ({ provider, src, wrapper }) => {
+    const label = videoProviderLabel(provider);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "video-embed__facade";
+    button.setAttribute("aria-label", `Смотреть видео ${label}`);
+
+    const play = document.createElement("span");
+    play.className = "video-embed__play";
+    play.innerHTML = PLAY_ICON;
+
+    const providerName = document.createElement("span");
+    providerName.className = "video-embed__provider";
+    providerName.textContent = label;
+
+    const hint = document.createElement("span");
+    hint.className = "video-embed__hint";
+    hint.textContent = `Плеер ${label} загрузится после нажатия и получит ваш IP-адрес и свои файлы cookie.`;
+
+    button.append(play, providerName, hint);
+    button.addEventListener("click", () => loadPlayer({ wrapper, src, provider }), { once: true });
+
+    return button;
+};
+
+const loadPlayer = ({ wrapper, src, provider }) => {
+    const iframe = document.createElement("iframe");
+    iframe.src = src;
+    iframe.title = `Видео ${videoProviderLabel(provider)}`;
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+    iframe.referrerPolicy = "no-referrer";
+
+    wrapper.classList.remove("video-embed--facade");
+    wrapper.classList.add("video-embed--ready");
+    wrapper.replaceChildren(iframe);
+};
+
 /**
- * Заменяет сохранённые обёртки на iframe доверенных провайдеров.
- * Повторный вызов безопасен: уже загруженные плееры пропускаются.
+ * Заменяет сохранённые обёртки на карточку «смотреть»; iframe появляется
+ * только по нажатию читателя. Повторный вызов безопасен: уже загруженные
+ * плееры и готовые карточки пропускаются.
  */
 export const enhanceVideoEmbeds = (root) => {
     if (!root) return 0;
@@ -147,7 +166,7 @@ export const enhanceVideoEmbeds = (root) => {
     let enhanced = 0;
 
     root.querySelectorAll(".video-embed[data-video-provider][data-video-id]").forEach((wrapper) => {
-        if (wrapper.querySelector("iframe")) return;
+        if (wrapper.querySelector("iframe") || wrapper.querySelector(".video-embed__facade")) return;
 
         const provider = wrapper.dataset.videoProvider || "";
         const videoId = wrapper.dataset.videoId || "";
@@ -160,16 +179,8 @@ export const enhanceVideoEmbeds = (root) => {
             return;
         }
 
-        const iframe = document.createElement("iframe");
-        iframe.src = src;
-        iframe.title = `Видео ${videoProviderLabel(provider)}`;
-        iframe.loading = "lazy";
-        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-        iframe.allowFullscreen = true;
-        iframe.referrerPolicy = "no-referrer";
-
-        wrapper.classList.add("video-embed--ready");
-        wrapper.replaceChildren(iframe);
+        wrapper.classList.add("video-embed--facade");
+        wrapper.replaceChildren(createFacade({ provider, src, wrapper }));
         enhanced += 1;
     });
 

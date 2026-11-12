@@ -45,6 +45,7 @@ const accept = () => {
             <div class="page-shell flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
                 <p class="max-w-[62ch] text-[0.9375rem] leading-relaxed text-content">
                     Сайт использует только технические cookie: они держат сессию и защищают формы. Аналитики и рекламных трекеров нет.
+                    Видео с внешних площадок загружается только по нажатию — тогда свои cookie может поставить провайдер плеера.
                     Подробнее —
                     <Link
                         :href="route('legal.privacy')"

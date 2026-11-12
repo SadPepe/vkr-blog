@@ -9,6 +9,17 @@ export default {
         "./resources/views/**/*.blade.php",
         "./resources/js/**/*.vue",
     ],
+    // Классы, которые собираются в JS (Support/videoEmbed.js, фасад видео):
+    // в .vue-файлах их нет, и Tailwind вырезает правила из @layer components.
+    safelist: [
+        "video-embed__facade",
+        "video-embed__play",
+        "video-embed__provider",
+        "video-embed__hint",
+        "video-embed--facade",
+        "video-embed--ready",
+        "video-embed--invalid",
+    ],
     // Тёмные темы включаются атрибутом data-mode="dark" (data-theme отвечает за палитру)
     darkMode: ["class", '[data-mode="dark"]'],
     theme: {

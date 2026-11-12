@@ -181,7 +181,7 @@ class HtmlSanitizer
             // Данные внешнего видео: провайдер и ID проверяются ещё раз
             // на клиенте при построении iframe, здесь отсекаем мусор.
             if ($name === 'data-video-provider') {
-                if (! in_array(strtolower($value), ['youtube', 'rutube', 'vk'], true)) {
+                if (! in_array(strtolower($value), ['rutube', 'vk'], true)) {
                     $toRemove[] = $attr->name;
                 }
                 continue;

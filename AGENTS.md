@@ -130,6 +130,9 @@ docker/entrypoint.sh      миграции, ассеты Filament, кэши пр
 - После `docker compose --profile test` каталоги `storage/framework/testing/disks/public/*` могут стать
   `nobody:nobody 700` — хост-тесты падают с `Permission denied`. Лечится удалением этих каталогов
   (например, из контейнера), не правкой тестов.
+- Классы, которые создаются в JS (`document.createElement`, `classList.add`), Tailwind не находит в
+  `.vue` и вырезает из `@layer components` — их надо перечислять в `safelist` (`tailwind.config.js`).
+  Пример: фасад видео `video-embed__*`.
 - `composer.lock` / `package-lock.json` не править руками; `vendor/`, `node_modules/`, `public/build` — не трогать.
 - Миграции на рабочей БД — только после `scripts/backup.sh`; rollback удаляет данные (`reports`, `announcements`).
 

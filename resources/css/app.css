@@ -575,7 +575,7 @@ textarea,
         border: 0;
     }
 
-    .video-embed:not(.video-embed--ready):not(.video-embed--invalid)::after {
+    .video-embed:not(.video-embed--ready):not(.video-embed--invalid):not(.video-embed--facade)::after {
         content: "Загрузка видео…";
         position: absolute;
         inset: 0;
@@ -586,6 +586,64 @@ textarea,
         color: rgb(var(--c-muted));
         font-size: 0.9375rem;
         text-align: center;
+    }
+
+    /* Фасад: до нажатия внешний плеер не грузится — вместо iframe карточка.
+       Так обращение к провайдеру (и его cookie) происходит по действию читателя. */
+    .video-embed__facade {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1.5rem;
+        border: 0;
+        background: transparent;
+        color: rgb(var(--c-content));
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 150ms ease;
+    }
+
+    .video-embed__facade:hover {
+        background: rgb(var(--c-surface));
+    }
+
+    .video-embed__facade:focus-visible {
+        outline: 2px solid rgb(var(--c-accent));
+        outline-offset: -2px;
+    }
+
+    .video-embed__play {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 3.5rem;
+        height: 3.5rem;
+        border: 1px solid rgb(var(--c-line-strong));
+        border-radius: 999px;
+        background: rgb(var(--c-surface));
+        color: rgb(var(--c-accent));
+    }
+
+    .video-embed__play svg {
+        width: 1.5rem;
+        height: 1.5rem;
+        margin-left: 0.15rem;
+    }
+
+    .video-embed__provider {
+        font-size: 1.0625rem;
+        font-weight: 600;
+    }
+
+    .video-embed__hint {
+        max-width: 42ch;
+        color: rgb(var(--c-muted));
+        font-size: 0.8125rem;
+        line-height: 1.45;
     }
 
     .video-embed--invalid {

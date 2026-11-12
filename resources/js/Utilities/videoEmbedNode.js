@@ -18,8 +18,8 @@ const VideoEmbed = Node.create({
     addAttributes() {
         return {
             provider: {
-                default: "youtube",
-                parseHTML: (element) => element.getAttribute("data-video-provider") || "youtube",
+                default: "rutube",
+                parseHTML: (element) => element.getAttribute("data-video-provider") || "rutube",
                 renderHTML: (attributes) => ({ "data-video-provider": attributes.provider }),
             },
             videoId: {

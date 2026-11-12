@@ -202,7 +202,7 @@ class ArticleTest extends TestCase
     public function test_video_only_post_is_allowed_and_kept_in_article_and_feed(): void
     {
         $user = User::factory()->create();
-        $video = '<div class="video-embed video-embed--youtube" data-video-provider="youtube" data-video-id="dQw4w9WgXcQ" data-video-hash=""></div>';
+        $video = '<div class="video-embed video-embed--rutube" data-video-provider="rutube" data-video-id="0123456789abcdef0123" data-video-hash=""></div>';
 
         $this->actingAs($user)->post('/articles', ['content' => $video]);
 
@@ -212,11 +212,11 @@ class ArticleTest extends TestCase
 
         $show = $this->get(route('articles.show', $article->slug))->assertOk();
         $showPage = $show->viewData('page');
-        $this->assertStringContainsString('data-video-provider="youtube"', $showPage['props']['article']['content']);
+        $this->assertStringContainsString('data-video-provider="rutube"', $showPage['props']['article']['content']);
 
         $home = $this->get(route('home'))->assertOk();
         $homePage = $home->viewData('page');
-        $this->assertStringContainsString('data-video-provider="youtube"', $homePage['props']['articles']['data'][0]['preview']);
+        $this->assertStringContainsString('data-video-provider="rutube"', $homePage['props']['articles']['data'][0]['preview']);
     }
 
     public function test_empty_post_is_rejected(): void
