@@ -179,8 +179,7 @@ export const enhanceVideoEmbeds = (root) => {
             return;
         }
 
-        wrapper.classList.add("video-embed--facade");
-        wrapper.replaceChildren(createFacade({ provider, src, wrapper }));
+        loadPlayer({ wrapper, src, provider });
         enhanced += 1;
     });
 
