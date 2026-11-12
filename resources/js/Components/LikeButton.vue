@@ -13,7 +13,7 @@
         :aria-label="liked ? 'Убрать лайк' : 'Поставить лайк'"
     >
         <svg
-            class="h-5 w-5 shrink-0 transition-transform duration-300"
+            class="h-[1.125rem] w-[1.125rem] shrink-0 transition-transform duration-300"
             :class="{ 'scale-110': liked, 'scale-100': !liked }"
             :fill="liked ? 'currentColor' : 'none'"
             stroke="currentColor"

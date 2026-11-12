@@ -29,9 +29,76 @@
             <div class="article-layout">
                 <div class="min-w-0">
                     <div class="article-head">
+                        <!-- Автор, просмотры и правка — одной строкой над постом:
+                             аватар и имя слева, метрика и кнопка у правого края.
+                             Ссылки «Все статьи автора» нет: имя уже ведёт в профиль. -->
+                        <div class="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
+                            <UserAvatar :user="article.user" :size="40" class="shrink-0" />
+                            <Link
+                                :href="authorUrl"
+                                class="min-w-0 truncate text-[1.0625rem] font-medium leading-snug text-content transition-colors hover:text-accent"
+                            >
+                                {{ article.user.name }}
+                            </Link>
+
+                            <div class="ml-auto flex items-center gap-3">
+                                <span
+                                    class="inline-flex items-center gap-1.5 text-sm text-muted"
+                                    :aria-label="`${article.views_count} ${pluralViews(article.views_count)}`"
+                                >
+                                    <svg
+                                        class="h-4 w-4 shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                        />
+                                    </svg>
+                                    <span class="num">{{ formatCount(article.views_count) }}</span>
+                                </span>
+
+                                <Link
+                                    v-if="isOwner"
+                                    :href="route('articles.edit', { article: article.slug })"
+                                    class="ui-pill"
+                                >
+                                    <svg
+                                        class="h-[1.125rem] w-[1.125rem] shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
+                                        />
+                                    </svg>
+                                    Редактировать
+                                </Link>
+                                <button
+                                    v-else-if="page.props.auth?.user"
+                                    type="button"
+                                    class="ui-pill"
+                                    @click="reportOpen = true"
+                                >
+                                    Пожаловаться
+                                </button>
+                            </div>
+                        </div>
+
                         <h1
                             v-if="article.title"
-                            class="mt-6 font-display text-[clamp(2rem,4.4vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.02em] [text-wrap:balance] text-content"
+                            class="mt-5 font-display text-[clamp(2rem,4.4vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.02em] [text-wrap:balance] text-content"
                         >
                             {{ article.title }}
                         </h1>
@@ -48,22 +115,10 @@
                     <!-- Картинки показываем как есть — в том месте текста, куда их вставил автор -->
                     <div ref="contentRef" class="article-body mt-12 text-content" v-html="article.content"></div>
 
-                    <!-- Поделиться на десктопе — те же пилюли, что и в блоке под постом;
-                         на узких экранах этим занимается ArticleFooter -->
-                    <div class="article-measure mx-auto mt-10 hidden lg:block">
-                        <ArticleShare :url="absoluteUrl" :title="displayTitle" />
-                    </div>
-
+                    <!-- Действия под постом: лайк и «поделиться» одной строкой
+                         на всех ширинах, отдельных копий для lg больше нет -->
                     <div class="article-measure">
-                        <ArticleFooter
-                            :article="article"
-                            :author-url="authorUrl"
-                            :share-url="absoluteUrl"
-                            :share-title="displayTitle"
-                            :is-owner="isOwner"
-                            :comments-count="commentsCount"
-                            @report="reportOpen = true"
-                        />
+                        <ArticleFooter :article="article" :share-url="absoluteUrl" :share-title="displayTitle" />
                     </div>
 
                     <div class="article-measure">
@@ -73,72 +128,8 @@
 
                 <!-- Рейл: похожие и афиша закрывают правую сторону -->
                 <aside class="article-rail">
-                    <!-- Автор и действия: с lg это единственная копия — на узких экранах
-                         то же самое показывает ArticleFooter до комментариев -->
-                    <div class="hidden lg:block">
-                        <!-- Автор статьи: аватар и имя одной строкой, описание — ниже во всю ширину -->
-                        <div class="flex items-center gap-3">
-                            <UserAvatar :user="article.user" :size="56" class="shrink-0" />
-                            <Link
-                                :href="authorUrl"
-                                class="min-w-0 text-[1.0625rem] font-medium text-content transition-colors hover:text-accent"
-                            >
-                                {{ article.user.name }}
-                            </Link>
-                        </div>
-                        <p v-if="article.user.about" class="mt-3 text-muted">
-                            {{ article.user.about }}
-                        </p>
-                        <Link :href="authorUrl" class="mt-2 inline-block text-sm text-accent transition-colors hover:text-accent-hover">
-                            Все статьи автора
-                        </Link>
-
-                        <!-- Метрики и действия — рядом с автором; на узких экранах рейл уходит под статью -->
-                        <ArticleStats
-                            :article="article"
-                            :views-count="article.views_count"
-                            :initial-liked="article.is_liked"
-                            :initial-likes-count="article.likes_count"
-                            :comments-count="commentsCount"
-                            class="mt-6"
-                        />
-
-                        <div class="mt-4 flex flex-wrap items-center gap-2">
-                            <Link
-                                v-if="isOwner"
-                                :href="route('articles.edit', { article: article.slug })"
-                                class="ui-pill ui-pill--quiet min-h-9 px-3 text-[0.875rem]"
-                            >
-                                <svg
-                                    class="h-[1.125rem] w-[1.125rem]"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="1.5"
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
-                                    />
-                                </svg>
-                                Редактировать
-                            </Link>
-                            <button
-                                v-else-if="page.props.auth?.user"
-                                type="button"
-                                class="ui-pill ui-pill--quiet min-h-9 px-3 text-[0.875rem]"
-                                @click="reportOpen = true"
-                            >
-                                Пожаловаться
-                            </button>
-                        </div>
-                    </div>
-
                     <PosterRail
                         v-if="relatedArticles && relatedArticles.length > 0"
-                        class="mt-12"
                         :articles="relatedArticles.slice(0, 4)"
                         title="Ещё в разделе"
                     />
@@ -195,8 +186,6 @@ import { Head, Link, usePage } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/Layout.vue";
 import CommentSection from "@/Components/Comments/CommentSection.vue";
 import ArticleFooter from "@/Components/ArticleFooter.vue";
-import ArticleShare from "@/Components/ArticleShare.vue";
-import ArticleStats from "@/Components/ArticleStats.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import ImageLightbox from "@/Components/ImageLightbox.vue";
 import PosterRail from "@/Components/PosterRail.vue";
@@ -266,6 +255,17 @@ const readingMinutes = computed(() => {
     return Math.max(1, Math.round(words / 200));
 });
 
+// Просмотры в строке автора: число с разделителем, падеж — для скринридера
+const formatCount = (value) => new Intl.NumberFormat("ru-RU").format(value ?? 0);
+
+const pluralViews = (n) => {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return "просмотр";
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "просмотра";
+    return "просмотров";
+};
+
 const description = computed(() => {
     const text = (props.article.excerpt || "").trim();
     if (text) return text;
@@ -286,7 +286,6 @@ const shareImage = computed(() =>
 );
 
 // Комментарии считаются вместе с ответами — как в рейле
-const commentsCount = computed(() => props.article.comments?.length ?? 0);
 
 const progress = ref(0);
 const showTopButton = ref(false);

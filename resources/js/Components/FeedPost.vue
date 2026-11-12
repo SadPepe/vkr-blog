@@ -135,7 +135,7 @@
              вертикальная линия и последний комментарий. -->
         <section v-if="article.comments_count > 0" class="mt-6 border-t border-line/70 pt-5" aria-label="Обсуждение поста">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <Link :href="articleUrl + '#comments'" class="ui-pill ui-pill--active">
+                <Link :href="articleUrl + '#comments'" class="ui-pill ui-pill--soft">
                     <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
                         <path
                             stroke-linecap="round"

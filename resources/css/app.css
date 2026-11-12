@@ -1380,10 +1380,27 @@ textarea,
         outline-offset: 2px;
     }
 
-    .ui-pill--active {
-        border-color: rgb(var(--c-accent) / 0.55);
+    /* Мягкое выделение: не «включено», а «здесь есть продолжение».
+       Осталось у ссылки на обсуждение в ленте. */
+    .ui-pill--soft {
+        border-color: rgb(var(--c-accent) / 0.45);
         background: rgb(var(--c-accent-soft));
         color: rgb(var(--c-accent));
+    }
+
+    /* Включённое состояние — плоская заливка акцентом: один тон вместо
+       «подложка + обводка + цветной текст». Рядом с нейтральной пилюлей
+       читается как выключатель: залито — включено. */
+    .ui-pill--active {
+        border-color: rgb(var(--c-accent));
+        background: rgb(var(--c-accent));
+        color: rgb(var(--c-accent-contrast));
+    }
+
+    .ui-pill--active:hover {
+        border-color: rgb(var(--c-accent-hover));
+        background: rgb(var(--c-accent-hover));
+        color: rgb(var(--c-accent-contrast));
     }
 
     .ui-pill--solid {
