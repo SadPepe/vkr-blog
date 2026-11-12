@@ -17,7 +17,7 @@
 | UI | PrimeVue 4, `vue-material-design-icons`, кастомные компоненты |
 | Редактор | Tiptap 2 (`Components/TipTapEditor.vue`), `browser-image-compression` |
 | Админка | Filament 4 (`app/Filament`, `app/Providers/Filament/AdminPanelProvider.php`) |
-| Тесты | PHPUnit на sqlite `:memory:` (`phpunit.xml`, `.env.testing`); 120 passed, 1 skipped |
+| Тесты | PHPUnit на sqlite `:memory:` (`phpunit.xml`, `.env.testing`); на 2026-11-12 — 153 passed, 2 skipped |
 | Деплой | Docker Compose: `app` (php-fpm + nginx), `db`, `caddy`, профиль `tests` |
 
 ## Команды
@@ -132,6 +132,22 @@ docker/entrypoint.sh      миграции, ассеты Filament, кэши пр
   (например, из контейнера), не правкой тестов.
 - `composer.lock` / `package-lock.json` не править руками; `vendor/`, `node_modules/`, `public/build` — не трогать.
 - Миграции на рабочей БД — только после `scripts/backup.sh`; rollback удаляет данные (`reports`, `announcements`).
+
+## Завершение задачи: память для новой сессии
+
+Чтобы новая сессия не восстанавливала контекст по диффу, перед финальным ответом
+агент обязан оставить короткую пометку:
+
+1. **UI/UX, компоненты, стили** — обновить `docs/redesign-notes.md`: что изменено,
+   какие решения приняты, какие файлы/маршруты затронуты. 3–8 пунктов, без пересказа кода.
+2. **Backend, маршруты, данные, тесты** — при необходимости добавить краткий блок
+   в `docs/state.md` или сослаться оттуда на `docs/redesign-notes.md`.
+3. В конце пометки указать **дату, hash последнего коммита и результат проверок**
+   (`php artisan test`, `npm run build`).
+4. Не дублировать длинные диффы и не писать «всё готово» без конкретики.
+
+Последняя зафиксированная итерация: **2026-11-12, `909a464`** — открытая лента,
+рейл, каталог авторов и упоминания `@username`.
 
 ## Документация
 
