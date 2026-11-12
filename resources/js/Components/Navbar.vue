@@ -30,6 +30,15 @@
                 <!-- Категории строкой текстовых ссылок -->
                 <nav class="site-header-cats hidden min-w-0 lg:block" aria-label="Категории">
                     <ul class="flex flex-wrap items-center gap-x-5 gap-y-1">
+                        <li>
+                            <Link
+                                :href="route('authors.index')"
+                                class="whitespace-nowrap text-[1.0625rem] leading-6 transition-colors hover:text-accent"
+                                :class="isAuthorsPage ? 'text-accent underline decoration-2 underline-offset-[7px]' : 'text-muted'"
+                            >
+                                Авторы
+                            </Link>
+                        </li>
                         <li v-for="category in categories" :key="category.id">
                             <Link
                                 :href="route('articlesByCategory', category.slug)"
@@ -314,8 +323,18 @@
                         </div>
                     </form>
 
-                    <nav aria-label="Категории">
+                    <nav aria-label="Авторы и категории">
                         <ul class="flex flex-col gap-1">
+                            <li>
+                                <Link
+                                    :href="route('authors.index')"
+                                    class="block py-1.5 text-[1.25rem] font-medium leading-snug transition-colors hover:text-accent"
+                                    :class="isAuthorsPage ? 'text-accent' : 'text-content'"
+                                    @click="closeMobileMenu"
+                                >
+                                    Авторы
+                                </Link>
+                            </li>
                             <li v-for="category in categories" :key="category.id">
                                 <Link
                                     :href="route('articlesByCategory', category.slug)"
@@ -388,6 +407,9 @@ const activeCategory = computed(() => {
     const path = (page.url || "").split("?")[0];
     return path.startsWith("/categories/") ? decodeURIComponent(path.replace("/categories/", "")) : null;
 });
+
+const isAuthorsPage = computed(() => (page.url || "").split("?")[0].startsWith("/authors"));
+
 
 const queryFromUrl = (url) => new URLSearchParams((url || "").split("?")[1] || "").get("query") || "";
 

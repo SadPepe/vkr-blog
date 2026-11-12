@@ -101,7 +101,7 @@
                             <slot />
                         </section>
 
-                        <aside v-if="hasAside" class="min-w-0 lg:sticky lg:top-8 lg:self-start">
+                        <aside v-if="hasAside" class="min-w-0">
                             <!-- Чаще читают: та же афиша, только без строки автора -->
                             <PosterRail :articles="topArticles" title="Чаще читают" :show-author="false" />
                         </aside>
@@ -195,8 +195,17 @@ function measureBackground(event) {
 }
 
 
-// Подпись одной строкой: она же отвечает на вопрос «что это за страница»
-const subtitle = computed(() => (memberSince.value ? `Автор блога · на блоге с ${memberSince.value}` : "Автор блога"));
+// Подпись одной строкой: она же отвечает на вопрос «что это за страница».
+// @username нужен, чтобы автора можно было упомянуть в посте или комментарии.
+const subtitle = computed(() => {
+    const parts = [];
+
+    if (props.user.username) parts.push(`@${props.user.username}`);
+    parts.push("Автор блога");
+    if (memberSince.value) parts.push(`на блоге с ${memberSince.value}`);
+
+    return parts.join(" · ");
+});
 
 const aboutId = computed(() => `about-${props.user.id}`);
 

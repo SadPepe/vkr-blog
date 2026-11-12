@@ -26,14 +26,14 @@
                         <p class="mt-2 text-[1.125rem] leading-snug text-content">{{ pageLead }}</p>
                     </header>
 
-                    <!-- Сортировка: сегменты на подложке, как переключатель разделов на форуме -->
-                    <nav aria-label="Сортировка" class="mt-4 flex gap-1 overflow-x-auto bg-surface-muted p-1">
+                    <!-- Сортировка: мягкие pill-чипы вместо прямоугольных сегментов -->
+                    <nav aria-label="Сортировка" class="mt-5 flex gap-2 overflow-x-auto pb-1">
                         <button
                             v-for="option in sortOptions"
                             :key="option.value"
                             type="button"
-                            class="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap px-3 text-sm transition-colors"
-                            :class="sort === option.value ? 'bg-accent font-medium text-accent-contrast' : 'text-content hover:bg-surface'"
+                            class="ui-pill shrink-0 whitespace-nowrap"
+                            :class="sort === option.value ? 'ui-pill--solid' : ''"
                             :aria-current="sort === option.value ? 'true' : undefined"
                             @click="onSortChange(option.value)"
                         >
@@ -41,8 +41,8 @@
                         </button>
                     </nav>
 
-                    <!-- Лента как на DTF: панели с радиусом, между ними шов --layout-feed-gap-y (4px) -->
-                    <ul v-if="feed.length" class="mt-5 flex flex-col gap-[var(--layout-feed-gap-y)]">
+                    <!-- Открытая лента: посты без подложек, между ними линия и воздух -->
+                    <ul v-if="feed.length" class="feed-list mt-6">
                         <li v-for="article in feed" :key="article.id">
                             <FeedPost :article="article" :categories="categories" />
                         </li>
@@ -80,9 +80,21 @@
                     <Pagination v-if="articles.links && articles.links.length > 3" :links="articles.links" class="mt-10" />
                 </div>
 
-                <!-- Афиша: тот же блок, что на статье и в профиле -->
-                <aside v-if="popularArticles.length" class="min-w-0 lg:sticky lg:top-8 lg:self-start">
-                    <PosterRail :articles="railArticles" title="По просмотрам" />
+                <!-- Рейл: активность, авторы и популярное. Открытыми блоками,
+                     без общей панели — в одном языке с лентой. -->
+                <aside v-if="hasRail" class="min-w-0">
+                    <div class="space-y-10">
+                        <PosterRail v-if="discussedArticles.length" :articles="discussedArticles" title="Сейчас обсуждают" />
+                        <AuthorsRail v-if="activeAuthors.length" :authors="activeAuthors" />
+                        <PosterRail v-if="railArticles.length" :articles="railArticles" title="По просмотрам за неделю" />
+
+                        <Link
+                            :href="$page.props.auth.user ? route('create') : route('register')"
+                            class="ui-pill ui-pill--solid w-full"
+                        >
+                            {{ $page.props.auth.user ? "Написать статью" : "Стать автором" }}
+                        </Link>
+                    </div>
                 </aside>
             </div>
         </div>
@@ -95,6 +107,7 @@ import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import Layout from "@/Layouts/Layout.vue";
 import FeedPost from "@/Components/FeedPost.vue";
 import PosterRail from "@/Components/PosterRail.vue";
+import AuthorsRail from "@/Components/AuthorsRail.vue";
 import Pagination from "@/Components/Pagination.vue";
 
 const page = usePage();
@@ -105,6 +118,14 @@ const props = defineProps({
         required: true,
     },
     popularArticles: {
+        type: Array,
+        default: () => [],
+    },
+    discussedArticles: {
+        type: Array,
+        default: () => [],
+    },
+    activeAuthors: {
         type: Array,
         default: () => [],
     },
@@ -137,6 +158,8 @@ const activeCategoryTitle = computed(() => {
 });
 
 const railArticles = computed(() => [...props.popularArticles].sort((a, b) => (b.views_count ?? 0) - (a.views_count ?? 0)).slice(0, 5));
+
+const hasRail = computed(() => props.discussedArticles.length > 0 || props.activeAuthors.length > 0 || railArticles.value.length > 0);
 
 // Лента = все статьи страницы: лид из старого дизайна убран, иначе первая
 // статья пропадала (при одной статье лента оставалась пустой)

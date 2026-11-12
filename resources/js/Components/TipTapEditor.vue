@@ -234,6 +234,56 @@
 
             <!-- Группа дополнительных элементов -->
             <div class="flex items-center gap-1">
+                <div class="relative">
+                    <button
+                        type="button"
+                        :class="[mentionOpen ? 'bg-accent-soft text-accent' : 'hover:bg-surface-muted text-content', 'p-2 rounded-md']"
+                        class="tooltip"
+                        data-tooltip="Упомянуть пользователя"
+                        @click="toggleMentionPicker"
+                    >
+                        <AtIcon class="w-5 h-5" />
+                    </button>
+
+                    <div
+                        v-if="mentionOpen"
+                        class="absolute left-0 top-full z-30 mt-2 w-[min(22rem,80vw)] overflow-hidden rounded-[14px] border border-line bg-surface shadow-lg"
+                    >
+                        <div class="border-b border-line p-2">
+                            <input
+                                ref="mentionInput"
+                                v-model="mentionQuery"
+                                type="text"
+                                placeholder="Имя или @username"
+                                aria-label="Найти пользователя для упоминания"
+                                class="h-10 w-full rounded-[10px] border border-line-strong bg-surface px-3 text-sm text-content placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                                @input="searchMentions"
+                                @keydown.esc="mentionOpen = false"
+                            />
+                        </div>
+                        <p v-if="mentionLoading" class="px-4 py-3 text-sm text-muted">Ищу людей…</p>
+                        <p v-else-if="mentionQuery && !mentionResults.length" class="px-4 py-3 text-sm text-muted">
+                            Никого не нашли
+                        </p>
+                        <ul v-else-if="mentionResults.length" class="max-h-64 overflow-y-auto py-1">
+                            <li v-for="user in mentionResults" :key="user.id">
+                                <button
+                                    type="button"
+                                    class="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-surface-muted"
+                                    @click="insertMention(user)"
+                                >
+                                    <UserAvatar :user="user" :size="30" />
+                                    <span class="min-w-0">
+                                        <span class="block truncate text-[0.9375rem] font-medium text-content">{{ user.name }}</span>
+                                        <span class="block truncate text-[0.8125rem] text-muted">@{{ user.username }}</span>
+                                    </span>
+                                </button>
+                            </li>
+                        </ul>
+                        <p v-else class="px-4 py-3 text-sm text-muted">Начните вводить имя или логин.</p>
+                    </div>
+                </div>
+
                 <button
                     type="button"
                     @click="setLink"
@@ -300,6 +350,15 @@
                 >
                     <CarouselIcon class="w-5 h-5" />
                 </button>
+                <button
+                    type="button"
+                    @click="openVideoModal"
+                    :class="'hover:bg-surface-muted text-content p-2 rounded-md'"
+                    class="tooltip"
+                    data-tooltip="Вставить видео"
+                >
+                    <MoviePlayOutlineIcon class="w-5 h-5" />
+                </button>
             </div>
 
             <span class="ml-auto hidden text-[11px] font-normal text-muted md:inline">
@@ -360,6 +419,47 @@
                 Начните писать вашу статью...
             </div>
         </div>
+
+        <!-- Вставка внешнего видео -->
+        <Modal :show="videoModalOpen" max-width="md" centered blur @close="closeVideoModal">
+            <form class="p-6" @submit.prevent="insertVideo">
+                <h2 class="text-xl font-semibold text-content">Вставить видео</h2>
+                <p class="mt-2 text-sm leading-relaxed text-muted">
+                    Вставьте ссылку на видео YouTube, Rutube или VK Video. Видео останется на внешней площадке.
+                </p>
+
+                <label for="video-embed-url" class="mt-5 block text-sm font-medium text-content">Ссылка на видео</label>
+                <input
+                    id="video-embed-url"
+                    ref="videoInput"
+                    v-model="videoUrl"
+                    type="url"
+                    inputmode="url"
+                    autocomplete="off"
+                    placeholder="https://youtube.com/watch?v=..."
+                    class="mt-2 h-11 w-full rounded-md border border-line-strong bg-surface px-3 text-sm text-content placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                    @input="videoError = ''"
+                />
+                <p v-if="videoError" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">{{ videoError }}</p>
+                <p class="mt-2 text-xs text-muted">Поддерживаются YouTube, Rutube и VK Video.</p>
+
+                <div class="mt-6 flex justify-end gap-2.5">
+                    <button
+                        type="button"
+                        class="rounded border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-content transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                        @click="closeVideoModal"
+                    >
+                        Отмена
+                    </button>
+                    <button
+                        type="submit"
+                        class="rounded bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast shadow-sm transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                    >
+                        Вставить
+                    </button>
+                </div>
+            </form>
+        </Modal>
     </div>
 </template>
 
@@ -369,7 +469,9 @@ import StarterKit from "@tiptap/starter-kit";
 import { CODE_LANGUAGES } from "@/Support/codeLanguages";
 import Image from "@tiptap/extension-image";
 import ImageCarousel from "@/Utilities/imageCarouselNode";
+import VideoEmbed from "@/Utilities/videoEmbedNode";
 import { CAROUSEL_IMAGE_TYPES, MAX_CAROUSEL_IMAGES } from "@/Support/imageCarouselConfig";
+import { parseVideoUrl } from "@/Support/videoEmbed";
 import Heading from "@tiptap/extension-heading";
 import Underline from "@tiptap/extension-underline";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -389,7 +491,11 @@ import AlignLeftIcon from "vue-material-design-icons/FormatAlignLeft.vue";
 import AligRightIcon from "vue-material-design-icons/FormatAlignRight.vue";
 import ImageIcon from "vue-material-design-icons/Image.vue";
 import CarouselIcon from "vue-material-design-icons/ViewCarousel.vue";
+import MoviePlayOutlineIcon from "vue-material-design-icons/MoviePlayOutline.vue";
 import LinkIcon from "vue-material-design-icons/LinkVariant.vue";
+import AtIcon from "vue-material-design-icons/At.vue";
+import UserAvatar from "@/Components/UserAvatar.vue";
+import Modal from "@/Components/Modal.vue";
 import { nextTick, onMounted, onBeforeUnmount, ref, watch } from "vue";
 import { MAX_DRAFT_SIZE, readDraft, removeDraft, writeDraft } from "@/Utilities/drafts";
 
@@ -437,6 +543,20 @@ const pendingDraft = ref(null);
 let draftTracking = false;
 const editorError = ref("");
 let editorErrorTimer = null;
+
+// Вставка упоминания через поиск: в HTML попадает обычная ссылка с классом mention
+const mentionOpen = ref(false);
+const mentionQuery = ref("");
+const mentionResults = ref([]);
+const mentionLoading = ref(false);
+const mentionInput = ref(null);
+let mentionTimer = null;
+
+// Вставка видео с внешних площадок
+const videoModalOpen = ref(false);
+const videoUrl = ref("");
+const videoError = ref("");
+const videoInput = ref(null);
 
 const showError = (message) => {
     editorError.value = message;
@@ -556,7 +676,16 @@ watch([title, selectedCategory], () => {
 
 // ---------- Инициализация редактора ----------
 const syncHasContent = () => {
-    hasContent.value = !!editor.value && editor.value.state.doc.textContent.trim().length > 0;
+    if (!editor.value) {
+        hasContent.value = false;
+        return;
+    }
+
+    const html = editor.value.getHTML();
+    hasContent.value =
+        editor.value.state.doc.textContent.trim().length > 0 ||
+        html.includes("<img") ||
+        html.includes("video-embed");
 };
 
 const handleKeyDown = (_view, event) => {
@@ -627,6 +756,7 @@ onMounted(() => {
                 allowBase64: true,
             }),
             ImageCarousel,
+            VideoEmbed,
         ],
         content: restoredContent,
         editorProps: {
@@ -796,6 +926,59 @@ const syncToolbarPosition = () => {
     };
 };
 
+const toggleMentionPicker = async () => {
+    mentionOpen.value = !mentionOpen.value;
+
+    if (!mentionOpen.value) return;
+
+    mentionQuery.value = "";
+    mentionResults.value = [];
+    await nextTick();
+    mentionInput.value?.focus();
+};
+
+const searchMentions = () => {
+    clearTimeout(mentionTimer);
+    const query = mentionQuery.value.trim();
+
+    if (!query) {
+        mentionResults.value = [];
+        mentionLoading.value = false;
+        return;
+    }
+
+    mentionTimer = setTimeout(async () => {
+        mentionLoading.value = true;
+
+        try {
+            const response = await fetch(route("mentions.search", { q: query }), {
+                headers: { Accept: "application/json" },
+            });
+            mentionResults.value = response.ok ? await response.json() : [];
+        } catch {
+            mentionResults.value = [];
+        } finally {
+            mentionLoading.value = false;
+        }
+    }, 180);
+};
+
+const insertMention = (user) => {
+    if (!editor.value) return;
+
+    editor.value
+        .chain()
+        .focus()
+        .insertContent(
+            `<a href="${route("authors.byUsername", user.username)}" class="mention">@${user.username}</a> `,
+        )
+        .run();
+
+    mentionOpen.value = false;
+    mentionQuery.value = "";
+    mentionResults.value = [];
+};
+
 const setLink = () => {
     const previousUrl = editor.value.getAttributes("link").href || "";
     const url = window.prompt("Введите URL ссылки:", previousUrl);
@@ -908,6 +1091,46 @@ const addGallery = () => {
     input.click();
 };
 
+const openVideoModal = async () => {
+    videoModalOpen.value = true;
+    videoUrl.value = "";
+    videoError.value = "";
+    await nextTick();
+    videoInput.value?.focus();
+};
+
+const closeVideoModal = () => {
+    videoModalOpen.value = false;
+    videoUrl.value = "";
+    videoError.value = "";
+};
+
+const insertVideo = () => {
+    if (!editor.value) return;
+
+    const parsed = parseVideoUrl(videoUrl.value);
+
+    if (!parsed.ok) {
+        videoError.value = parsed.error;
+        return;
+    }
+
+    editor.value
+        .chain()
+        .focus()
+        .insertContent({
+            type: "videoEmbed",
+            attrs: {
+                provider: parsed.provider,
+                videoId: parsed.videoId,
+                hash: parsed.hash,
+            },
+        })
+        .run();
+
+    closeVideoModal();
+};
+
 // Фото можно перетащить или вставить из буфера; внутреннее перемещение узлов не трогаем
 const handleImageDrop = (view, event, moved) => {
     if (moved) return false;
@@ -938,8 +1161,8 @@ const prepareArticleData = async () => {
 
     // Клиентская валидация: пустой пост (ни текста, ни картинки) не отправляем
     let content = editor.value.getHTML();
-    if (!editor.value.state.doc.textContent.trim() && !content.includes("<img")) {
-        return { error: "Добавьте текст или изображение — пустой пост опубликовать нельзя." };
+    if (!editor.value.state.doc.textContent.trim() && !content.includes("<img") && !content.includes("video-embed")) {
+        return { error: "Добавьте текст, изображение или видео — пустой пост опубликовать нельзя." };
     }
 
     // Находим изображения как blob: (новые) и data: (base64, например вставки)

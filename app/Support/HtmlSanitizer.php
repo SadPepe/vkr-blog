@@ -35,6 +35,7 @@ class HtmlSanitizer
         'a'  => ['href', 'rel', 'target'],
         'img'=> ['src'],
         'ol' => ['start'],
+        'div'=> ['data-video-provider', 'data-video-id', 'data-video-hash'],
         // Выравнивание текста из редактора — единственное разрешённое свойство style.
         'p'  => ['style'],
         'h1' => ['style'],
@@ -172,6 +173,29 @@ class HtmlSanitizer
 
             if ($name === 'target') {
                 if ($value !== '_blank') {
+                    $toRemove[] = $attr->name;
+                }
+                continue;
+            }
+
+            // Данные внешнего видео: провайдер и ID проверяются ещё раз
+            // на клиенте при построении iframe, здесь отсекаем мусор.
+            if ($name === 'data-video-provider') {
+                if (! in_array(strtolower($value), ['youtube', 'rutube', 'vk'], true)) {
+                    $toRemove[] = $attr->name;
+                }
+                continue;
+            }
+
+            if ($name === 'data-video-id') {
+                if (! preg_match('/^[A-Za-z0-9_-]{1,100}$/', $value)) {
+                    $toRemove[] = $attr->name;
+                }
+                continue;
+            }
+
+            if ($name === 'data-video-hash') {
+                if ($value !== '' && ! preg_match('/^[A-Za-z0-9_-]+$/', $value)) {
                     $toRemove[] = $attr->name;
                 }
                 continue;

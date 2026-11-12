@@ -428,11 +428,6 @@ textarea,
 /* ------------------------------------------------------------------
    Каркас страницы: одна пара полей 20 / 32 / 48px, контейнер 1440px.
    ------------------------------------------------------------------ */
-/* Шов между панелями постов в лентах (главная, автор, профиль): один токен на все списки. */
-:root {
-    --layout-feed-gap-y: 4px;
-}
-
 @layer components {
     .page-shell {
         margin-inline: auto;
@@ -484,8 +479,6 @@ textarea,
         }
 
         .article-rail {
-            position: sticky;
-            top: 2rem;
             max-width: 22rem;
         }
     }
@@ -546,10 +539,6 @@ textarea,
             gap: 2.5rem 2.5rem;
         }
 
-        .article-rail {
-            position: sticky;
-            top: 2rem;
-        }
     }
 
     /* Рейл на статье: отступ от текстовой колонки даёт gap `.article-layout`.
@@ -565,11 +554,63 @@ textarea,
         max-width: 100%;
     }
 
+    /* Внешнее видео: обёртка держит пропорции 16:9, iframe создаёт JS
+       после проверки провайдера и ID. */
+    .video-embed {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        margin-block: 1.5rem;
+        overflow: hidden;
+        border: 1px solid rgb(var(--c-line));
+        border-radius: 0.75rem;
+        background: rgb(var(--c-surface-muted));
+    }
+
+    .video-embed iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+    .video-embed:not(.video-embed--ready):not(.video-embed--invalid)::after {
+        content: "Загрузка видео…";
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        color: rgb(var(--c-muted));
+        font-size: 0.9375rem;
+        text-align: center;
+    }
+
+    .video-embed--invalid {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        color: rgb(var(--c-muted));
+        font-size: 0.9375rem;
+        text-align: center;
+    }
+
     .article-body {
         max-width: var(--measure);
         margin-inline: auto;
         font-size: 1.0625rem;
         line-height: 1.7;
+    }
+
+    /* Длинные URL, e-mail и слитные надписи переносим внутри колонки,
+       иначе они вылезают за правый край статьи и ленты. */
+    .article-body,
+    .post-content {
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 
     .article-body > * + * {
@@ -1300,4 +1341,122 @@ textarea,
     .theme-menu .theme-menu__panel {
         right: 0;
     }
+}
+
+/* ------------------------------------------------------------------
+   Открытая лента: контент без карточек, мягкие только действия.
+   Пилюли — единственный «мягкий» контейнер в потоке страницы.
+   ------------------------------------------------------------------ */
+@layer components {
+    .ui-pill {
+        display: inline-flex;
+        min-height: 2.25rem;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        border: 1px solid rgb(var(--c-line-strong));
+        border-radius: 999px;
+        background: transparent;
+        padding: 0.35rem 0.8rem;
+        color: rgb(var(--c-content));
+        font-size: 0.9375rem;
+        font-weight: 500;
+        line-height: 1.2;
+        text-decoration: none;
+        transition:
+            color 150ms ease,
+            background-color 150ms ease,
+            border-color 150ms ease;
+    }
+
+    .ui-pill:hover {
+        border-color: rgb(var(--c-accent));
+        background: rgb(var(--c-accent-soft));
+        color: rgb(var(--c-accent));
+    }
+
+    .ui-pill:focus-visible {
+        outline: 2px solid rgb(var(--c-accent));
+        outline-offset: 2px;
+    }
+
+    .ui-pill--active {
+        border-color: rgb(var(--c-accent) / 0.55);
+        background: rgb(var(--c-accent-soft));
+        color: rgb(var(--c-accent));
+    }
+
+    .ui-pill--solid {
+        border-color: rgb(var(--c-accent));
+        background: rgb(var(--c-accent));
+        color: rgb(var(--c-accent-contrast));
+    }
+
+    .ui-pill--solid:hover {
+        border-color: rgb(var(--c-accent-hover));
+        background: rgb(var(--c-accent-hover));
+        color: rgb(var(--c-accent-contrast));
+    }
+
+    .ui-pill--quiet {
+        border-color: transparent;
+        color: rgb(var(--c-muted));
+    }
+
+    .ui-pill--quiet:hover {
+        border-color: transparent;
+    }
+
+    .feed-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .feed-list > li + li {
+        margin-top: 3rem;
+        border-top: 1px solid rgb(var(--c-line) / 0.72);
+        padding-top: 3rem;
+    }
+
+    @media (min-width: 640px) {
+        .feed-list > li + li {
+            margin-top: 3.5rem;
+            padding-top: 3.5rem;
+        }
+    }
+
+    .comment-thread {
+        border-left: 2px solid rgb(var(--c-line-strong) / 0.7);
+        padding-left: 1rem;
+    }
+
+    @media (min-width: 640px) {
+        .comment-thread {
+            padding-left: 1.25rem;
+        }
+    }
+}
+
+/* Упоминания @username: ссылка на профиль с мягкой акцентной подложкой.
+   Класс ставит MentionRenderer в постах и MentionText в комментариях. */
+a.mention,
+.post-content a.mention,
+.article-body a.mention {
+    display: inline;
+    padding: 0.05em 0.32em;
+    border-radius: 999px;
+    background: rgb(var(--c-accent-soft));
+    color: rgb(var(--c-accent));
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+        color 150ms ease,
+        background-color 150ms ease;
+}
+
+a.mention:hover,
+.post-content a.mention:hover,
+.article-body a.mention:hover {
+    background: rgb(var(--c-accent));
+    color: rgb(var(--c-accent-contrast));
 }

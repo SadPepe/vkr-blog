@@ -1,17 +1,16 @@
 <!-- resources/js/Components/FeedPost.vue -->
 <template>
-    <!-- Пост в ленте — по образцу dtf.ru (.content/.content-header/.content-footer):
-         панель с заливкой и радиусом, шапка 16/20, футер 54px без фона, шов между постами
-         --layout-feed-gap-y (4px, resources/css/app.css) -->
-    <article class="rounded-2xl bg-surface pb-2 sm:rounded-3xl">
-        <!-- Шапка: аватар слева, имя, под ним категория; справа на той же строке — дата/время и просмотры -->
-        <header class="flex items-start gap-3 px-4 pb-3 pt-4 leading-snug text-muted sm:px-5 sm:pt-5">
-            <UserAvatar v-if="showAuthor" :user="article.user" :size="28" class="mt-0.5" />
+    <!-- Пост в открытой ленте: без подложки, рамки и скругления.
+         Посты разделяет линия и воздух в родительском .feed-list. -->
+    <article class="min-w-0">
+        <!-- Шапка: автор, категория и дата; просмотры остаются справа -->
+        <header class="flex items-start gap-3 leading-snug text-muted">
+            <UserAvatar v-if="showAuthor" :user="article.user" :size="44" class="shrink-0" />
             <div class="min-w-0 flex-1">
                 <Link
                     v-if="showAuthor"
                     :href="route('authors.show', article.user.id)"
-                    class="block truncate text-[0.9375rem] font-medium text-content transition-colors hover:text-accent"
+                    class="block truncate text-[1rem] font-semibold text-content transition-colors hover:text-accent"
                 >
                     {{ article.user.name }}
                 </Link>
@@ -56,7 +55,7 @@
 
         <h3
             v-if="heading"
-            class="px-4 font-display text-[1.5rem] font-bold leading-[1.2] tracking-[-0.02em] text-content sm:px-5 sm:text-[1.75rem]"
+            class="mt-4 font-display text-[1.5rem] font-bold leading-[1.2] tracking-[-0.02em] text-content sm:text-[1.75rem]"
         >
             <Link :href="route('articles.show', article.slug)" class="transition-colors hover:text-accent">
                 {{ heading }}
@@ -65,19 +64,18 @@
 
         <div
             ref="bodyRef"
-            class="post-content px-4 pb-2 text-content sm:px-5"
-            :class="[heading ? 'pt-3' : '', { 'feed-body--clamped': article.has_more && !expanded }]"
+            class="post-content mt-3 text-content"
+            :class="{ 'feed-body--clamped': article.has_more && !expanded }"
             v-html="postHtml"
             @click="handleContentClick"
         />
 
-        <!-- Действия под телом поста: «Читать дальше» и ссылка на сам пост.
-             Ссылка есть у всех постов, в том числе с заголовком. -->
-        <div class="mt-3 flex flex-wrap items-center gap-x-5 px-4 sm:px-5">
+        <!-- Текстовые действия чтения остаются ссылками, без лишних пилюль -->
+        <div class="mt-3 flex flex-wrap items-center gap-x-5">
             <button
                 v-if="article.has_more || expanded"
                 type="button"
-                class="inline-flex min-h-11 items-center text-sm font-medium text-accent transition-colors hover:text-accent-hover"
+                class="inline-flex min-h-10 items-center text-sm font-medium text-accent transition-colors hover:text-accent-hover"
                 :aria-expanded="expanded"
                 @click="toggleExpand"
             >
@@ -86,46 +84,28 @@
 
             <Link
                 :href="articleUrl"
-                class="inline-flex min-h-11 items-center text-sm font-medium text-accent transition-colors hover:text-accent-hover"
+                class="inline-flex min-h-10 items-center text-sm font-medium text-accent transition-colors hover:text-accent-hover"
             >
                 Открыть пост
             </Link>
         </div>
 
-        <!-- Последний комментарий: строка обсуждения под телом поста -->
-        <Link
-            v-if="article.latest_comment"
-            :href="articleUrl + '#comments'"
-            class="group mt-2 flex items-start gap-3 border-t border-line px-4 py-3 transition-colors hover:bg-surface-muted sm:px-5"
-            aria-label="Читать обсуждение поста"
-        >
-            <UserAvatar :user="article.latest_comment.user" :size="24" class="mt-0.5" />
-            <div class="min-w-0">
-                <p class="text-[0.9375rem] leading-snug">
-                    <span class="font-medium text-content transition-colors group-hover:text-accent">{{
-                        article.latest_comment.user.name
-                    }}</span>
-                    <span class="text-muted"> · </span>
-                    <span class="text-muted">последний комментарий</span>
-                </p>
-                <p class="mt-0.5 line-clamp-2 break-words text-[0.9375rem] leading-snug text-content">{{ article.latest_comment.body }}</p>
-            </div>
-        </Link>
-
-        <!-- Действия: футер поста как .content-footer на DTF — 54px, без фона, пункты через 20px.
-             Просмотры переехали в шапку, здесь остаются лайки, комментарии и «поделиться». -->
-        <footer class="flex min-h-[54px] flex-wrap items-center gap-x-5 gap-y-2 px-4 pt-1 sm:px-5">
+        <!-- Взаимодействия — мягкие пилюли: единственный скруглённый элемент в посте -->
+        <footer class="mt-4 flex flex-wrap items-center gap-2">
             <LikeButton
                 :article="article"
                 :initial-liked="Boolean(article.is_liked)"
                 :initial-likes-count="article.likes_count ?? 0"
+                :label="pluralLikes(article.likes_count ?? 0)"
                 pill
             />
 
+            <!-- Если обсуждения ещё нет, действие ведёт к форме комментария.
+                 При наличии комментариев единственная точка входа — блок «Обсуждение» ниже. -->
             <Link
+                v-if="!article.comments_count"
                 :href="articleUrl + '#comments'"
-                class="inline-flex items-center gap-1 text-[0.9375rem] text-content transition-colors hover:text-accent"
-                :aria-label="`${article.comments_count} ${pluralComments(article.comments_count)} — к обсуждению`"
+                class="ui-pill"
             >
                 <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
                     <path
@@ -134,27 +114,70 @@
                         d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                     />
                 </svg>
-                <span class="num font-medium">{{ article.comments_count }}</span>
+                <span>Комментировать</span>
             </Link>
 
-            <button
-                type="button"
-                class="-ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted text-content transition-colors hover:bg-accent-soft hover:text-accent"
-                :aria-label="copied ? 'Ссылка скопирована' : 'Скопировать ссылку на пост'"
-                @click="share"
-            >
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+            <button type="button" class="ui-pill" :aria-label="copied ? 'Ссылка скопирована' : 'Скопировать ссылку на пост'" @click="share">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 11-5.656-5.656l1.5-1.5m9.656-1.5l1.5-1.5a4 4 0 10-5.656-5.656l-3 3a4 4 0 000 5.656"
                     />
                 </svg>
+                <span class="hidden sm:inline">{{ copied ? "Скопировано" : "Поделиться" }}</span>
             </button>
 
-            <!-- Свои посты: править и удалить — справа -->
             <span v-if="$slots.actions" class="ml-auto flex items-center gap-1"><slot name="actions" /></span>
         </footer>
+
+        <!-- Обсуждение — отдельная тред-зона без подложки: пилюля-заголовок,
+             вертикальная линия и последний комментарий. -->
+        <section v-if="article.comments_count > 0" class="mt-6 border-t border-line/70 pt-5" aria-label="Обсуждение поста">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <Link :href="articleUrl + '#comments'" class="ui-pill ui-pill--active">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                    </svg>
+                    <span>Обсуждение</span>
+                    <span class="num">· {{ article.comments_count }}</span>
+                </Link>
+
+                <Link
+                    :href="articleUrl + '#comments'"
+                    class="text-sm font-medium text-accent transition-colors hover:text-accent-hover"
+                >
+                    Все комментарии →
+                </Link>
+            </div>
+
+            <div v-if="article.latest_comment" class="comment-thread mt-4">
+                <Link
+                    :href="articleUrl + '#comments'"
+                    class="group flex items-start gap-3 py-1"
+                    aria-label="Читать обсуждение поста"
+                >
+                    <UserAvatar :user="article.latest_comment.user" :size="26" class="mt-0.5" />
+                    <div class="min-w-0">
+                        <p class="text-[0.9375rem] leading-snug">
+                            <span class="font-medium text-content transition-colors group-hover:text-accent">{{
+                                article.latest_comment.user.name
+                            }}</span>
+                            <span class="text-muted"> · </span>
+                            <span class="text-muted">последний комментарий</span>
+                        </p>
+                        <p class="comment-content mt-1 line-clamp-2 break-words text-[0.9375rem] leading-snug text-content">
+                            <MentionText v-if="article.latest_comment.body" :text="article.latest_comment.body" :linkify="false" />
+                            <template v-else>{{ article.latest_comment.image_url ? "Фото в комментарии" : "Комментарий" }}</template>
+                        </p>
+                    </div>
+                </Link>
+            </div>
+        </section>
 
         <!-- Лайтбокс: фото из поста на полный экран, карусель листается по кадрам -->
         <ImageLightbox
@@ -174,6 +197,7 @@ import { Link, router } from "@inertiajs/vue3";
 import LikeButton from "@/Components/LikeButton.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import ImageLightbox from "@/Components/ImageLightbox.vue";
+import MentionText from "@/Components/MentionText.vue";
 
 const props = defineProps({
     article: {
@@ -273,6 +297,11 @@ const enhanceContent = async () => {
         const { enhanceImageCarousels } = await import("@/Support/imageCarousel");
         enhanceImageCarousels(root);
     }
+
+    if (root.querySelector(".video-embed")) {
+        const { enhanceVideoEmbeds } = await import("@/Support/videoEmbed");
+        enhanceVideoEmbeds(root);
+    }
 };
 
 onMounted(enhanceContent);
@@ -328,5 +357,6 @@ const pluralize = (n, [one, few, many]) => {
 };
 
 const pluralViews = (n) => pluralize(n, ["просмотр", "просмотра", "просмотров"]);
+const pluralLikes = (n) => pluralize(n, ["лайк", "лайка", "лайков"]);
 const pluralComments = (n) => pluralize(n, ["комментарий", "комментария", "комментариев"]);
 </script>

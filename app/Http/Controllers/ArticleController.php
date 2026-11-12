@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\Category;
+use App\Support\AuthorPreview;
 use App\Support\ContentNormalizer;
 use App\Support\HtmlSanitizer;
+use App\Support\MentionRenderer;
 use App\Support\PostPreview;
 use App\Traits\HandlesArticles;
 use Illuminate\Http\Request;
@@ -32,7 +34,7 @@ class ArticleController extends Controller
 
         if ($this->contentIsEmpty($content)) {
             throw ValidationException::withMessages([
-                'content' => 'Добавьте текст или изображение — пустой пост опубликовать нельзя.',
+                'content' => 'Добавьте текст, изображение или видео — пустой пост опубликовать нельзя.',
             ]);
         }
 
@@ -106,7 +108,7 @@ class ArticleController extends Controller
 
         if ($this->contentIsEmpty($content)) {
             throw ValidationException::withMessages([
-                'content' => 'Добавьте текст или изображение — пустой пост сохранить нельзя.',
+                'content' => 'Добавьте текст, изображение или видео — пустой пост сохранить нельзя.',
             ]);
         }
 
@@ -160,7 +162,7 @@ class ArticleController extends Controller
         $article->is_liked = auth()->check() ? $article->getIsLikedAttribute() : false;
 
         // Старые посты могли сохраниться одним <p> с <br>: на показе разводим по абзацам
-        $article->content = ContentNormalizer::paragraphs((string) $article->content);
+        $article->content = MentionRenderer::render(ContentNormalizer::paragraphs((string) $article->content));
 
         // Помечаем комментарии: лайкнул ли их текущий пользователь
         $article->comments->each(function ($comment) {
@@ -172,10 +174,19 @@ class ArticleController extends Controller
         $relatedArticles = $article->category_slug
             ? Article::visible()->where('category_slug', $article->category_slug)
                 ->whereKeyNot($article->id)
+                ->with('user:id,name,avatar')
                 ->latest()
                 ->limit(4)
                 ->select(Article::CARD_COLUMNS)
                 ->get()
+                ->each(function (Article $related) {
+                    // Рейл «Ещё в разделе» показывает автора и подпись так же,
+                    // как остальные списки: без этого строка выглядела пустой.
+                    $related->label = Article::labelFor($related->title, $related->excerpt);
+                    $related->is_photo_post = $related->isPhotoPost();
+
+                    return $related;
+                })
             : collect();
 
         $popularArticleController = new \App\Http\Controllers\PopularArticleController;
@@ -193,9 +204,10 @@ class ArticleController extends Controller
      */
     public function excerpt(Article $article)
     {
-        return response()->json(
-            PostPreview::excerpt((string) $article->content)
-        );
+        $preview = PostPreview::excerpt((string) $article->content);
+        $preview['html'] = MentionRenderer::render($preview['html']);
+
+        return response()->json($preview);
     }
 
     public function index(Request $request)
@@ -220,6 +232,8 @@ class ArticleController extends Controller
         return inertia('Home', [
             'articles' => $articles,
             'popularArticles' => $popularArticles,
+            'discussedArticles' => $this->discussedArticles(),
+            'activeAuthors' => $this->activeAuthors(),
             'categories' => $categories,
             'sort' => $sort,
         ]);
@@ -258,6 +272,41 @@ class ArticleController extends Controller
         ]);
     }
 
+    /**
+     * Посты, которые сейчас активнее всего обсуждают.
+     */
+    private function discussedArticles(?string $categorySlug = null, int $limit = 4)
+    {
+        return Article::visible()
+            ->when($categorySlug, fn ($query) => $query->where('category_slug', $categorySlug))
+            ->where('comments_count', '>', 0)
+            ->with('user:id,name,avatar')
+            ->orderByDesc('comments_count')
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get(Article::CARD_COLUMNS)
+            ->each(function (Article $article) {
+                $article->label = Article::labelFor($article->title, $article->excerpt);
+                $article->is_photo_post = $article->isPhotoPost();
+
+                return $article;
+            });
+    }
+
+    /**
+     * Активные авторы: те, кто публиковался недавно, а не вечный топ по просмотрам.
+     */
+    private function activeAuthors(int $limit = 4)
+    {
+        return AuthorPreview::query()
+            ->when(auth()->check(), fn ($query) => $query->whereKeyNot(auth()->id()))
+            ->orderByDesc('last_published_at')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($author) => AuthorPreview::map($author));
+    }
+
     public function create()
     {
         return Inertia::render('Articles/Create');   // Vue component
@@ -278,7 +327,7 @@ class ArticleController extends Controller
                 $this->applySort(
                     Article::visible()
                         ->where('category_slug', $categorySlug)
-                        ->with(['user:id,name,avatar'])
+                        ->with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
                         ->select(array_merge(Article::CARD_COLUMNS, ['content'])),
                     $sort
                 )->paginate(10)
@@ -291,6 +340,8 @@ class ArticleController extends Controller
                 'articles' => $articles,
                 'categories' => $categories,
                 'popularArticles' => $popularArticles,
+                'discussedArticles' => $this->discussedArticles($categorySlug),
+                'activeAuthors' => $this->activeAuthors(),
                 'activeCategory' => $categorySlug,
                 'sort' => $sort,
             ]);

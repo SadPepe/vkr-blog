@@ -76,8 +76,8 @@
                 </div>
 
                 <!-- Текст комментария -->
-                <p v-if="!editing && comment.content" class="mt-0.5 whitespace-pre-wrap break-words text-[1.0625rem] leading-[1.6] text-content">
-                    {{ comment.content }}
+                <p v-if="!editing && comment.content" class="comment-content mt-0.5 whitespace-pre-wrap break-words text-[1.0625rem] leading-[1.6] text-content">
+                    <MentionText :text="comment.content" />
                 </p>
 
                 <!-- Прикреплённое фото: клик открывает лайтбокс -->
@@ -92,7 +92,7 @@
                         :src="comment.image_url"
                         :alt="`Фото к комментарию от ${comment.user.name}`"
                         decoding="async"
-                        class="max-h-80 w-auto max-w-full rounded-md border border-line object-cover"
+                        class="max-h-80 w-auto max-w-full rounded-xl border border-line object-cover"
                     />
                 </button>
 
@@ -123,8 +123,8 @@
             <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.9375rem] sm:gap-x-4">
                 <button
                     type="button"
-                    class="inline-flex min-h-9 items-center gap-1.5 transition-colors hover:text-accent"
-                    :class="liked ? 'text-accent' : 'text-muted'"
+                    class="ui-pill min-h-9 px-3 text-[0.875rem]"
+                    :class="liked ? 'ui-pill--active' : 'ui-pill--quiet'"
                     :aria-label="liked ? 'Убрать лайк' : 'Лайкнуть комментарий'"
                     :aria-pressed="liked"
                     @click="toggleLike"
@@ -149,8 +149,8 @@
                 <button
                     v-if="authUser"
                     type="button"
-                    class="inline-flex min-h-9 items-center transition-colors hover:text-accent"
-                    :class="replying ? 'text-content' : 'text-muted'"
+                    class="ui-pill ui-pill--quiet min-h-9 px-3 text-[0.875rem]"
+                    :class="replying ? 'ui-pill--active' : ''"
                     :aria-expanded="replying"
                     @click="openForm('reply')"
                 >
@@ -160,7 +160,7 @@
                 <button
                     v-if="authUser && !isOwn"
                     type="button"
-                    class="inline-flex min-h-9 w-7 items-center justify-center text-muted transition-colors hover:text-accent"
+                    class="ui-pill ui-pill--quiet h-9 w-9 min-h-9 px-0"
                     aria-label="Пожаловаться на комментарий"
                     title="Пожаловаться"
                     @click="reportOpen = true"
@@ -221,6 +221,7 @@ import CommentInput from "@/Components/Comments/CommentInput.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import ImageLightbox from "@/Components/ImageLightbox.vue";
 import ReportDialog from "@/Components/ReportDialog.vue";
+import MentionText from "@/Components/MentionText.vue";
 
 const page = usePage();
 

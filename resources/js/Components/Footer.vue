@@ -11,14 +11,14 @@
                     <a
                         v-if="!$page.props.auth.user"
                         :href="route('register')"
-                        class="mt-8 inline-flex items-center justify-center bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
+                        class="ui-pill ui-pill--solid mt-8 px-5"
                     >
                         Регистрация
                     </a>
                     <Link
                         v-else
                         :href="route('create')"
-                        class="mt-8 inline-flex items-center justify-center bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
+                        class="ui-pill ui-pill--solid mt-8 px-5"
                     >
                         Написать статью
                     </Link>
@@ -29,6 +29,9 @@
                     <ul class="mt-4 space-y-2.5">
                         <li>
                             <Link :href="route('home')" class="text-muted transition-colors hover:text-accent"> Главная </Link>
+                        </li>
+                        <li>
+                            <Link :href="route('authors.index')" class="text-muted transition-colors hover:text-accent"> Авторы </Link>
                         </li>
                         <li>
                             <Link :href="route('articles.search')" class="text-muted transition-colors hover:text-accent"> Поиск </Link>

@@ -10,6 +10,7 @@ use App\Http\Controllers\PopularArticleController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\MentionController;
 use App\Http\Controllers\ReportController;
 
 
@@ -24,6 +25,9 @@ Route::get('/copyright', [LegalController::class, 'copyright'])->name('legal.cop
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 Route::get('/search', [ArticleController::class, 'search'])->name('articles.search');
 
+Route::get('/mentions/search', [MentionController::class, 'search'])->name('mentions.search');
+Route::get('/u/{username}', [AuthorController::class, 'showByUsername'])->name('authors.byUsername');
+Route::get('/authors', [AuthorController::class, 'index'])->name('authors.index');
 Route::get('/authors/{user}', [AuthorController::class, 'show'])->name('authors.show');
 
 Route::get('/categories/{category:slug}', [ArticleController::class, 'articlesByCategory'])->name('articlesByCategory');

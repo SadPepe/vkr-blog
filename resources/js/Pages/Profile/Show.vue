@@ -6,7 +6,7 @@
             <h2 class="type-h2 text-content">Мои статьи</h2>
 
             <!-- Та же лента, что на главной и у автора; свои посты можно править и удалять -->
-            <ul v-if="articles.data.length" class="mt-5 flex flex-col gap-[var(--layout-feed-gap-y)]">
+            <ul v-if="articles.data.length" class="feed-list mt-6">
                 <li v-for="article in articles.data" :key="article.id">
                     <FeedPost :article="article" :categories="categories" :show-author="false">
                         <template #actions>

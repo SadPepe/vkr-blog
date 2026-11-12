@@ -4,6 +4,7 @@ namespace App\Support;
 
 use DOMDocument;
 use DOMNode;
+use App\Support\MentionRenderer;
 use Illuminate\Support\Str;
 
 /**
@@ -137,7 +138,7 @@ class PostPreview
         return $paginator->through(function ($article) {
             $preview = self::withMeta((string) $article->content);
 
-            $article->preview = $preview['html'];
+            $article->preview = MentionRenderer::render($preview['html']);
             $article->has_more = ! $preview['complete'];
 
             // Кнопка лайка в ленте знает своё состояние сразу, без отдельного запроса
@@ -149,6 +150,7 @@ class PostPreview
             $article->latest_comment = $comment ? [
                 'id' => $comment->id,
                 'body' => Str::limit(trim(preg_replace('/\s+/u', ' ', strip_tags((string) $comment->content))), 180),
+                'image_url' => $comment->image_url,
                 'created_at' => optional($comment->created_at)->toIso8601String(),
                 'user' => [
                     'name' => $comment->user?->name,

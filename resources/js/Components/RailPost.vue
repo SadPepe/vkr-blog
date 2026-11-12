@@ -6,7 +6,7 @@
     <Link
         :href="route('articles.show', article.slug)"
         prefetch="hover"
-        class="group flex items-start gap-3 py-3.5 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+        class="group flex items-start gap-3 py-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
     >
         <div class="min-w-0 flex-1">
             <div v-if="author" class="flex items-center gap-2">
@@ -16,15 +16,41 @@
                 </span>
             </div>
 
-            <!-- Без заголовка подписью служит начало текста, для фотопоста — «Фотопост» -->
+            <!-- Фотопост: вместо бесполезной подписи «Фотопост» показываем
+                 сам кадр. Это единственный медийный формат в рейле. -->
+            <div v-if="isPhotoPost && article.card_image_path" class="mt-2 overflow-hidden rounded-xl border border-line">
+                <img
+                    :src="article.card_image_path"
+                    alt="Фотопост"
+                    class="aspect-[12/5] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    loading="lazy"
+                    decoding="async"
+                />
+            </div>
+
+            <!-- Без заголовка подписью служит начало текста -->
             <span
+                v-else
                 class="line-clamp-2 text-[0.9375rem] font-medium leading-snug transition-colors group-hover:text-accent"
                 :class="[author ? 'mt-1' : '', isPhotoPost ? 'text-muted' : 'text-content']"
             >
                 {{ displayLabel }}
             </span>
 
-            <span class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-muted">
+            <span class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-muted">
+                <span v-if="isPhotoPost" class="inline-flex items-center gap-1 font-medium text-content">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M3 8.25A2.25 2.25 0 015.25 6h1.5l1.125-1.5h6.25L15.25 6h1.5A2.25 2.25 0 0119 8.25v8.5A2.25 2.25 0 0116.75 19H5.25A2.25 2.25 0 013 16.75v-8.5z"
+                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.25 3.25 0 100-6.5 3.25 3.25 0 000 6.5z" />
+                    </svg>
+                    <span>Фотопост</span>
+                </span>
+                <span v-if="isPhotoPost" aria-hidden="true">·</span>
+
                 <span class="inline-flex items-center gap-1" :aria-label="`${article.views_count} ${pluralViews(article.views_count)}`">
                     <svg
                         class="h-4 w-4 shrink-0"
@@ -67,16 +93,6 @@
                 </span>
             </span>
         </div>
-
-        <!-- Фотопост: подписи нет, поэтому вместо неё миниатюра первой картинки -->
-        <img
-            v-if="isPhotoPost && article.card_image_path"
-            :src="article.card_image_path"
-            alt="Фотопост"
-            class="h-11 w-11 shrink-0 bg-surface-muted object-cover"
-            loading="lazy"
-            decoding="async"
-        />
     </Link>
 </template>
 

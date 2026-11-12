@@ -118,6 +118,16 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Article::class);
     }
 
+    /**
+     * Последняя опубликованная статья — для каталога авторов и блока в рейле.
+     */
+    public function latestPublishedArticle()
+    {
+        return $this->hasOne(Article::class)
+            ->where('articles.status', Article::STATUS_PUBLISHED)
+            ->latestOfMany();
+    }
+
     public function comments()
     {
         return $this->hasMany(Comment::class);

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Article;
+use App\Models\Category;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -198,6 +199,26 @@ class ArticleTest extends TestCase
         $this->get(route('articles.show', $article->slug))->assertOk();
     }
 
+    public function test_video_only_post_is_allowed_and_kept_in_article_and_feed(): void
+    {
+        $user = User::factory()->create();
+        $video = '<div class="video-embed video-embed--youtube" data-video-provider="youtube" data-video-id="dQw4w9WgXcQ" data-video-hash=""></div>';
+
+        $this->actingAs($user)->post('/articles', ['content' => $video]);
+
+        $article = Article::firstOrFail();
+        $this->assertSame('', $article->excerpt);
+        $this->assertStringContainsString('video-embed', $article->content);
+
+        $show = $this->get(route('articles.show', $article->slug))->assertOk();
+        $showPage = $show->viewData('page');
+        $this->assertStringContainsString('data-video-provider="youtube"', $showPage['props']['article']['content']);
+
+        $home = $this->get(route('home'))->assertOk();
+        $homePage = $home->viewData('page');
+        $this->assertStringContainsString('data-video-provider="youtube"', $homePage['props']['articles']['data'][0]['preview']);
+    }
+
     public function test_empty_post_is_rejected(): void
     {
         $user = User::factory()->create();
@@ -253,5 +274,46 @@ class ArticleTest extends TestCase
         $this->getJson(route('articles.excerpt', $article->slug))
             ->assertOk()
             ->assertJsonPath('complete', true);
+    }
+
+    public function test_related_articles_include_author_for_article_rail(): void
+    {
+        Category::factory()->create(['slug' => 'science']);
+        $author = User::factory()->create(['name' => 'Автор раздела']);
+        $article = Article::factory()->for($author)->create([
+            'category_slug' => 'science',
+            'title' => 'Текущая статья',
+            'slug' => 'current-article',
+        ]);
+        Article::factory()->for($author)->create([
+            'category_slug' => 'science',
+            'title' => 'Соседняя статья',
+            'slug' => 'related-article',
+        ]);
+
+        $this->get(route('articles.show', $article->slug))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('relatedArticles', 1)
+                ->where('relatedArticles.0.user.name', 'Автор раздела')
+                ->where('relatedArticles.0.label', 'Соседняя статья'));
+    }
+
+    public function test_mentions_are_rendered_in_article_and_feed(): void
+    {
+        $author = User::factory()->create(['username' => 'test_user']);
+        $article = Article::factory()->for($author)->create([
+            'title' => 'Пост с упоминанием',
+            'slug' => 'post-with-mention',
+            'content' => '<p>Привет, @test_user!</p>',
+        ]);
+
+        $response = $this->get(route('articles.show', $article->slug))->assertOk();
+        $page = $response->viewData('page');
+        $this->assertStringContainsString('class="mention"', $page['props']['article']['content']);
+
+        $home = $this->get(route('home'))->assertOk();
+        $homePage = $home->viewData('page');
+        $this->assertStringContainsString('class="mention"', $homePage['props']['articles']['data'][0]['preview']);
     }
 }

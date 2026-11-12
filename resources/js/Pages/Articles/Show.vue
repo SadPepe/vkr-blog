@@ -48,30 +48,22 @@
                     <!-- Картинки показываем как есть — в том месте текста, куда их вставил автор -->
                     <div ref="contentRef" class="article-body mt-12 text-content" v-html="article.content"></div>
 
-                    <div class="article-measure mx-auto">
-                        <!-- Поделиться: текстовые ссылки -->
-                        <div class="mt-10 flex flex-wrap items-baseline gap-x-5 gap-y-2 text-[1.0625rem]">
-                            <span class="text-muted">Поделиться</span>
-                            <button type="button" class="text-accent transition-colors hover:text-accent-hover" @click="copyLink">
-                                {{ copied ? "Ссылка скопирована" : "Скопировать ссылку" }}
-                            </button>
-                            <a
-                                :href="telegramShareUrl"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="text-accent transition-colors hover:text-accent-hover"
-                            >
-                                Telegram
-                            </a>
-                            <a
-                                :href="vkShareUrl"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="text-accent transition-colors hover:text-accent-hover"
-                            >
-                                ВКонтакте
-                            </a>
-                        </div>
+                    <!-- Поделиться на десктопе — те же пилюли, что и в блоке под постом;
+                         на узких экранах этим занимается ArticleFooter -->
+                    <div class="article-measure mx-auto mt-10 hidden lg:block">
+                        <ArticleShare :url="absoluteUrl" :title="displayTitle" />
+                    </div>
+
+                    <div class="article-measure">
+                        <ArticleFooter
+                            :article="article"
+                            :author-url="authorUrl"
+                            :share-url="absoluteUrl"
+                            :share-title="displayTitle"
+                            :is-owner="isOwner"
+                            :comments-count="commentsCount"
+                            @report="reportOpen = true"
+                        />
                     </div>
 
                     <div class="article-measure">
@@ -81,69 +73,81 @@
 
                 <!-- Рейл: похожие и афиша закрывают правую сторону -->
                 <aside class="article-rail">
-                    <!-- Автор статьи: аватар и имя одной строкой, описание — ниже во всю ширину -->
-                    <div class="flex items-center gap-3">
-                        <UserAvatar :user="article.user" :size="56" class="shrink-0" />
-                        <Link
-                            :href="authorUrl"
-                            class="min-w-0 text-[1.0625rem] font-medium text-content transition-colors hover:text-accent"
-                        >
-                            {{ article.user.name }}
-                        </Link>
-                    </div>
-                    <p v-if="article.user.about" class="mt-3 text-muted">
-                        {{ article.user.about }}
-                    </p>
-                    <Link :href="authorUrl" class="mt-2 inline-block text-sm text-accent transition-colors hover:text-accent-hover">
-                        Все статьи автора
-                    </Link>
-
-                    <!-- Метрики и действия — рядом с автором; на узких экранах рейл уходит под статью -->
-                    <ArticleStats
-                        :article="article"
-                        :views-count="article.views_count"
-                        :initial-liked="article.is_liked"
-                        :initial-likes-count="article.likes_count"
-                        :comments-count="article.comments.length"
-                        class="mt-6"
-                    />
-
-                    <div class="mt-4 flex flex-wrap items-center gap-2">
-                        <Link
-                            v-if="isOwner"
-                            :href="route('articles.edit', { article: article.slug })"
-                            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-surface-muted hover:text-accent"
-                        >
-                            <svg
-                                class="h-[1.125rem] w-[1.125rem]"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.5"
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
+                    <!-- Автор и действия: с lg это единственная копия — на узких экранах
+                         то же самое показывает ArticleFooter до комментариев -->
+                    <div class="hidden lg:block">
+                        <!-- Автор статьи: аватар и имя одной строкой, описание — ниже во всю ширину -->
+                        <div class="flex items-center gap-3">
+                            <UserAvatar :user="article.user" :size="56" class="shrink-0" />
+                            <Link
+                                :href="authorUrl"
+                                class="min-w-0 text-[1.0625rem] font-medium text-content transition-colors hover:text-accent"
                             >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
-                                />
-                            </svg>
-                            Редактировать
+                                {{ article.user.name }}
+                            </Link>
+                        </div>
+                        <p v-if="article.user.about" class="mt-3 text-muted">
+                            {{ article.user.about }}
+                        </p>
+                        <Link :href="authorUrl" class="mt-2 inline-block text-sm text-accent transition-colors hover:text-accent-hover">
+                            Все статьи автора
                         </Link>
-                        <button
-                            v-else-if="page.props.auth?.user"
-                            type="button"
-                            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-surface-muted hover:text-accent"
-                            @click="reportOpen = true"
-                        >
-                            Пожаловаться
-                        </button>
+
+                        <!-- Метрики и действия — рядом с автором; на узких экранах рейл уходит под статью -->
+                        <ArticleStats
+                            :article="article"
+                            :views-count="article.views_count"
+                            :initial-liked="article.is_liked"
+                            :initial-likes-count="article.likes_count"
+                            :comments-count="commentsCount"
+                            class="mt-6"
+                        />
+
+                        <div class="mt-4 flex flex-wrap items-center gap-2">
+                            <Link
+                                v-if="isOwner"
+                                :href="route('articles.edit', { article: article.slug })"
+                                class="ui-pill ui-pill--quiet min-h-9 px-3 text-[0.875rem]"
+                            >
+                                <svg
+                                    class="h-[1.125rem] w-[1.125rem]"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
+                                    />
+                                </svg>
+                                Редактировать
+                            </Link>
+                            <button
+                                v-else-if="page.props.auth?.user"
+                                type="button"
+                                class="ui-pill ui-pill--quiet min-h-9 px-3 text-[0.875rem]"
+                                @click="reportOpen = true"
+                            >
+                                Пожаловаться
+                            </button>
+                        </div>
                     </div>
 
                     <PosterRail
-                        v-if="popularArticles && popularArticles.length > 0"
+                        v-if="relatedArticles && relatedArticles.length > 0"
                         class="mt-12"
+                        :articles="relatedArticles.slice(0, 4)"
+                        title="Ещё в разделе"
+                    />
+
+                    <PosterRail
+                        v-if="popularArticles && popularArticles.length > 0"
+                        class="mt-10"
                         :articles="popularArticles.slice(0, 5)"
+                        title="По просмотрам за неделю"
                     />
                 </aside>
             </div>
@@ -190,6 +194,8 @@ import { computed, onMounted, onBeforeUnmount, ref } from "vue";
 import { Head, Link, usePage } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/Layout.vue";
 import CommentSection from "@/Components/Comments/CommentSection.vue";
+import ArticleFooter from "@/Components/ArticleFooter.vue";
+import ArticleShare from "@/Components/ArticleShare.vue";
 import ArticleStats from "@/Components/ArticleStats.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import ImageLightbox from "@/Components/ImageLightbox.vue";
@@ -279,41 +285,8 @@ const shareImage = computed(() =>
         : new URL(props.article.card_image_path, window.location.origin).href,
 );
 
-const telegramShareUrl = computed(
-    () => `https://t.me/share/url?url=${encodeURIComponent(absoluteUrl.value)}&text=${encodeURIComponent(displayTitle.value)}`,
-);
-
-const vkShareUrl = computed(
-    () => `https://vk.com/share.php?url=${encodeURIComponent(absoluteUrl.value)}&title=${encodeURIComponent(displayTitle.value)}`,
-);
-
-const copied = ref(false);
-let copiedTimer = null;
-
-const copyLink = async () => {
-    const url = window.location.href;
-
-    try {
-        await navigator.clipboard.writeText(url);
-    } catch {
-        // Резервный путь для браузеров без Clipboard API (http, старые движки)
-        const input = document.createElement("textarea");
-        input.value = url;
-        input.setAttribute("readonly", "");
-        input.style.position = "absolute";
-        input.style.left = "-9999px";
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand("copy");
-        document.body.removeChild(input);
-    }
-
-    copied.value = true;
-    clearTimeout(copiedTimer);
-    copiedTimer = setTimeout(() => {
-        copied.value = false;
-    }, 2500);
-};
+// Комментарии считаются вместе с ответами — как в рейле
+const commentsCount = computed(() => props.article.comments?.length ?? 0);
 
 const progress = ref(0);
 const showTopButton = ref(false);
@@ -376,6 +349,11 @@ const enhanceContent = async () => {
     if (root.querySelector(".image-carousel")) {
         const { enhanceImageCarousels } = await import("@/Support/imageCarousel");
         enhanceImageCarousels(root);
+    }
+
+    if (root.querySelector(".video-embed")) {
+        const { enhanceVideoEmbeds } = await import("@/Support/videoEmbed");
+        enhanceVideoEmbeds(root);
     }
 };
 

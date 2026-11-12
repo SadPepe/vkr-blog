@@ -1,18 +1,18 @@
 <!-- resources/js/Components/PosterRail.vue -->
 <template>
-    <!-- Афиша целиком: панель с плашкой заголовка + список строк RailPost.
-         Один и тот же блок на главной, на статье и в профиле — меняется
-         только подпись раздела и то, нужна ли строка автора. -->
-    <div class="border border-line bg-surface">
-        <h2 class="border-b border-line bg-surface-muted px-4 py-2.5 text-[0.9375rem] font-semibold text-content">
-            {{ title }}
-        </h2>
-        <ul class="divide-y divide-line">
+    <!-- Рейл открытый: без панели и отдельной плашки заголовка.
+         Блоки разделены линиями, как и лента. -->
+    <section>
+        <div class="flex items-baseline justify-between gap-4 border-b border-line pb-3">
+            <h2 class="type-h3 text-content">{{ title }}</h2>
+            <slot name="action" />
+        </div>
+        <ul class="mt-1">
             <li v-for="article in articles" :key="article.id">
-                <RailPost :article="article" :show-author="showAuthor" class="px-4" />
+                <RailPost :article="article" :show-author="showAuthor" />
             </li>
         </ul>
-    </div>
+    </section>
 </template>
 
 <script setup>

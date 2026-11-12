@@ -13,6 +13,7 @@
         <Footer />
 
         <CookieNotice />
+        <ExternalLinkGuard />
     </div>
 </template>
 
@@ -24,6 +25,7 @@ import FlashMessage from "@/Components/FlashMessage.vue";
 import PageTransition from "@/Shared/PageTransition.vue";
 import Footer from "@/Components/Footer.vue";
 import CookieNotice from "@/Components/CookieNotice.vue";
+import ExternalLinkGuard from "@/Components/ExternalLinkGuard.vue";
 
 const page = usePage();
 </script>

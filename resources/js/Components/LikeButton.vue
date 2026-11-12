@@ -6,9 +6,8 @@
         :disabled="loading"
         :class="[
             'inline-flex items-center gap-1 transition-colors',
-            pill ? 'min-h-[30px] rounded-full px-2 text-[0.9375rem] font-medium' : 'text-[0.9375rem]',
-            liked ? 'text-accent' : 'text-content hover:text-accent',
-            pill ? (liked ? 'bg-accent-soft' : 'bg-surface-muted') : '',
+            pill ? 'ui-pill' : 'text-[0.9375rem]',
+            liked ? (pill ? 'ui-pill--active' : 'text-accent') : 'text-content hover:text-accent',
         ]"
         :aria-pressed="liked"
         :aria-label="liked ? 'Убрать лайк' : 'Поставить лайк'"
@@ -29,6 +28,7 @@
             />
         </svg>
         <span class="num">{{ likesCount }}</span>
+        <span v-if="label" class="hidden sm:inline">{{ label }}</span>
     </button>
 </template>
 
@@ -55,6 +55,11 @@ const props = defineProps({
     pill: {
         type: Boolean,
         default: false,
+    },
+    // Подпись рядом с числом: «12 лайков», «1 лайк». На мобильных скрывается.
+    label: {
+        type: String,
+        default: "",
     },
 });
 

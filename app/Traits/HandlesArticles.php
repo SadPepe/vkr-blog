@@ -133,13 +133,14 @@ trait HandlesArticles
     }
 
     /**
-     * Пост считается пустым, если в нём нет ни текста, ни изображения.
+     * Пост считается пустым, если в нём нет ни текста, ни изображения, ни видео.
      */
     protected function contentIsEmpty(string $html): bool
     {
         $text = trim(preg_replace('/\s+/u', ' ', strip_tags($html)));
+        $hasVideo = preg_match('/<div\b[^>]*\bclass=["\'][^"\']*\bvideo-embed\b/i', $html) === 1;
 
-        return $text === '' && $this->firstContentImage($html) === null;
+        return $text === '' && $this->firstContentImage($html) === null && ! $hasVideo;
     }
 
     /**

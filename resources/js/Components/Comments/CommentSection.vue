@@ -1,6 +1,6 @@
 <!-- resources/js/Components/Comments/CommentSection.vue -->
 <template>
-    <section id="comments" class="mt-16 scroll-mt-24" aria-labelledby="comments-title">
+    <section id="comments" class="mt-8 scroll-mt-24 lg:mt-10" aria-labelledby="comments-title">
         <!-- Заголовок: название и число комментариев, без линий и пилюль -->
         <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
             <h2 id="comments-title" class="type-h2 text-content">Обсуждение</h2>
@@ -17,7 +17,7 @@
                 v-model="newComment"
                 v-model:image="newImage"
                 label="Ваш комментарий"
-                placeholder="Что вы об этом думаете? Можно прикрепить фото."
+                placeholder="Коментарий"
                 submit-label="Отправить комментарий"
                 :loading="loading"
                 :error="errors.content"
