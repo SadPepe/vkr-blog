@@ -150,10 +150,11 @@ docker/entrypoint.sh      миграции, ассеты Filament, кэши пр
    (`php artisan test`, `npm run build`).
 4. Не дублировать длинные диффы и не писать «всё готово» без конкретики.
 
-Последняя зафиксированная итерация: **2026-11-12, `7c957ac`** — видео-встраивания
-с политикой, автор и действия над постом, каталог авторов `/authors`, упоминания
-`@username`. Проверки: `npm run build` — ok, `php artisan test` — 155 passed,
-2 skipped (на хосте падает только `ImageStoreTest`: нет GD/ImageMagick).
+Последняя зафиксированная итерация: **2026-11-13, `028d6b3`** — закрепление поста
+автора (`is_pinned`/`pinned_at`), черновики с фото в IndexedDB, шрифты Golos Text
+700/800 и кегли заголовков, `BackToTop`/`ArticleActionsMenu`, LAN-хост Vite для
+проверки с телефона. Проверки: `npm run build` — ok, `php artisan test` —
+173 passed, 2 skipped. Детали — `docs/redesign-notes.md`.
 
 ## Документация
 

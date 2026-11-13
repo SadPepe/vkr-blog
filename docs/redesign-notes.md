@@ -674,3 +674,8 @@ node ~/.dsh/skills/design-taste-frontend/scripts/inspect.mjs "http://127.0.0.1:8
   (`document.fonts.check("800 17px Golos Text")` → true), ширина набора 700 и 800 различается.
 - Скриншоты: `storage/app/shots/weights-dark.png`, `storage/app/shots/weights-editor-dark.png`.
 - Проверки: `npm run build` — ok (после починки `fonts.css`); PHP не менялся.
+
+Итог итерации 2026-11-13: коммит `028d6b3` (закрепление, черновики с фото,
+шрифты 700/800, BackToTop, LAN-хост Vite). `php artisan test` — 173 passed,
+2 skipped; `npm run build` — ok. Ветки `redesign/underground-dev` и
+`redesign/underground` синхронизированы на `028d6b3`.
