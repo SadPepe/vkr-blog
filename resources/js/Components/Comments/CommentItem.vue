@@ -25,11 +25,11 @@
                     <div class="flex shrink-0 items-center gap-2">
                         <div v-if="canEdit || canDelete" class="flex items-center gap-1">
                             <button
-                                v-if="canEdit"
+                                v-if="canEdit && !editing"
                                 type="button"
                                 class="inline-flex h-6 w-6 items-center justify-center text-muted transition-colors hover:text-accent"
-                                :aria-label="editing ? 'Закрыть редактирование' : 'Изменить комментарий'"
-                                :title="editing ? 'Закрыть редактирование' : 'Изменить'"
+                                aria-label="Изменить комментарий"
+                                title="Изменить"
                                 @click="openForm('edit')"
                             >
                                 <svg
@@ -147,14 +147,12 @@
                 </button>
 
                 <button
-                    v-if="authUser"
+                    v-if="authUser && !replying"
                     type="button"
                     class="ui-pill ui-pill--quiet min-h-9 px-3 text-[0.875rem]"
-                    :class="replying ? 'ui-pill--active' : ''"
-                    :aria-expanded="replying"
                     @click="openForm('reply')"
                 >
-                    {{ replying ? "Закрыть" : "Ответить" }}
+                    Ответить
                 </button>
 
                 <button
@@ -364,13 +362,13 @@ const toErrors = (errors) => ({
     image: errors.image?.[0] ?? "",
 });
 
-const submitReply = async () => {
+const submitReply = () => {
     if ((!replyText.value.trim() && !replyImage.value) || loading.value) return;
 
+    // loading держим до onFinish: router.post() не возвращает Promise запроса.
     loading.value = true;
     replyErrors.value = {};
 
-    const repliesBefore = visibleReplies.value.length;
     const payload = {
         content: replyText.value,
         parent_id: props.comment.id,
@@ -378,31 +376,28 @@ const submitReply = async () => {
     if (replyImage.value) payload.image = replyImage.value;
 
     try {
-        await router.post(route("comments.store", props.articleSlug), payload, {
+        router.post(route("comments.store", props.articleSlug), payload, {
             preserveScroll: true,
             forceFormData: !!replyImage.value,
-            onSuccess: async () => {
+            onSuccess: () => {
                 replyText.value = "";
                 replyImage.value = null;
                 formMode.value = null;
-
-                await nextTick();
-
-                // Страховка: если ветка не обновилась, дотягиваем страницу вручную
-                if (visibleReplies.value.length === repliesBefore) {
-                    router.reload({ only: ["article"], preserveScroll: true });
-                }
             },
             onError: (errors) => {
                 replyErrors.value = toErrors(errors);
             },
+            onFinish: () => {
+                loading.value = false;
+            },
         });
-    } finally {
+    } catch (error) {
         loading.value = false;
+        console.error("Не удалось отправить ответ:", error);
     }
 };
 
-const submitEdit = async () => {
+const submitEdit = () => {
     const hasPhoto = !!editImage.value || (!!props.comment.image_url && !editRemoveImage.value);
 
     if ((!editText.value.trim() && !hasPhoto) || loading.value) return;
@@ -418,7 +413,7 @@ const submitEdit = async () => {
     }
 
     try {
-        await router.put(route("comments.update", props.comment.id), payload, {
+        router.put(route("comments.update", props.comment.id), payload, {
             preserveScroll: true,
             forceFormData: !!editImage.value,
             onSuccess: () => {
@@ -429,9 +424,13 @@ const submitEdit = async () => {
             onError: (errors) => {
                 editErrors.value = toErrors(errors);
             },
+            onFinish: () => {
+                loading.value = false;
+            },
         });
-    } finally {
+    } catch (error) {
         loading.value = false;
+        console.error("Не удалось сохранить комментарий:", error);
     }
 };
 </script>

@@ -1,5 +1,5 @@
 /**
- * Лента фото на странице: один горизонтальный ряд, кадры вплотную друг к другу.
+ * Лента фото на странице: один горизонтальный ряд, один кадр — одна видимая полоса.
  *
  * Разметку даёт редактор: <div class="image-carousel"><img>…</div>.
  * Модуль грузится лениво и только если на странице есть такая обёртка.
@@ -33,7 +33,8 @@ export function enhanceImageCarousels(root) {
 
         const count = document.createElement("span");
         count.className = "image-carousel__counter";
-        count.textContent = `${images.length} фото`;
+        count.setAttribute("aria-live", "polite");
+        count.textContent = `1 / ${images.length}`;
 
         const prev = makeButton("Прокрутить ленту назад", "←");
         const next = makeButton("Прокрутить ленту вперёд", "→");
@@ -45,15 +46,31 @@ export function enhanceImageCarousels(root) {
         bar.className = "image-carousel__bar";
         bar.append(count, nav);
 
-        // Шаг — 80% видимой ширины: кадры разной ширины, по одному их прокручивать неудобно
-        const step = () => Math.max(carousel.clientWidth * 0.8, 240);
+        // Шаг — ровно один кадр: кадр занимает всю ширину ленты
+        const step = () => Math.max(carousel.clientWidth, 1);
         const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
         const render = () => {
+            const width = carousel.clientWidth || 1;
+            const index = Math.min(images.length, Math.max(1, Math.round(carousel.scrollLeft / width) + 1));
+            count.textContent = `${index} / ${images.length}`;
+
             // Допуск 2px: при дробных ширинах кадров scrollLeft не доходит до max ровно
             prev.disabled = carousel.scrollLeft <= 2;
             next.disabled = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 2;
         };
+
+        // Пропорции кадров разные: рамку задаёт первый снимок, остальные вписываются
+        // в неё. Иначе под коротким кадром остаётся пустое поле, а подпись уезжает вниз.
+        const applyFrame = () => {
+            const { naturalWidth: w, naturalHeight: h } = images[0];
+            if (!w || !h) return;
+
+            shell.style.setProperty("--carousel-ratio", `${w} / ${h}`);
+        };
+
+        if (images[0].complete) applyFrame();
+        else images[0].addEventListener("load", applyFrame, { once: true });
 
         prev.addEventListener("click", () => carousel.scrollBy({ left: -step(), behavior }));
         next.addEventListener("click", () => carousel.scrollBy({ left: step(), behavior }));

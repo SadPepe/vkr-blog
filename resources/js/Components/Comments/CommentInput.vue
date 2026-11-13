@@ -12,7 +12,9 @@
                 rows="1"
                 :maxlength="maxlength"
                 :placeholder="placeholder"
-                class="min-h-12 w-full resize-none border-0 bg-transparent px-4 py-3 text-[1.0625rem] leading-[1.45] text-content outline-none placeholder:text-muted focus:ring-0"
+                :readonly="loading"
+                :aria-busy="loading"
+                class="min-h-12 w-full resize-none border-0 bg-transparent px-4 py-3 text-[1.0625rem] leading-[1.45] text-content outline-none placeholder:text-muted focus:ring-0 read-only:opacity-60"
                 @input="onInput"
                 @keydown.enter="onEnter"
                 @keydown.esc="closeMentions"
@@ -23,7 +25,7 @@
                 :class="hasPhoto ? 'text-accent' : 'text-muted hover:text-accent'"
                 :aria-label="hasPhoto ? 'Фото прикреплено' : 'Прикрепить фото'"
                 :title="hasPhoto ? 'Фото прикреплено' : 'Прикрепить фото'"
-                :disabled="processing"
+                :disabled="processing || loading"
                 @click="fileInput?.click()"
             >
                 <svg v-if="!processing" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true">
@@ -38,12 +40,18 @@
             <button
                 type="submit"
                 :disabled="!canSubmit"
-                :aria-label="submitLabel"
+                :aria-label="loading ? 'Отправляется' : submitLabel"
+                :aria-busy="loading"
                 :title="submitTitle"
                 class="mr-1.5 flex h-9 shrink-0 items-center justify-center self-center overflow-hidden rounded-full bg-accent text-accent-contrast transition-all duration-150 hover:bg-accent-hover disabled:pointer-events-none"
-                :class="canSubmit ? 'w-9 opacity-100' : 'mr-0 w-0 opacity-0'"
+                :class="canSubmit || loading ? 'w-9 opacity-100' : 'mr-0 w-0 opacity-0'"
             >
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <span
+                    v-if="loading"
+                    class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-accent-contrast border-t-transparent"
+                    aria-hidden="true"
+                />
+                <svg v-else class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 12h15m0 0l-6-6m6 6l-6 6" />
                 </svg>
             </button>

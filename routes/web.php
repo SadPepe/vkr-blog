@@ -69,6 +69,9 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:20,1');
     Route::get('/articles/{article:slug}/edit', [ArticleController::class, 'edit'])->name('articles.edit');
     Route::put('/articles/{article:slug}', [ArticleController::class, 'update'])->name('articles.update');
+    Route::patch('/articles/{article:slug}/pin', [ArticleController::class, 'pin'])->name('articles.pin');
+    Route::patch('/articles/{article:slug}/visibility', [ArticleController::class, 'visibility'])
+        ->name('articles.visibility');
     Route::delete('/articles/{article:slug}', [ArticleController::class, 'destroy'])->name('articles.destroy');
 });
 Route::get('/articles/{article:slug}/excerpt', [ArticleController::class, 'excerpt'])

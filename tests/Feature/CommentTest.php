@@ -52,6 +52,25 @@ class CommentTest extends TestCase
         $this->assertSame(1, $article->refresh()->comments_count);
     }
 
+    public function test_comment_store_returns_json_for_ajax_submission(): void
+    {
+        $user = User::factory()->create();
+        $article = Article::factory()->create(['slug' => 'ajax-comment']);
+
+        $this->actingAs($user)
+            ->postJson(route('comments.store', $article->slug), ['content' => 'Без перезагрузки'])
+            ->assertOk()
+            ->assertJsonPath('content', 'Без перезагрузки')
+            ->assertJsonPath('user.id', $user->id)
+            ->assertJsonPath('image_url', null);
+
+        $this->assertDatabaseHas('comments', [
+            'article_id' => $article->id,
+            'user_id' => $user->id,
+            'content' => 'Без перезагрузки',
+        ]);
+    }
+
     public function test_reply_does_not_increase_comments_counter(): void
     {
         $user = User::factory()->create();
@@ -245,5 +264,112 @@ class CommentTest extends TestCase
 
         $this->assertNull($comment->fresh()->image_path);
         Storage::disk('public')->assertMissing($newPath);
+    }
+    public function test_feed_shows_three_latest_comments_newest_first(): void
+    {
+        $article = Article::factory()->create(['comments_count' => 5]);
+        $comments = collect(range(1, 5))
+            ->map(fn (int $i) => Comment::factory()->create([
+                'article_id' => $article->id,
+                'content' => "Комментарий {$i}",
+            ]));
+
+        $this->get('/')->assertInertia(fn (Assert $page) => $page
+            ->component('Home')
+            ->has('articles.data.0.recent_comments', 3)
+            ->where('articles.data.0.recent_comments.0.id', $comments[4]->id)
+            ->where('articles.data.0.recent_comments.1.id', $comments[3]->id)
+            ->where('articles.data.0.recent_comments.2.id', $comments[2]->id));
+    }
+
+    public function test_feed_preview_skips_hidden_comments(): void
+    {
+        $article = Article::factory()->create(['comments_count' => 2]);
+        $visible = Comment::factory()->create(['article_id' => $article->id, 'content' => 'Видимый']);
+        Comment::factory()->create(['article_id' => $article->id, 'content' => 'Скрытый', 'hidden_at' => now()]);
+
+        $this->get('/')->assertInertia(fn (Assert $page) => $page
+            ->has('articles.data.0.recent_comments', 1)
+            ->where('articles.data.0.recent_comments.0.id', $visible->id));
+    }
+
+    public function test_comment_posted_from_feed_appears_in_recent_comments(): void
+    {
+        $user = User::factory()->create();
+        $article = Article::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('comments.store', $article->slug), ['content' => 'Прямо из ленты'])
+            ->assertRedirect();
+
+        $this->actingAs($user)->get('/')->assertInertia(fn (Assert $page) => $page
+            ->has('articles.data.0.recent_comments', 1)
+            ->where('articles.data.0.recent_comments.0.body', 'Прямо из ленты'));
+    }
+    public function test_feed_comment_preview_includes_visible_replies(): void
+    {
+        $article = Article::factory()->create(['comments_count' => 1]);
+        $parent = Comment::factory()->create(['article_id' => $article->id, 'content' => 'Родитель']);
+        $reply = Comment::factory()->create([
+            'article_id' => $article->id,
+            'parent_id' => $parent->id,
+            'content' => 'Ответ',
+        ]);
+        Comment::factory()->create([
+            'article_id' => $article->id,
+            'parent_id' => $parent->id,
+            'content' => 'Скрытый ответ',
+            'hidden_at' => now(),
+        ]);
+
+        $this->get('/')->assertInertia(fn (Assert $page) => $page
+            ->has('articles.data.0.recent_comments', 1)
+            ->has('articles.data.0.recent_comments.0.replies', 1)
+            ->where('articles.data.0.recent_comments.0.replies.0.id', $reply->id)
+            ->where('articles.data.0.recent_comments.0.replies.0.body', 'Ответ'));
+    }
+    public function test_feed_preview_shows_old_thread_with_recent_reply(): void
+    {
+        $article = Article::factory()->create(['comments_count' => 4]);
+        $old = Comment::factory()->create(['article_id' => $article->id, 'content' => 'Старый корень']);
+        $old->forceFill(['created_at' => now()->subDays(5)])->save();
+
+        foreach (range(1, 3) as $i) {
+            $fresh = Comment::factory()->create(['article_id' => $article->id, 'content' => "Новый {$i}"]);
+            $fresh->forceFill(['created_at' => now()->subDays(4 - $i)])->save();
+        }
+
+        Comment::factory()->create([
+            'article_id' => $article->id,
+            'parent_id' => $old->id,
+            'content' => 'Свежий ответ',
+        ]);
+
+        $this->get('/')->assertInertia(fn (Assert $page) => $page
+            ->has('articles.data.0.recent_comments', 3)
+            // Свежие ветки идут сверху
+            ->where('articles.data.0.recent_comments.0.body', 'Новый 3')
+            // Ветка со свежим ответом тоже попадает в превью, хотя её корень старый
+            ->where('articles.data.0.recent_comments.2.id', $old->id)
+            ->where('articles.data.0.recent_comments.2.replies.0.body', 'Свежий ответ'));
+    }
+
+    public function test_feed_comment_preview_limits_replies(): void
+    {
+        $article = Article::factory()->create(['comments_count' => 1]);
+        $parent = Comment::factory()->create(['article_id' => $article->id, 'content' => 'Родитель']);
+
+        foreach (range(1, 4) as $i) {
+            Comment::factory()->create([
+                'article_id' => $article->id,
+                'parent_id' => $parent->id,
+                'content' => "Ответ {$i}",
+            ]);
+        }
+
+        $this->get('/')->assertInertia(fn (Assert $page) => $page
+            ->has('articles.data.0.recent_comments.0.replies', 3)
+            ->where('articles.data.0.recent_comments.0.replies.0.body', 'Ответ 2')
+            ->where('articles.data.0.recent_comments.0.replies.2.body', 'Ответ 4'));
     }
 }

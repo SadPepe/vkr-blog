@@ -24,6 +24,7 @@ class Article extends Model
         'card_image_path',
         'category_slug',
         'status',
+        'is_pinned',
         'created_at',
         'views_count',
         'likes_count',
@@ -41,6 +42,8 @@ class Article extends Model
         'category_slug',
         'status',
         'published_at',
+        'is_pinned',
+        'pinned_at',
         'views_count',
         'likes_count',
         'comments_count',
@@ -48,6 +51,7 @@ class Article extends Model
 
     protected $dates = [
         'published_at',
+        'pinned_at',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -55,6 +59,8 @@ class Article extends Model
 
     protected $casts = [
         'published_at' => 'datetime',
+        'pinned_at' => 'datetime',
+        'is_pinned' => 'boolean',
     ];
 
     public const STATUS_DRAFT = 'draft';
@@ -80,6 +86,22 @@ class Article extends Model
     public function isVisible(): bool
     {
         return $this->status === self::STATUS_PUBLISHED;
+    }
+
+    /**
+     * Закреплённый пост автора — первым в профиле и на странице автора.
+     */
+    public function scopePinnedFirst($query)
+    {
+        return $query->orderByDesc('is_pinned')->orderByDesc('pinned_at');
+    }
+
+    /**
+     * Закреплять имеет смысл только опубликованное: скрытый пост читатель не увидит.
+     */
+    public function canBePinned(): bool
+    {
+        return $this->isVisible();
     }
 
     public function user(): BelongsTo
@@ -261,7 +283,9 @@ class Article extends Model
             default => now()->subWeek(),
         };
 
-        $sub = static::query();
+        $sub = static::query()
+            // Скрытые и черновики не должны всплывать в «Популярном»
+            ->where('status', self::STATUS_PUBLISHED);
 
         if ($date === null) {
             // Детальные просмотры храним 12 месяцев, поэтому «за всё время»

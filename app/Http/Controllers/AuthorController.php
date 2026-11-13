@@ -63,10 +63,12 @@ class AuthorController extends Controller
         $articles = PostPreview::attachPaginator(
             $user->articles()
                 ->visible()
-                ->with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
+                ->with('user:id,name,avatar')
                 ->select(array_merge(\App\Models\Article::CARD_COLUMNS, ['content']))
+                // Закреплённый пост автора — первым
+                ->pinnedFirst()
                 ->latest()
-                ->paginate(12)
+                ->paginate(6)
         );
 
         $stats = $user->articles()

@@ -92,6 +92,7 @@
 import { computed, onBeforeUnmount, ref } from "vue";
 import { NodeViewWrapper } from "@tiptap/vue-3";
 import { CAROUSEL_IMAGE_TYPES, MAX_CAROUSEL_IMAGES } from "@/Support/imageCarouselConfig";
+import { createDraftImageUrl } from "@/Utilities/drafts";
 
 const props = defineProps({
     editor: { type: Object, default: null },
@@ -141,7 +142,7 @@ const onFiles = (event) => {
         flash(`В карусель можно добавить не больше ${max} фото`);
     }
 
-    const urls = files.slice(0, room).map((file) => URL.createObjectURL(file));
+    const urls = files.slice(0, room).map((file) => createDraftImageUrl(file));
     props.updateAttributes({ srcs: [...srcs.value, ...urls] });
 };
 

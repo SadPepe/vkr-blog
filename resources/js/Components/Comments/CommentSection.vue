@@ -17,7 +17,7 @@
                 v-model="newComment"
                 v-model:image="newImage"
                 label="Ваш комментарий"
-                placeholder="Коментарий"
+                placeholder="..."
                 submit-label="Отправить комментарий"
                 :loading="loading"
                 :error="errors.content"
@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
 import CommentInput from "@/Components/Comments/CommentInput.vue";
 import CommentItem from "@/Components/Comments/CommentItem.vue";
@@ -107,31 +107,25 @@ const hint = computed(() =>
     remaining.value <= 200 ? `${remaining.value} ${plural(remaining.value, ["символ", "символа", "символов"])} осталось` : "",
 );
 // Новые комментарии показываются сверху — свежий оказывается сразу под формой
-const submitComment = async () => {
+const submitComment = () => {
     if ((!newComment.value.trim() && !newImage.value) || loading.value) return;
 
+    // Флаг ставим синхронно: router.post() возвращает undefined, поэтому await
+    // здесь не ждёт запрос и раньше сбрасывал loading сразу после клика.
     loading.value = true;
     errors.content = "";
     errors.image = "";
 
-    const countBefore = props.comments.length;
     const payload = { content: newComment.value };
     if (newImage.value) payload.image = newImage.value;
 
     try {
-        await router.post(route("comments.store", props.articleSlug), payload, {
+        router.post(route("comments.store", props.articleSlug), payload, {
             preserveScroll: true,
             forceFormData: !!newImage.value,
-            onSuccess: async () => {
+            onSuccess: () => {
                 newComment.value = "";
                 newImage.value = null;
-
-                await nextTick();
-
-                // Страховка: если список не обновился, дотягиваем страницу вручную
-                if (props.comments.length === countBefore) {
-                    router.reload({ only: ["article"], preserveScroll: true });
-                }
             },
             onError: (err) => {
                 if (err.content) {
@@ -141,9 +135,13 @@ const submitComment = async () => {
                     errors.image = err.image[0];
                 }
             },
+            onFinish: () => {
+                loading.value = false;
+            },
         });
-    } finally {
+    } catch (error) {
         loading.value = false;
+        console.error("Не удалось отправить комментарий:", error);
     }
 };
 
@@ -153,13 +151,13 @@ const deleteComment = (commentId) => {
     pendingDeleteId.value = commentId;
 };
 
-const confirmDelete = async () => {
+const confirmDelete = () => {
     const id = pendingDeleteId.value;
     pendingDeleteId.value = null;
 
     if (!id) return;
 
-    await router.delete(route("comments.destroy", id), {
+    router.delete(route("comments.destroy", id), {
         preserveScroll: true,
     });
 };

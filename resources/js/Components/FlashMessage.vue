@@ -77,14 +77,23 @@ const dismiss = (id) => {
     timers.delete(id);
 };
 
+// Flash лежит в общих props и не исчезает после показа. Если его не погасить,
+// любой частичный reload (например, обновление статьи) снова пришлёт тот же
+// объект в watch и покажет дубль. Читаем сообщение один раз и обнуляем значения.
 watch(
-    () => page.props.flash,
-    (flash) => {
-        if (!flash) return;
-        push("success", flash.success);
-        push("error", flash.error);
+    () => [page.props.flash?.success, page.props.flash?.error],
+    ([success, error]) => {
+        if (!success && !error) return;
+
+        push("success", success);
+        push("error", error);
+
+        if (page.props.flash) {
+            page.props.flash.success = null;
+            page.props.flash.error = null;
+        }
     },
-    { deep: true, immediate: true },
+    { immediate: true },
 );
 
 onBeforeUnmount(() => {

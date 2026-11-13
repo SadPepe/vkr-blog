@@ -77,7 +77,23 @@
                         </div>
                     </div>
 
-                    <Pagination v-if="articles.links && articles.links.length > 3" :links="articles.links" class="mt-10" />
+                    <!-- Догрузка ленты порциями — только по явному клику: без автоподгрузки
+                         при прокрутке, чтобы читатель сам решал, продолжать ли ленту. -->
+                    <div v-if="feed.length" class="mt-10 flex flex-col items-center gap-3">
+                        <button
+                            v-if="hasMoreArticles"
+                            type="button"
+                            class="ui-pill ui-pill--solid min-h-11 px-5"
+                            :disabled="loadingMore"
+                            :aria-busy="loadingMore"
+                            @click="loadMore"
+                        >
+                            {{ loadingMore ? "Загружаю…" : "Показать ещё" }}
+                        </button>
+                        <p class="type-meta num" aria-live="polite">
+                            Показано {{ feed.length }} из {{ articles.total }}
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Рейл: активность, авторы и популярное. Открытыми блоками,
@@ -98,17 +114,19 @@
                 </aside>
             </div>
         </div>
+
+        <BackToTop />
     </Layout>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import Layout from "@/Layouts/Layout.vue";
 import FeedPost from "@/Components/FeedPost.vue";
 import PosterRail from "@/Components/PosterRail.vue";
 import AuthorsRail from "@/Components/AuthorsRail.vue";
-import Pagination from "@/Components/Pagination.vue";
+import BackToTop from "@/Components/BackToTop.vue";
 
 const page = usePage();
 
@@ -161,9 +179,37 @@ const railArticles = computed(() => [...props.popularArticles].sort((a, b) => (b
 
 const hasRail = computed(() => props.discussedArticles.length > 0 || props.activeAuthors.length > 0 || railArticles.value.length > 0);
 
-// Лента = все статьи страницы: лид из старого дизайна убран, иначе первая
-// статья пропадала (при одной статье лента оставалась пустой)
-const feed = computed(() => props.articles.data);
+// Лента накапливается порциями: первая страница приходит из Inertia,
+// следующие догружаются частичным визитом по кнопке и добавляются к показанным постам.
+const feed = ref([...(props.articles.data ?? [])]);
+const loadingMore = ref(false);
+
+const hasMoreArticles = computed(() => Boolean(props.articles.next_page_url));
+
+const loadMore = () => {
+    if (loadingMore.value || !props.articles.next_page_url) return;
+
+    loadingMore.value = true;
+
+    const nextPage = new URL(props.articles.next_page_url, window.location.origin);
+    const query = Object.fromEntries(nextPage.searchParams.entries());
+    router.get(nextPage.pathname, query, {
+        only: ["articles"],
+        preserveState: true,
+        preserveScroll: true,
+        preserveUrl: true,
+        replace: true,
+        onSuccess: (page) => {
+            const incoming = page.props.articles?.data ?? [];
+            const visibleIds = new Set(feed.value.map((article) => article.id));
+
+            feed.value.push(...incoming.filter((article) => !visibleIds.has(article.id)));
+        },
+        onFinish: () => {
+            loadingMore.value = false;
+        },
+    });
+};
 
 const pluralArticles = (n) => {
     const mod10 = n % 10;

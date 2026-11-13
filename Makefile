@@ -31,3 +31,8 @@ test:
 # и без pdo_sqlite (нужен тестам) — подключаем расширения через php-ini/.
 serve:
 	PHP_INI_SCAN_DIR="$(CURDIR)/php-ini" php artisan serve --port=8001
+
+# То же, но слушает все интерфейсы: сайт открывается с телефона по LAN-адресу
+# (Vite тоже ходит по локалке — см. vite.config.js).
+serve-lan:
+	PHP_INI_SCAN_DIR="$(CURDIR)/php-ini" php artisan serve --host=0.0.0.0 --port=8001

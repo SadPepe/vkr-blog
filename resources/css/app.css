@@ -259,7 +259,10 @@
 }
 
 html {
-    scroll-behavior: smooth;
+    /* Inertia восстанавливает позицию через window.scrollTo(). Глобальный smooth
+       превращал это в заметный «прыжок» после отправки комментария; плавную
+       прокрутку включаем точечно, например у кнопки «Наверх». */
+    scroll-behavior: auto;
 }
 
 /* Защита от горизонтального скролла на узких экранах */
@@ -340,6 +343,29 @@ textarea,
     letter-spacing: 0;
 }
 
+/* Жирный — настоящим 700 (файлы подключены в fonts.css). С одним 600
+   в тёмной теме <strong> почти не отличался от обычного текста. */
+strong,
+b {
+    font-weight: 700;
+}
+
+/* В тёмных темах светлые штрихи «расплываются» и кажутся толще, поэтому
+   разницу между обычным и жирным держим на шаг выше. */
+[data-mode="dark"] strong,
+[data-mode="dark"] b {
+    font-weight: 800;
+}
+
+[data-mode="dark"] h1,
+[data-mode="dark"] h2,
+[data-mode="dark"] h3,
+[data-mode="dark"] h4,
+[data-mode="dark"] h5,
+[data-mode="dark"] h6 {
+    font-weight: 700;
+}
+
 /* Видимый фокус — клавиатура, не мышь. Компоненты с ring его перекрывают своим. */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 2px solid rgb(var(--c-accent));
@@ -349,6 +375,36 @@ textarea,
 ::selection {
     background: rgb(var(--c-accent-soft));
     color: rgb(var(--c-content));
+}
+
+/* Редактор: те же размеры заголовков, что на странице статьи.
+   Tailwind сбрасывает кегль h1–h6 в inherit, и в наборе h2 выглядел
+   обычным абзацем — «заголовок не заголовок». */
+.ProseMirror h1 {
+    margin-top: 0.5rem;
+    font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.ProseMirror h2 {
+    margin-top: 2.5rem;
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    line-height: 1.2;
+}
+
+.ProseMirror h3 {
+    margin-top: 2rem;
+    font-size: 1.25rem;
+    line-height: 1.3;
+}
+
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+    margin-top: 1.75rem;
+    font-size: 1.0625rem;
+    line-height: 1.35;
 }
 
 /* ------------------------------------------------------------------
@@ -672,7 +728,12 @@ textarea,
     }
 
     .article-body > * + * {
-        margin-top: 1.15rem;
+        margin-top: 1.25rem;
+    }
+
+    /* Абзацы: ровный шаг и без висячих слов в последней строке */
+    .article-body p {
+        text-wrap: pretty;
     }
 
     .article-body h2 {
@@ -685,7 +746,17 @@ textarea,
     .article-body h3 {
         margin-top: 2rem;
         font-weight: 600;
-        font-size: 1.125rem;
+        font-size: 1.25rem;
+        line-height: 1.3;
+    }
+
+    /* Четвёртый-шестой уровни: тот же шаг, но без роста кегля */
+    .article-body h4,
+    .article-body h5,
+    .article-body h6 {
+        margin-top: 1.75rem;
+        font-weight: 600;
+        font-size: 1.0625rem;
         line-height: 1.35;
     }
 
@@ -713,10 +784,61 @@ textarea,
         color: rgb(var(--c-muted));
     }
 
+    /* Списки: свой маркер у каждого типа и свой шаг вложенности.
+       Без этого ol рисовался точками, а вложенные уровни стояли на одной оси. */
     .article-body ul,
     .article-body ol {
-        padding-left: 1.25rem;
+        padding-inline-start: 1.5rem;
+    }
+
+    .article-body ul {
         list-style: disc;
+    }
+
+    .article-body ol {
+        list-style: decimal;
+    }
+
+    .article-body ul ul {
+        list-style-type: circle;
+    }
+
+    .article-body ul ul ul {
+        list-style-type: square;
+    }
+
+    .article-body ol ol {
+        list-style-type: lower-alpha;
+    }
+
+    .article-body ol ol ol {
+        list-style-type: lower-roman;
+    }
+
+    .article-body li > ul,
+    .article-body li > ol {
+        margin-block: 0.35em 0;
+        padding-inline-start: 1.25rem;
+    }
+
+    .article-body li + li {
+        margin-top: 0.3em;
+    }
+
+    /* Редактор кладёт текст пункта в p: внешние отступы ему не нужны */
+    .article-body li > p {
+        margin: 0;
+    }
+
+    .article-body li > p + p {
+        margin-top: 0.35em;
+    }
+
+    /* Разделитель — линия в токене темы, а не браузерный серый */
+    .article-body hr {
+        margin: 2rem 0;
+        border: 0;
+        border-top: 1px solid rgb(var(--c-line));
     }
 
     .article-body blockquote {
@@ -738,8 +860,8 @@ textarea,
         background: rgb(var(--c-surface-muted));
         color: rgb(var(--c-content));
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-        font-size: 0.875rem;
-        line-height: 1.65;
+        font-size: 0.9375rem;
+        line-height: 1.6;
         tab-size: 4;
         overflow-x: auto;
         overscroll-behavior-x: contain;
@@ -754,7 +876,7 @@ textarea,
         background: rgb(var(--c-surface-muted));
         color: rgb(var(--c-content));
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-        font-size: 0.875em;
+        font-size: 0.9em;
     }
 
     /* Рамку и подложку блока кода рисует JS-обёртка .code-block (ниже, вне
@@ -849,14 +971,56 @@ textarea,
     .post-content h3 {
         margin-top: 1.75rem;
         font-weight: 600;
-        font-size: 1.125rem;
-        line-height: 1.35;
+        font-size: 1.1875rem;
+        line-height: 1.3;
     }
 
+    .post-content p {
+        text-wrap: pretty;
+    }
+
+    /* В ленте тот же порядок, но шаг компактнее: пост читают вскользь */
     .post-content ul,
     .post-content ol {
-        padding-left: 1.25rem;
+        padding-inline-start: 1.4rem;
+    }
+
+    .post-content ul {
         list-style: disc;
+    }
+
+    .post-content ol {
+        list-style: decimal;
+    }
+
+    .post-content ul ul {
+        list-style-type: circle;
+    }
+
+    .post-content ul ul ul {
+        list-style-type: square;
+    }
+
+    .post-content ol ol {
+        list-style-type: lower-alpha;
+    }
+
+    .post-content ol ol ol {
+        list-style-type: lower-roman;
+    }
+
+    .post-content li > ul,
+    .post-content li > ol {
+        margin-block: 0.3em 0;
+        padding-inline-start: 1.15rem;
+    }
+
+    .post-content li + li {
+        margin-top: 0.25em;
+    }
+
+    .post-content li > p {
+        margin: 0;
     }
 
     .post-content a {
@@ -1129,26 +1293,57 @@ textarea,
 
 .image-carousel {
     display: flex;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0;
     overflow-x: auto;
     overscroll-behavior-x: contain;
-    border-radius: 0.75rem;
-    background: rgb(var(--c-surface-muted));
+    /* Листаем по одному кадру: снэп на границу фото, а не «на глазок» */
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
 }
 
-/* Кадры одной высоты, с небольшим зазором — лента, но не сплошное полотно */
+.image-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+/* Один кадр занимает всю ширину ленты и вписывается целиком (contain, не cover).
+   Высота — по пропорциям снимка, сверху ограничена 78vh/36rem: фото не «плывёт»
+   в пустом поле фиксированной высоты. Без подложки — поля не читаются полосами. */
 .image-carousel > img {
-    flex: 0 0 auto;
-    width: auto;
-    height: clamp(16rem, 50vh, 38rem);
+    flex: 0 0 100%;
+    width: 100%;
+    height: auto;
+    /* Рамка по пропорциям первого снимка (задаёт JS): все кадры одной высоты */
+    aspect-ratio: var(--carousel-ratio, auto);
     min-width: 0;
     max-width: none;
-    max-height: none;
+    max-height: min(78vh, 36rem);
     margin: 0;
     border-radius: 0;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
     cursor: zoom-in;
     box-shadow: none;
+    background: transparent;
+}
+
+/* На мобиле фото уходит в поля страницы: лента на всю ширину экрана */
+@media (max-width: 639.98px) {
+    .article-body .image-carousel-shell {
+        width: calc(100% + 40px);
+        margin-inline: -20px;
+        margin-block: 1.75rem;
+    }
+
+    .article-body .image-carousel > img {
+        max-height: min(72vh, 30rem);
+    }
+
+    .article-body .image-carousel__bar {
+        padding-inline: 20px;
+    }
 }
 
 .image-carousel__bar {
@@ -1208,6 +1403,8 @@ textarea,
 }
 
 .prose div.image-carousel > img {
+    flex: 0 0 auto;
+    width: auto;
     height: 9rem;
     margin: 0;
     border-radius: 0;

@@ -15,6 +15,28 @@
                     {{ article.user.name }}
                 </Link>
                 <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem]">
+                    <!-- Закрепление живёт в профиле автора и на его странице, не в общей ленте -->
+                    <span
+                        v-if="article.is_pinned && !showAuthor"
+                        class="inline-flex items-center gap-1 font-medium text-accent"
+                    >
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M17.25 3.75H6.75A1.5 1.5 0 005.25 5.25v15L12 15.75l6.75 4.5v-15a1.5 1.5 0 00-1.5-1.5z"
+                            />
+                        </svg>
+                        Закреплено
+                    </span>
+
+                    <span
+                        v-if="article.status && article.status !== 'published'"
+                        class="inline-flex items-center gap-1 rounded-sm border border-line bg-surface-muted px-1.5 py-0.5 font-medium text-muted"
+                    >
+                        {{ statusLabel }}
+                    </span>
+
                     <Link
                         v-if="article.category_slug"
                         :href="route('articlesByCategory', article.category_slug)"
@@ -49,6 +71,9 @@
                         </svg>
                         <span class="num font-medium">{{ article.views_count }}</span>
                     </span>
+
+                    <!-- Действия автора — «⋯» рядом с просмотрами; в чужой ленте слота нет -->
+                    <div v-if="$slots.actions" class="-my-1 flex items-center"><slot name="actions" /></div>
                 </div>
             </div>
         </header>
@@ -71,9 +96,8 @@
         />
 
         <!-- Текстовые действия чтения остаются ссылками, без лишних пилюль -->
-        <div class="mt-3 flex flex-wrap items-center gap-x-5">
+        <div v-if="article.has_more || expanded" class="mt-3 flex flex-wrap items-center gap-x-5">
             <button
-                v-if="article.has_more || expanded"
                 type="button"
                 class="inline-flex min-h-10 items-center text-sm font-medium text-accent transition-colors hover:text-accent-hover"
                 :aria-expanded="expanded"
@@ -81,13 +105,6 @@
             >
                 {{ expanded ? "Свернуть" : loading ? "Загружаю…" : "Читать дальше" }}
             </button>
-
-            <Link
-                :href="articleUrl"
-                class="inline-flex min-h-10 items-center text-sm font-medium text-accent transition-colors hover:text-accent-hover"
-            >
-                Открыть пост
-            </Link>
         </div>
 
         <!-- Взаимодействия — мягкие пилюли: единственный скруглённый элемент в посте -->
@@ -100,10 +117,21 @@
                 pill
             />
 
-            <!-- Если обсуждения ещё нет, действие ведёт к форме комментария.
-                 При наличии комментариев единственная точка входа — блок «Обсуждение» ниже. -->
+            <Link :href="articleUrl" class="ui-pill">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                </svg>
+                <span>К статье</span>
+            </Link>
+
+            <!-- Если обсуждения ещё нет и гость не может писать, ведём к форме на странице поста.
+                 Автор комментария пишет прямо в ленте, поэтому дубля кнопки нет. -->
             <Link
-                v-if="!article.comments_count"
+                v-if="!commentsCount && !canComment"
                 :href="articleUrl + '#comments'"
                 class="ui-pill"
             >
@@ -127,54 +155,105 @@
                 </svg>
                 <span class="hidden sm:inline">{{ copied ? "Скопировано" : "Поделиться" }}</span>
             </button>
-
-            <span v-if="$slots.actions" class="ml-auto flex items-center gap-1"><slot name="actions" /></span>
         </footer>
 
-        <!-- Обсуждение — отдельная тред-зона без подложки: пилюля-заголовок,
-             вертикальная линия и последний комментарий. -->
-        <section v-if="article.comments_count > 0" class="mt-6 border-t border-line/70 pt-5" aria-label="Обсуждение поста">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <Link :href="articleUrl + '#comments'" class="ui-pill ui-pill--soft">
-                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                        />
-                    </svg>
-                    <span>Обсуждение</span>
-                    <span class="num">· {{ article.comments_count }}</span>
-                </Link>
+        <!-- Комментарии — как на странице поста: подпись с числом, знакомое поле ввода
+             и несколько свежих веток с ответами. Полная лента — по «Все комментарии». -->
+        <section
+            v-if="commentsCount > 0 || canComment"
+            class="mt-6 border-t border-line/70 pt-5"
+            aria-label="Комментарии к посту"
+        >
+            <p class="flex items-baseline gap-2 text-[0.9375rem] font-semibold text-content">
+                Комментарии
+                <span class="num font-normal text-muted">{{ commentsCount }}</span>
+            </p>
 
-                <Link
-                    :href="articleUrl + '#comments'"
-                    class="text-sm font-medium text-accent transition-colors hover:text-accent-hover"
-                >
-                    Все комментарии →
-                </Link>
-            </div>
+            <form v-if="canComment" class="mt-4" @submit.prevent="submitComment">
+                <CommentInput
+                    :id="`feed-comment-${article.id}`"
+                    v-model="newComment"
+                    v-model:image="newImage"
+                    label="Ваш комментарий"
+                    placeholder="..."
+                    submit-label="Отправить комментарий"
+                    :loading="commentLoading"
+                    :error="commentErrors.content"
+                    :image-error="commentErrors.image"
+                    :hint="commentHint"
+                />
+            </form>
 
-            <div v-if="article.latest_comment" class="comment-thread mt-4">
-                <Link
-                    :href="articleUrl + '#comments'"
-                    class="group flex items-start gap-3 py-1"
-                    aria-label="Читать обсуждение поста"
-                >
-                    <UserAvatar :user="article.latest_comment.user" :size="26" class="mt-0.5" />
-                    <div class="min-w-0">
-                        <p class="text-[0.9375rem] leading-snug">
-                            <span class="font-medium text-content transition-colors group-hover:text-accent">{{
-                                article.latest_comment.user.name
-                            }}</span>
-                            <span class="text-muted"> · </span>
-                            <span class="text-muted">последний комментарий</span>
-                        </p>
-                        <p class="comment-content mt-1 line-clamp-2 break-words text-[0.9375rem] leading-snug text-content">
-                            <MentionText v-if="article.latest_comment.body" :text="article.latest_comment.body" :linkify="false" />
-                            <template v-else>{{ article.latest_comment.image_url ? "Фото в комментарии" : "Комментарий" }}</template>
-                        </p>
+            <p v-else class="mt-4 text-sm text-muted">
+                <Link :href="route('login')" class="font-medium text-accent transition-colors hover:text-accent-hover">
+                    Войдите
+                </Link>, чтобы комментировать.
+            </p>
+
+            <ol v-if="recentComments.length" class="mt-6 space-y-6" aria-label="Комментарии">
+                <li v-for="comment in recentComments" :key="comment.id">
+                    <div class="flex items-start gap-3">
+                        <UserAvatar :user="comment.user" :size="30" class="mt-0.5 shrink-0" />
+                        <div class="min-w-0">
+                            <p class="flex flex-wrap items-baseline gap-x-2 text-[0.9375rem] leading-snug">
+                                <span class="font-semibold text-content">{{ comment.user?.name }}</span>
+                                <time :datetime="comment.created_at" class="num text-[0.8125rem] text-muted">
+                                    {{ formatDateTime(comment.created_at) }}
+                                </time>
+                            </p>
+                            <p
+                                v-if="comment.body"
+                                class="comment-content mt-1 break-words text-[0.9375rem] leading-snug text-content"
+                            >
+                                <MentionText :text="comment.body" />
+                            </p>
+                            <img
+                                v-if="comment.image_url"
+                                :src="comment.image_url"
+                                alt="Фото в комментарии"
+                                loading="lazy"
+                                class="mt-2 max-h-56 w-auto max-w-full rounded-lg border border-line object-cover"
+                            />
+
+                            <!-- Ответы — одной веткой с линией, как в полном обсуждении -->
+                            <ul v-if="comment.replies?.length" class="mt-3 space-y-3 border-l-2 border-line pl-3.5">
+                                <li v-for="reply in comment.replies" :key="reply.id" class="flex items-start gap-2.5">
+                                    <UserAvatar :user="reply.user" :size="24" class="mt-0.5 shrink-0" />
+                                    <div class="min-w-0">
+                                        <p class="flex flex-wrap items-baseline gap-x-2 text-[0.9375rem] leading-snug">
+                                            <span class="font-semibold text-content">{{ reply.user?.name }}</span>
+                                            <time :datetime="reply.created_at" class="num text-[0.8125rem] text-muted">
+                                                {{ formatDateTime(reply.created_at) }}
+                                            </time>
+                                        </p>
+                                        <p
+                                            v-if="reply.body"
+                                            class="comment-content mt-1 break-words text-[0.9375rem] leading-snug text-content"
+                                        >
+                                            <MentionText :text="reply.body" />
+                                        </p>
+                                        <img
+                                            v-if="reply.image_url"
+                                            :src="reply.image_url"
+                                            alt="Фото в комментарии"
+                                            loading="lazy"
+                                            class="mt-2 max-h-48 w-auto max-w-full rounded-lg border border-line object-cover"
+                                        />
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
+                </li>
+            </ol>
+
+            <!-- Одна точка входа в полное обсуждение — в конце ветки, а не в заголовке -->
+            <div v-if="commentsCount > 0" class="mt-3 flex justify-end">
+                <Link
+                    :href="articleUrl + '#comments'"
+                    class="text-sm font-semibold text-accent transition-colors hover:text-accent-hover"
+                >
+                    Все комментарии
                 </Link>
             </div>
         </section>
@@ -192,9 +271,10 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { Link, router } from "@inertiajs/vue3";
+import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
+import { Link, router, usePage } from "@inertiajs/vue3";
 import LikeButton from "@/Components/LikeButton.vue";
+import CommentInput from "@/Components/Comments/CommentInput.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import ImageLightbox from "@/Components/ImageLightbox.vue";
 import MentionText from "@/Components/MentionText.vue";
@@ -214,6 +294,102 @@ const props = defineProps({
         default: true,
     },
 });
+
+const page = usePage();
+const canComment = computed(() => Boolean(page.props.auth?.user));
+
+// Комментарий из ленты: то же поле, что и на странице поста, но без отдельного компонента формы
+const MAX_COMMENT_LENGTH = 1000;
+const newComment = ref("");
+const newImage = ref(null);
+const commentLoading = ref(false);
+const commentErrors = reactive({});
+
+// Комментарии обновляем локально после AJAX-ответа: Inertia не перерисовывает
+// всю страницу и не восстанавливает scroll, поэтому форма не «прыгает».
+const commentsCount = ref(props.article.comments_count ?? 0);
+const recentComments = ref([...(props.article.recent_comments ?? [])]);
+
+watch(
+    () => props.article.comments_count,
+    (value) => {
+        commentsCount.value = value ?? 0;
+    },
+);
+
+watch(
+    () => props.article.recent_comments,
+    (value) => {
+        recentComments.value = [...(value ?? [])];
+    },
+);
+
+const commentHint = computed(() => {
+    const remaining = MAX_COMMENT_LENGTH - newComment.value.length;
+
+    return remaining <= 200 ? `${remaining} ${pluralize(remaining, ["символ", "символа", "символов"])} осталось` : "";
+});
+
+const submitComment = async () => {
+    if ((!newComment.value.trim() && !newImage.value) || commentLoading.value) return;
+
+    commentLoading.value = true;
+    commentErrors.content = "";
+    commentErrors.image = "";
+
+    const payload = new FormData();
+    payload.append("content", newComment.value);
+    if (newImage.value) payload.append("image", newImage.value);
+
+    try {
+        const response = await fetch(route("comments.store", { article: props.article.slug }), {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content"),
+            },
+            body: payload,
+        });
+
+        if (response.status === 401) {
+            router.visit(route("login"));
+            return;
+        }
+
+        if (response.status === 422) {
+            const data = await response.json();
+            if (data.errors?.content) commentErrors.content = data.errors.content[0];
+            if (data.errors?.image) commentErrors.image = data.errors.image[0];
+            return;
+        }
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const created = await response.json();
+        recentComments.value = [
+            {
+                id: created.id,
+                body: created.content ?? "",
+                image_url: created.image_url,
+                created_at: created.created_at,
+                user: {
+                    name: created.user?.name ?? "",
+                    avatar_url: created.user?.avatar_url,
+                },
+                replies: [],
+            },
+            ...recentComments.value.filter((comment) => comment.id !== created.id),
+        ].slice(0, 3);
+        commentsCount.value += 1;
+        newComment.value = "";
+        newImage.value = null;
+    } catch (error) {
+        console.error("Не удалось отправить комментарий:", error);
+        commentErrors.content = "Не удалось отправить комментарий. Попробуйте ещё раз.";
+    } finally {
+        commentLoading.value = false;
+    }
+};
 
 const expanded = ref(false);
 const copied = ref(false);
@@ -271,6 +447,10 @@ const share = async () => {
 };
 
 const categoryName = computed(() => props.categories.find((c) => c.slug === props.article.category_slug)?.name ?? "Без категории");
+
+// В своём профиле видно и черновики, и скрытое — подписываем их, чтобы
+// не путать с опубликованным
+const statusLabel = computed(() => (props.article.status === "draft" ? "Черновик" : "Скрыто"));
 
 const heading = computed(() => (props.article.title ?? "").trim());
 

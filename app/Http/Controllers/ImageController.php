@@ -10,8 +10,10 @@ class ImageController extends Controller
 {
     public function upload(Request $request)
     {
+        // Лимит согласован с клиентом (TipTapEditor сжимает до 2.5 МБ, но проверяет
+        // исходник по 20 МБ и после сжатия по 10 МБ): сюда доходят только ужатые файлы.
         $request->validate([
-            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:10240',
         ]);
 
         $path = ImageStore::storeUploaded($request->file('image'), 'images');

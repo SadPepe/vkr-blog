@@ -204,6 +204,23 @@ class ProfileController extends Controller
             ')
             ->first();
 
+        // Скрытые посты живут в отдельной вкладке, чтобы не мешаться в ленте
+        $tab = $request->query('tab') === 'hidden' ? 'hidden' : 'articles';
+
+        $articles = $user->articles()
+            ->when(
+                $tab === 'hidden',
+                fn ($query) => $query->where('status', Article::STATUS_HIDDEN),
+                fn ($query) => $query->where('status', '!=', Article::STATUS_HIDDEN)
+            )
+            ->with('user:id,name,avatar')
+            // Закреплённый пост — над остальными, дальше по свежести
+            ->pinnedFirst()
+            ->latest()
+            ->select(array_merge(Article::CARD_COLUMNS, ['content']))
+            ->paginate(6)
+            ->withQueryString();
+
         return Inertia::render('Profile/Show', [
             'user' => $user,
             'stats' => [
@@ -212,13 +229,12 @@ class ProfileController extends Controller
                 'likes_count' => (int) $stats->likes_count,
                 'comments_count' => (int) $stats->comments_count,
             ],
-            'articles' => PostPreview::attachPaginator(
-                $user->articles()
-                    ->with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
-                    ->latest()
-                    ->select(array_merge(Article::CARD_COLUMNS, ['content']))
-                    ->paginate(12)
-            ),
+            'articles' => PostPreview::attachPaginator($articles),
+            'tab' => $tab,
+            'counts' => [
+                'articles' => $user->articles()->where('status', '!=', Article::STATUS_HIDDEN)->count(),
+                'hidden' => $user->articles()->where('status', Article::STATUS_HIDDEN)->count(),
+            ],
             // Лучшие статьи автора: рейтинг по просмотрам вместо прежней медиасетки
             'topArticles' => \App\Models\Article::topFor($user),
         ]);

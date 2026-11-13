@@ -1,10 +1,21 @@
 // Черновики статей хранятся только в localStorage браузера.
 // Ключ вида blog_draft_article-create или blog_draft_article-<slug>.
+//
+// Фото нельзя хранить в localStorage как blob:-ссылки: они живут только до
+// перезагрузки документа. Поэтому сами файлы складываем в IndexedDB, а в HTML
+// черновика пишем служебную ссылку draft-image:<id>. При восстановлении
+// достаём Blob и снова превращаем его в blob:-URL для редактора.
 
 export const DRAFT_PREFIX = "blog_draft_";
 export const MAX_DRAFT_SIZE = 400 * 1024; // 400KB — меньше лимита localStorage
 export const CREATE_DRAFT_KEY = "article-create";
 export const DRAFTS_UPDATED_EVENT = "drafts:updated";
+export const DRAFT_IMAGE_PREFIX = "draft-image:";
+
+const DRAFT_IMAGE_DB = "blog-drafts-images";
+const DRAFT_IMAGE_STORE = "images";
+const blobImageIds = new Map();
+let draftImageDbPromise = null;
 
 export const draftStorageKey = (key) => DRAFT_PREFIX + (key || "default");
 
@@ -14,6 +25,113 @@ export const notifyDraftsUpdated = () => {
     } catch {
         /* окно недоступно */
     }
+};
+
+const randomId = () => {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        return crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
+
+const openDraftImageDb = () => {
+    if (typeof indexedDB === "undefined") return Promise.resolve(null);
+    if (draftImageDbPromise) return draftImageDbPromise;
+
+    draftImageDbPromise = new Promise((resolve) => {
+        try {
+            const request = indexedDB.open(DRAFT_IMAGE_DB, 1);
+            request.onupgradeneeded = () => {
+                request.result.createObjectStore(DRAFT_IMAGE_STORE, { keyPath: "id" });
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => resolve(null);
+        } catch {
+            resolve(null);
+        }
+    });
+
+    return draftImageDbPromise;
+};
+
+const withDraftImageStore = async (mode, callback) => {
+    const db = await openDraftImageDb();
+    if (!db) return null;
+
+    return new Promise((resolve) => {
+        try {
+            const transaction = db.transaction(DRAFT_IMAGE_STORE, mode);
+            const store = transaction.objectStore(DRAFT_IMAGE_STORE);
+            const request = callback(store);
+            request.onsuccess = () => resolve(request.result ?? null);
+            request.onerror = () => resolve(null);
+        } catch {
+            resolve(null);
+        }
+    });
+};
+
+export const putDraftImage = (id, blob) =>
+    withDraftImageStore("readwrite", (store) => store.put({ id, blob }));
+
+export const getDraftImage = (id) => withDraftImageStore("readonly", (store) => store.get(id));
+
+export const deleteDraftImages = async (ids) => {
+    const uniqueIds = [...new Set((ids || []).filter(Boolean))];
+    if (!uniqueIds.length) return;
+
+    await Promise.all(uniqueIds.map((id) => withDraftImageStore("readwrite", (store) => store.delete(id))));
+
+    for (const [url, id] of blobImageIds.entries()) {
+        if (uniqueIds.includes(id)) blobImageIds.delete(url);
+    }
+};
+
+// Создаём blob:-URL и запоминаем соответствие файла и служебного id.
+// Запись в IndexedDB стартует сразу, чтобы к моменту autosave черновика
+// изображение уже было доступно после перезагрузки.
+export const createDraftImageUrl = (file) => {
+    const url = URL.createObjectURL(file);
+    const id = randomId();
+
+    blobImageIds.set(url, id);
+    putDraftImage(id, file);
+
+    return url;
+};
+
+export const registerDraftImageUrl = (url, id) => {
+    if (url && id) blobImageIds.set(url, id);
+};
+
+export const draftImageIdForUrl = (url) => blobImageIds.get(url) || null;
+
+export const extractDraftImageIds = (html) =>
+    [...String(html || "").matchAll(/draft-image:([^"']+)/g)].map((match) => match[1]);
+
+// Перед записью в localStorage заменяем нестабильные blob:-URL на id из IndexedDB.
+export const serializeDraftImages = (html) =>
+    String(html || "").replace(/src="(blob:[^"]+)"/g, (match, url) => {
+        const id = draftImageIdForUrl(url);
+        return id ? `src="${DRAFT_IMAGE_PREFIX}${id}"` : match;
+    });
+
+// После чтения черновика возвращаем настоящие blob:-URL для редактора.
+export const hydrateDraftImages = async (html) => {
+    let result = String(html || "");
+    const ids = [...new Set(extractDraftImageIds(result))];
+
+    for (const id of ids) {
+        const record = await getDraftImage(id);
+        if (!record?.blob) continue;
+
+        const url = URL.createObjectURL(record.blob);
+        registerDraftImageUrl(url, id);
+        result = result.split(`${DRAFT_IMAGE_PREFIX}${id}`).join(url);
+    }
+
+    return result;
 };
 
 export const readDraft = (key) => {
@@ -40,6 +158,11 @@ export const writeDraft = (key, data) => {
 };
 
 export const removeDraft = (key) => {
+    const draft = readDraft(key);
+    if (draft?.content) {
+        deleteDraftImages(extractDraftImageIds(draft.content));
+    }
+
     try {
         localStorage.removeItem(draftStorageKey(key));
     } catch {

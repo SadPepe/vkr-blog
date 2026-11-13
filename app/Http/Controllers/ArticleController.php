@@ -76,6 +76,56 @@ class ArticleController extends Controller
         }
     }
 
+    /**
+     * Закрепить пост в своём блоге или снять закрепление.
+     * Закреплённый пост один: новый пин снимает предыдущий.
+     */
+    public function pin(Article $article)
+    {
+        Gate::authorize('update', $article);
+
+        if (! $article->canBePinned()) {
+            return back()->with('error', 'Скрытый пост закрепить нельзя — сначала опубликуйте его.');
+        }
+
+        $pinned = ! $article->is_pinned;
+
+        DB::transaction(function () use ($article, $pinned) {
+            Article::where('user_id', $article->user_id)
+                ->where('is_pinned', true)
+                ->whereKeyNot($article->id)
+                ->update(['is_pinned' => false, 'pinned_at' => null]);
+
+            $article->update([
+                'is_pinned' => $pinned,
+                'pinned_at' => $pinned ? now() : null,
+            ]);
+        });
+
+        return back()->with('success', $pinned ? 'Пост закреплён' : 'Пост откреплён');
+    }
+
+    /**
+     * Скрыть свой пост от читателей или вернуть его в ленты.
+     * Скрытый пост остаётся в профиле автора и доступен только ему и модераторам.
+     */
+    public function visibility(Article $article)
+    {
+        Gate::authorize('update', $article);
+
+        $hide = $article->isVisible();
+
+        $article->update([
+            'status' => $hide ? Article::STATUS_HIDDEN : Article::STATUS_PUBLISHED,
+            'published_at' => $hide ? $article->published_at : ($article->published_at ?? now()),
+            // Скрытый пост не остаётся закреплённым: закрепление обещает его читателям
+            'is_pinned' => $hide ? false : $article->is_pinned,
+            'pinned_at' => $hide ? null : $article->pinned_at,
+        ]);
+
+        return back()->with('success', $hide ? 'Пост скрыт — он виден только вам' : 'Пост снова опубликован');
+    }
+
     public function edit(Article $article)
     {
         Gate::authorize('update', $article);
@@ -145,11 +195,14 @@ class ArticleController extends Controller
 
     public function show(Article $article)
     {
-        // Скрытые модератором посты доступны только модераторам
-        abort_if(! $article->isVisible() && ! optional(auth()->user())->canModerate(), 404);
+        // Скрытый пост доступен автору и модераторам, остальным — 404
+        $this->ensureCanView($article);
 
-        // Обновляем метод увеличения просмотров
-        $article->incrementViews();
+        // Просмотры считаем только у опубликованного: автор в своём скрытом
+        // посте не должен накручивать счётчик
+        if ($article->isVisible()) {
+            $article->incrementViews();
+        }
 
         $article->load([
             'user:id,name,about,avatar',
@@ -204,6 +257,9 @@ class ArticleController extends Controller
      */
     public function excerpt(Article $article)
     {
+        // Черновик или скрытый пост не должен утекать через ленивую подгрузку
+        $this->ensureCanView($article);
+
         $preview = PostPreview::excerpt((string) $article->content);
         $preview['html'] = MentionRenderer::render($preview['html']);
 
@@ -217,10 +273,10 @@ class ArticleController extends Controller
         $articles = PostPreview::attachPaginator(
             $this->applySort(
                 Article::visible()
-                    ->with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
+                    ->with('user:id,name,avatar')
                     ->select(array_merge(Article::CARD_COLUMNS, ['content'])),
                 $sort
-            )->paginate(12)
+            )->paginate(6)
         )->withQueryString();
 
         // Используем PopularArticleController для получения популярных статей
@@ -327,10 +383,10 @@ class ArticleController extends Controller
                 $this->applySort(
                     Article::visible()
                         ->where('category_slug', $categorySlug)
-                        ->with(['user:id,name,avatar', 'latestComment.user:id,name,avatar'])
+                        ->with('user:id,name,avatar')
                         ->select(array_merge(Article::CARD_COLUMNS, ['content'])),
                     $sort
-                )->paginate(10)
+                )->paginate(6)
             )->withQueryString();
 
             // Для категорий тоже используем популярные статьи за неделю
@@ -348,5 +404,22 @@ class ArticleController extends Controller
         }
 
         return $this->index();
+    }
+
+    /**
+     * Опубликованное видят все; черновик и скрытое — только автор и модераторы.
+     */
+    private function ensureCanView(Article $article): void
+    {
+        if ($article->isVisible()) {
+            return;
+        }
+
+        $user = auth()->user();
+
+        abort_if(
+            ! $user || ($user->id !== $article->user_id && ! $user->canModerate()),
+            404
+        );
     }
 }

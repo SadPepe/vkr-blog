@@ -170,6 +170,15 @@ node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматир�
 
 - Dev: `php artisan serve` (порт может отличаться, проверяй фактический), `npm run dev`
   (Vite, `public/hot`).
+- Телефон в той же Wi-Fi: `npm run dev` + `make serve-lan` (Laravel на `0.0.0.0:8001`).
+  Vite слушает `0.0.0.0:5173`, а в `public/hot` пишется LAN-адрес машины (Vite сам берёт
+  первый не-loopback IPv4, переопределяется `VITE_DEV_HOST`), иначе телефон грузит ассеты
+  с `[::1]` и видит пустую страницу. Адрес — http://<LAN-IP>:8001.
+  На машине включён ufw с политикой DROP: пока не открыты `8001/tcp` и `5173/tcp`
+  (`sudo ufw allow 5173/tcp`, `sudo ufw allow 8001/tcp`), телефон получает таймаут.
+  Вторая причина «вечного скелетона» — CORS: страница открыта с `:8001`, модули грузятся
+  с `:5173`, а Vite 6 по умолчанию пускает только localhost-origin. Поэтому в
+  `vite.config.js` включён `server.cors: true`.
 - БД: PostgreSQL `blog` (см. `.env`), демо-данные — `php artisan migrate --seed`.
 - Часовой пояс приложения — `APP_TIMEZONE=Europe/Moscow` (`config/app.php`). Даты в формах админки
   вводятся и сравниваются в московском времени. До перехода на эту настройку метки времени
@@ -239,3 +248,14 @@ node_modules/.bin/prettier --write "resources/js/**/*.vue"   # форматир�
 - В таблице объявлений есть колонка «Сейчас» (`Идёт` / `Запланировано` / `Истекло` / `Выключено`),
   чтобы было видно, почему строка не показывается.
 - Тесты: `AnnouncementTest` (3). Всего 119 passed + 1 skipped.
+
+## Закрепление и скрытие постов автором (2026-11-13)
+
+- `articles.is_pinned` + `pinned_at` (миграция `2026_11_13_000100_add_pinning_to_articles_table`),
+  `Article::scopePinnedFirst()`; один закреплённый пост на автора.
+- Автор скрывает и возвращает свой пост через `PATCH /articles/{slug}/visibility`; скрытие
+  снимает закрепление. Владелец видит скрытый пост, читатели — 404; `excerpt` тоже закрыт.
+- Профиль: вкладки «Мои статьи» / «Скрытые» (`?tab=hidden`, счётчики в props `counts`),
+  действия с постом — в меню «⋯» рядом с просмотрами (`Components/ArticleActionsMenu.vue`).
+- Подробнее — `docs/redesign-notes.md`, раздел «Закрепление и скрытие поста автором».
+- Тесты: `tests/Feature/ArticlePinVisibilityTest.php` (10); всего 166 passed, 2 skipped.

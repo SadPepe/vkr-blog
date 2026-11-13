@@ -29,8 +29,8 @@
             <div class="article-layout">
                 <div class="min-w-0">
                     <div class="article-head">
-                        <!-- Автор, просмотры и правка — одной строкой над постом:
-                             аватар и имя слева, метрика и кнопка у правого края.
+                        <!-- Автор, просмотры и действия — одной строкой над постом:
+                             аватар и имя слева, метрика и «⋯» у правого края.
                              Ссылки «Все статьи автора» нет: имя уже ведёт в профиль. -->
                         <div class="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
                             <UserAvatar :user="article.user" :size="40" class="shrink-0" />
@@ -64,36 +64,40 @@
                                     <span class="num">{{ formatCount(article.views_count) }}</span>
                                 </span>
 
-                                <Link
-                                    v-if="isOwner"
-                                    :href="route('articles.edit', { article: article.slug })"
-                                    class="ui-pill"
-                                >
-                                    <svg
-                                        class="h-[1.125rem] w-[1.125rem] shrink-0"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="1.5"
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
-                                        />
-                                    </svg>
-                                    Редактировать
-                                </Link>
+                                <!-- Действия автора — в меню «⋯» рядом с просмотрами,
+                                     чтобы шапка поста оставалась спокойной -->
+                                <ArticleActionsMenu v-if="isOwner" :article="article" />
+
                                 <button
-                                    v-else-if="page.props.auth?.user"
+                                    v-if="!isOwner && page.props.auth?.user"
                                     type="button"
-                                    class="ui-pill"
+                                    class="ui-pill ui-pill--quiet h-9 w-9 min-h-9 px-0"
+                                    aria-label="Пожаловаться на статью"
+                                    title="Пожаловаться"
                                     @click="reportOpen = true"
                                 >
-                                    Пожаловаться
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21V4m0 0h11.5l-1.6 3.2a1 1 0 000 .9L14.5 11H3" />
+                                    </svg>
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- Скрытый пост: объясняем, почему его не видят читатели -->
+                        <div
+                            v-if="isOwner && !isPublished"
+                            class="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 border border-line bg-surface-muted px-4 py-3 text-sm text-muted"
+                        >
+                            <span>
+                                Пост скрыт — его видят только вы и модераторы. Он остаётся в профиле и не попадает в ленты.
+                            </span>
+                            <button
+                                type="button"
+                                class="inline-flex min-h-9 items-center font-semibold text-accent transition-colors hover:text-accent-hover"
+                                @click="toggleVisibility"
+                            >
+                                Опубликовать снова
+                            </button>
                         </div>
 
                         <h1
@@ -106,6 +110,10 @@
                         <!-- Дата и время чтения — строкой после заголовка.
                              Категория уже есть в хлебных крошках, поэтому здесь её нет -->
                         <p class="type-meta mt-4">
+                            <template v-if="article.is_pinned">
+                                <span class="font-medium text-accent">Закреплено</span>
+                                <span aria-hidden="true"> · </span>
+                            </template>
                             <time :datetime="article.created_at">{{ formatDate(article.created_at) }}</time>
                             <span aria-hidden="true"> · </span>
                             <span class="whitespace-nowrap">{{ readingMinutes }} мин чтения</span>
@@ -182,10 +190,11 @@
 
 <script setup>
 import { computed, onMounted, onBeforeUnmount, ref } from "vue";
-import { Head, Link, usePage } from "@inertiajs/vue3";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/Layout.vue";
 import CommentSection from "@/Components/Comments/CommentSection.vue";
 import ArticleFooter from "@/Components/ArticleFooter.vue";
+import ArticleActionsMenu from "@/Components/ArticleActionsMenu.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import ImageLightbox from "@/Components/ImageLightbox.vue";
 import PosterRail from "@/Components/PosterRail.vue";
@@ -211,6 +220,14 @@ const props = defineProps({
 
 // Владелец может править статью прямо со страницы просмотра
 const isOwner = computed(() => page.props.auth?.user?.id === props.article.user.id);
+
+// Скрытый пост доступен владельцу, но не читателям — интерфейс это проговаривает
+const isPublished = computed(() => props.article.status === "published");
+
+// Публикация из баннера скрытого поста: остальные действия — в меню «⋯»
+const toggleVisibility = () => {
+    router.patch(route("articles.visibility", { article: props.article.slug }), {}, { preserveScroll: true });
+};
 
 // Своя страница автора не нужна: у себя ведём в профиль
 const authorUrl = computed(() =>
@@ -376,164 +393,3 @@ onBeforeUnmount(() => {
     document.body.style.overflow = "";
 });
 </script>
-
-<style scoped>
-.article-content :deep(ul),
-.article-content :deep(ol) {
-    margin: 1.1rem 0;
-    padding-inline-start: 1.5rem;
-    list-style-position: outside;
-}
-
-.article-content :deep(li > p) {
-    margin: 0.25rem 0;
-}
-
-/* Вложенные уровни: свой шаг отступа и свои маркеры */
-.article-content :deep(li > ul),
-.article-content :deep(li > ol) {
-    margin: 0.5rem 0 0.5rem 0.25rem;
-    padding-inline-start: 1.4rem;
-}
-
-.article-content :deep(ul ul) {
-    list-style-type: circle;
-}
-
-.article-content :deep(ul ul ul) {
-    list-style-type: square;
-}
-
-.article-content :deep(ol ol) {
-    list-style-type: lower-alpha;
-}
-
-.article-content :deep(ol ol ol) {
-    list-style-type: lower-roman;
-}
-
-.article-content :deep(p) {
-    line-height: 1.7;
-    margin: 0.4rem 0;
-}
-
-.article-content :deep(ol) {
-    list-style-type: decimal;
-}
-
-.article-content :deep(ul) {
-    list-style-type: disc;
-}
-
-.article-content :deep(hr) {
-    border: none;
-    border-top: 1px solid gray;
-    margin: 2rem 0;
-
-    &.ProseMirror-selectednode {
-        border-top: 2px solid rgb(173, 0, 173);
-    }
-}
-
-.article-content :deep(blockquote) {
-    border-left: 3px solid rgb(var(--c-line-strong));
-    color: rgb(var(--c-muted));
-    margin: 1.5rem 0;
-    padding-left: 1rem;
-}
-
-.article-content :deep(h1),
-.article-content :deep(h2) {
-    font-weight: 600;
-    margin: 2rem 0 1rem;
-}
-
-.article-content :deep(h1) {
-    text-wrap: pretty;
-    font-size: 2.1rem;
-    line-height: 1.2;
-    margin-bottom: 1.5rem;
-}
-
-.article-content :deep(h2) {
-    text-wrap: pretty;
-    font-size: 1.875rem;
-    margin: 0.8rem 0 1rem;
-}
-
-.article-content :deep(h3) {
-    text-wrap: pretty;
-    font-size: 1.5rem;
-    margin: 0.8rem 0 1rem;
-}
-
-.article-content :deep(h4),
-.article-content :deep(h5),
-.article-content :deep(h6) {
-    font-size: 1rem;
-    margin: 1.25rem 0 0.5rem;
-}
-
-.article-content :deep(img) {
-    display: block;
-    margin: 1.5rem auto;
-    border-radius: 0.75rem;
-    max-width: 100%;
-    max-height: 70vh;
-    height: auto;
-    cursor: zoom-in;
-}
-
-/* внутри figure отступы задаёт сама фигура */
-.article-content :deep(figure img) {
-    margin-block: 0;
-}
-
-.article-content :deep(a) {
-    color: rgb(var(--c-accent));
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-.article-content :deep(code) {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.9em;
-    background: rgba(15, 23, 42, 0.06);
-    padding: 0.15em 0.35em;
-    border-radius: 0.3rem;
-}
-
-.article-content :deep(pre) {
-    margin: 1.5rem 0;
-    padding: 1rem 1.25rem;
-    overflow-x: auto;
-    border-radius: 0.75rem;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgb(var(--c-surface));
-    font-size: 0.9rem;
-    line-height: 1.6;
-}
-
-.article-content :deep(pre code) {
-    background: transparent;
-    padding: 0;
-    border-radius: 0;
-    font-size: inherit;
-    white-space: pre;
-}
-
-.article-content :deep(figure) {
-    margin: 1.75rem 0;
-}
-
-.article-content :deep(figcaption) {
-    margin-top: 0.5rem;
-    text-align: center;
-    font-size: 0.875rem;
-    color: rgb(var(--c-muted));
-}
-
-.article-content :deep(li) {
-    margin: 0.35rem 0;
-}
-</style>
