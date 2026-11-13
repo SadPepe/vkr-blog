@@ -679,3 +679,45 @@ node ~/.dsh/skills/design-taste-frontend/scripts/inspect.mjs "http://127.0.0.1:8
 шрифты 700/800, BackToTop, LAN-хост Vite). `php artisan test` — 173 passed,
 2 skipped; `npm run build` — ok. Ветки `redesign/underground-dev` и
 `redesign/underground` синхронизированы на `028d6b3`.
+
+## Фавиконка и название сайта во вкладке (2026-11-13)
+
+- Подключён набор favicon из `favicon_io.zip`: `public/favicon.ico` (был пустой 0 байт),
+  `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png` (180×180),
+  `android-chrome-192x192.png`, `android-chrome-512x512.png`, `site.webmanifest`.
+- В `site.webmanifest` прописаны `name`/`short_name` («Челны подземка» / «Подземка»),
+  `start_url: "/"`, `display: standalone`; `theme_color`/`background_color` — `#e6e1d7`
+  (фон темы `paper`, дефолт для новых посетителей).
+- В `resources/views/app.blade.php` добавлены `link rel="icon"` (ico + png 32/16),
+  `apple-touch-icon` и `manifest` — рядом с `<title inertia>`.
+- **Причина «МОЙ.БЛОГ» во вкладке:** имя было захардкожено в `resources/js/app.js`
+  (`const appName = 'МОЙ.БЛОГ'`), а не в `.env`. Теперь берётся из
+  `import.meta.env.VITE_APP_NAME` с фолбэком «Челны подземка»; `APP_NAME` в `.env.example`,
+  `.env.production.example`, `.env.testing` приведён к текущему названию.
+- Проверки: `curl /favicon.ico` → 200, `/site.webmanifest` → 200, манифест и
+  png-иконки раздаются; `<title>` в выдаче `:8001` — «Челны подземка»;
+  `npm run build` — ok; `php artisan test` — 173 passed, 2 skipped.
+- Незакоммиченное состояние поверх `ec50034` (ветка `redesign/underground-dev`).
+
+## Логотип в шапке: эмблема из SVG (2026-11-13)
+
+- Добавлен `resources/js/Components/BrandMark.vue` — инлайновая эмблема из присланного SVG:
+  синий квадрат (`#0055a5`) с белой окантовкой, белый треугольник, чёрные ступени и фигура
+  пешехода (`#1a1a1a`). Размеры — `h-7 w-7 lg:h-8 lg:w-8` (28/32 px), выравнивание по центру строки.
+- В `Navbar.vue` прежняя штриховая иконка перехода (24×24, `currentColor`) заменена на `<BrandMark />`;
+  текстовый логотип «Челны **подземка**» сохранён без изменений.
+- Брендовые цвета знака намеренно не на токенах тем: эмблема должна выглядеть одинаково во всех
+  16 палитрах, как иконка приложения. Это единственное исключение из правила «только токены».
+- Визуальная проверка (скриншоты Chromium + зрение суб-агента): на 32 px ступени уже не читаются,
+  остаются треугольник и человек — знак воспринимается как «пешеходный переход», а не «лестница вниз»;
+  на 375 px всё влезает в одну строку, поиск/кнопки не сжимаются, обрезки нет.
+- Если нужна узнаваемость именно «подземного перехода»: убрать ступени, оставить одну толстую
+  полосу-основание и увеличить фигуру — правка внутри одного `BrandMark.vue`.
+- Скриншоты: `storage/app/shots/logo-header2.png`, `logo-mobile2-crop.png`.
+- Проверки: `npm run build` — ok; PHP не менялся.
+
+Итог по знаку: эксперименты с лого (цветная эмблема-щит и монохромная
+пиктограмма «человек на спуске») откатили. В шапке — исходный штриховой знак
+подземного перехода из `Navbar.vue` (`h-6 w-6 text-accent lg:h-7 lg:w-7`,
+`currentColor`), `BrandMark.vue` удалён, `Navbar.vue` вернулся к HEAD.
+Скриншот: `storage/app/shots/logo-restored.png`.

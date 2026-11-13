@@ -6,7 +6,8 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
-const appName = 'МОЙ.БЛОГ';
+// Название сайта — из APP_NAME (.env) через VITE_APP_NAME, чтобы не хардкодить в бандле.
+const appName = import.meta.env.VITE_APP_NAME || 'Челны подземка';
 
 createInertiaApp({
     title: (title) => (title ? `${title} — ${appName}` : appName),

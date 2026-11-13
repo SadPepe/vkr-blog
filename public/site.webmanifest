@@ -1,0 +1,21 @@
+{
+    "name": "Челны подземка",
+    "short_name": "Подземка",
+    "description": "Блог о подземной жизни Челнов: статьи, категории, обсуждения.",
+    "icons": [
+        {
+            "src": "/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "theme_color": "#e6e1d7",
+    "background_color": "#e6e1d7",
+    "start_url": "/",
+    "display": "standalone"
+}
