@@ -95,7 +95,7 @@
                 'feed-body': isMobile,
                 'feed-body--clamped': !isMobile && article.has_more && !expanded,
             }"
-            v-html="isMobile && mobileCollapsed ? teaserHtml : postHtml"
+            v-html="renderedHtml"
             @click="handleContentClick"
         />
 
@@ -515,7 +515,13 @@ watch([mobileCollapsed, () => props.article.preview], () => buildTeaser());
 const demoteHeadings = (html) =>
     (html || "").replace(/<(\/?)h([1-6])\b[^>]*>/gi, (_, close) => (close ? "</p>" : '<p class="post-subhead">'));
 
-const postHtml = computed(() => demoteHeadings(expanded.value ? fullHtml.value : props.article.preview));
+// Раскрываем только то, что действительно загрузили: у короткого поста fullHtml
+// остаётся пустым (has_more = false), и без этой проверки тело поста схлопывалось
+// в пустоту — на телефоне «Читать дальше» есть всегда, даже в полном анонсе
+const postHtml = computed(() => demoteHeadings(expanded.value && fullHtml.value ? fullHtml.value : props.article.preview));
+
+// Что реально стоит в теле: обрезанный анонс на телефоне или HTML поста
+const renderedHtml = computed(() => (isMobile.value && mobileCollapsed.value ? teaserHtml.value : postHtml.value));
 
 // Код и карусели в ленте: модули грузим лениво, только когда они нужны
 const bodyRef = ref(null);
@@ -543,7 +549,7 @@ const enhanceContent = async () => {
 onMounted(enhanceContent);
 
 // При раскрытии поста HTML меняется целиком — оформляем блоки заново
-watch(postHtml, async () => {
+watch(renderedHtml, async () => {
     await nextTick();
     enhanceContent();
 });
