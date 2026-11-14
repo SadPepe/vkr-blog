@@ -59,46 +59,18 @@
                 role="toolbar"
                 aria-label="Форматирование">
                 <div class="flex h-11 items-center px-8">
-                    <div class="relative shrink-0">
-                        <button
-                            type="button"
-                            class="editor-btn flex h-9 items-center gap-1 px-1.5 text-sm font-medium"
-                            aria-haspopup="menu"
-                            :aria-expanded="styleMenuOpen"
-                            aria-label="Стиль абзаца"
-                            @click="styleMenuOpen = !styleMenuOpen"
-                        >
-                            <span class="text-[15px] font-semibold leading-none lg:hidden">Aa</span>
-                            <span class="hidden max-w-[6rem] truncate text-[13px] lg:inline">{{ currentBlockLabel }}</span>
-                            <ChevronDownIcon :size="14" class="text-muted" />
-                        </button>
-                        <div
-                            v-if="styleMenuOpen"
-                            class="absolute left-0 top-full z-40 mt-1 w-60 rounded-xl border border-line bg-surface p-1"
-                            role="menu"
-                            aria-label="Стиль абзаца"
-                        >
-                            <button
-                                v-for="style in blockStyles"
-                                :key="style.key"
-                                type="button"
-                                role="menuitemradio"
-                                :aria-checked="editor && style.isActive(editor)"
-                                class="flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 text-left text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
-                                :class="editor && style.isActive(editor) ? 'bg-accent-soft text-accent' : 'text-content'"
-                                @click="applyBlockStyle(style)"
-                            >
-                                <span>{{ style.label }}</span>
-                                <CheckIcon v-if="editor && style.isActive(editor)" :size="16" />
-                            </button>
-                        </div>
-                        <div
-                            v-if="styleMenuOpen"
-                            class="fixed inset-0 z-30"
-                            aria-hidden="true"
-                            @click="styleMenuOpen = false"
-                        ></div>
-                    </div>
+                    <!-- Заголовки — отдельными кнопками, без списка уровней -->
+                    <button
+                        v-for="heading in headingTools"
+                        :key="heading.key"
+                        type="button"
+                        class="editor-btn h-8 px-1.5 text-[13px] font-semibold"
+                        :aria-label="heading.label"
+                        :aria-pressed="toolActive(heading)"
+                        @click="heading.run()"
+                    >
+                        {{ heading.short }}
+                    </button>
 
                     <span class="mx-1 h-5 w-px shrink-0 bg-line-strong" aria-hidden="true"></span>
 
@@ -165,44 +137,17 @@
                 aria-label="Форматирование"
                 :style="toolbarStyle"
             >
-                <div class="relative">
-                    <button
-                        type="button"
-                        class="editor-btn h-11 w-11 text-[15px] font-semibold"
-                        aria-haspopup="menu"
-                        :aria-expanded="styleMenuOpen"
-                        aria-label="Стиль абзаца"
-                        @click="styleMenuOpen = !styleMenuOpen"
-                    >
-                        Aa
-                    </button>
-                    <div
-                        v-if="styleMenuOpen"
-                        class="absolute left-0 top-full z-40 mt-1 w-60 rounded-xl border border-line bg-surface p-1"
-                        role="menu"
-                        aria-label="Стиль абзаца"
-                    >
-                        <button
-                            v-for="style in blockStyles"
-                            :key="style.key"
-                            type="button"
-                            role="menuitemradio"
-                            :aria-checked="editor && style.isActive(editor)"
-                            class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 text-left text-sm transition-colors hover:bg-surface-muted"
-                            :class="editor && style.isActive(editor) ? 'bg-accent-soft text-accent' : 'text-content'"
-                            @click="applyBlockStyle(style)"
-                        >
-                            <span>{{ style.label }}</span>
-                            <CheckIcon v-if="editor && style.isActive(editor)" :size="16" />
-                        </button>
-                    </div>
-                    <div
-                        v-if="styleMenuOpen"
-                        class="fixed inset-0 z-30"
-                        aria-hidden="true"
-                        @click="styleMenuOpen = false"
-                    ></div>
-                </div>
+                <button
+                    v-for="heading in headingTools"
+                    :key="heading.key"
+                    type="button"
+                    class="editor-btn h-11 w-9 text-[12px] font-semibold"
+                    :aria-label="heading.label"
+                    :aria-pressed="toolActive(heading)"
+                    @click="heading.run()"
+                >
+                    {{ heading.short }}
+                </button>
 
                 <span class="mx-1 h-6 w-px shrink-0 bg-line-strong" aria-hidden="true"></span>
 
@@ -507,7 +452,6 @@ import MoviePlayOutlineIcon from "vue-material-design-icons/MoviePlayOutline.vue
 import LinkIcon from "vue-material-design-icons/LinkVariant.vue";
 import AtIcon from "vue-material-design-icons/At.vue";
 import StrikethroughIcon from "vue-material-design-icons/FormatStrikethrough.vue";
-import CheckIcon from "vue-material-design-icons/Check.vue";
 import ChevronDownIcon from "vue-material-design-icons/ChevronDown.vue";
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import DotsHorizontalIcon from "vue-material-design-icons/DotsHorizontal.vue";
@@ -568,7 +512,6 @@ const editor = ref(null);
 const selectedCategory = ref(props.initialCardCategory || "");
 
 // Состояние панелей и статус автосохранения
-const styleMenuOpen = ref(false);
 const sheetOpen = ref(false);
 const lastSavedAt = ref(null);
 const wordCount = ref(0);
@@ -1365,40 +1308,18 @@ const cleanupBlobUrls = (assetUrls) => {
 // телефонный ряд и шторку «Ещё». Активность — из состояния выделения Tiptap.
 const editorChain = () => editor.value?.chain().focus();
 
-const blockStyles = [
-    {
-        key: "paragraph",
-        label: "Обычный текст",
-        shortLabel: "Текст",
-        run: () => editorChain()?.setParagraph().run(),
-        isActive: (instance) => instance.isActive("paragraph"),
-    },
-    {
-        key: "h2",
-        label: "Заголовок",
-        run: () => editorChain()?.toggleHeading({ level: 2 }).run(),
-        isActive: (instance) => instance.isActive("heading", { level: 2 }),
-    },
-    {
-        key: "h3",
-        label: "Подзаголовок",
-        run: () => editorChain()?.toggleHeading({ level: 3 }).run(),
-        isActive: (instance) => instance.isActive("heading", { level: 3 }),
-    },
-    {
-        key: "quote",
-        label: "Цитата",
-        run: () => editorChain()?.toggleBlockquote().run(),
-        isActive: (instance) => instance.isActive("blockquote"),
-    },
-    {
-        key: "codeBlock",
-        label: "Блок кода",
-        run: () => editorChain()?.toggleCodeBlock().run(),
-        isActive: (instance) => instance.isActive("codeBlock"),
-    },
-];
+// Заголовки — тремя кнопками вместо выпадающего списка уровней.
+// toggleHeading: повторное нажатие возвращает обычный абзац
+const headingTools = [1, 2, 3].map((level) => ({
+    key: `h${level}`,
+    short: `H${level}`,
+    label: `Заголовок H${level}`,
+    run: () => editorChain()?.toggleHeading({ level }).run(),
+    isActive: (instance) => instance.isActive("heading", { level }),
+}));
 
+// Заголовки — три кнопки вместо выпадающего списка уровней.
+// toggleHeading: повторное нажатие возвращает обычный абзац
 const inlineTools = [
     {
         key: "bold",
@@ -1582,14 +1503,6 @@ const sheetGroups = [
 const toolActive = (tool) => (editor.value && tool.isActive ? tool.isActive(editor.value) : false);
 const toolDisabled = (tool) => (editor.value && tool.can ? !tool.can(editor.value) : false);
 
-const currentBlockLabel = computed(() => {
-    if (!editor.value) return "Текст";
-
-    const current = blockStyles.find((style) => style.isActive(editor.value));
-
-    return current ? current.shortLabel || current.label : "Текст";
-});
-
 // Состояние черновика: в подвале и точкой в телефонной панели
 const draftStatus = computed(() => {
     if (!isDirty.value) return "Без изменений";
@@ -1611,15 +1524,9 @@ const wordForm = computed(() => {
 
 const readingMinutes = computed(() => Math.max(1, Math.ceil(wordCount.value / 180)));
 
-const applyBlockStyle = (style) => {
-    styleMenuOpen.value = false;
-    style.run();
-};
-
 const sheetRef = ref(null);
 
 const openSheet = () => {
-    styleMenuOpen.value = false;
     sheetOpen.value = true;
     nextTick(() => sheetRef.value?.focus());
 };
@@ -1645,7 +1552,6 @@ watch(sheetOpen, (open) => {
 const handleGlobalKeydown = (event) => {
     if (event.key !== "Escape") return;
 
-    if (styleMenuOpen.value) styleMenuOpen.value = false;
     if (mentionOpen.value) mentionOpen.value = false;
     if (sheetOpen.value) closeSheet();
 };

@@ -1,5 +1,6 @@
 <template>
-    <div class="flex min-h-screen flex-col">
+    <!-- Отступ снизу — место под нижнюю навигацию на телефоне -->
+    <div class="page-with-bottom-nav flex min-h-screen flex-col">
         <AnnouncementTicker />
         <Navbar />
 
@@ -12,6 +13,7 @@
         </PageTransition>
         <Footer />
 
+        <BottomNav />
         <CookieNotice />
         <ExternalLinkGuard />
     </div>
@@ -24,6 +26,7 @@ import Navbar from "@/Components/Navbar.vue";
 import FlashMessage from "@/Components/FlashMessage.vue";
 import PageTransition from "@/Shared/PageTransition.vue";
 import Footer from "@/Components/Footer.vue";
+import BottomNav from "@/Components/BottomNav.vue";
 import CookieNotice from "@/Components/CookieNotice.vue";
 import ExternalLinkGuard from "@/Components/ExternalLinkGuard.vue";
 

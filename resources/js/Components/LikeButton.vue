@@ -7,13 +7,13 @@
         :class="[
             'inline-flex items-center gap-1 transition-colors',
             pill ? 'ui-pill' : 'text-[0.9375rem]',
-            liked ? (pill ? 'ui-pill--active' : 'text-accent') : 'text-content hover:text-accent',
+            liked ? (pill ? 'ui-pill--active' : 'text-accent') : pill ? 'text-content hover:text-accent' : 'text-muted hover:text-accent',
         ]"
         :aria-pressed="liked"
         :aria-label="liked ? 'Убрать лайк' : 'Поставить лайк'"
     >
         <svg
-            class="h-[1.125rem] w-[1.125rem] shrink-0 transition-transform duration-300"
+            class="h-[1.375rem] w-[1.375rem] sm:h-[1.125rem] sm:w-[1.125rem] shrink-0 transition-transform duration-300"
             :class="{ 'scale-110': liked, 'scale-100': !liked }"
             :fill="liked ? 'currentColor' : 'none'"
             stroke="currentColor"

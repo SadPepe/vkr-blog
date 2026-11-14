@@ -30,15 +30,6 @@
                 <!-- Категории строкой текстовых ссылок -->
                 <nav class="site-header-cats hidden min-w-0 lg:block" aria-label="Категории">
                     <ul class="flex flex-wrap items-center gap-x-5 gap-y-1">
-                        <li>
-                            <Link
-                                :href="route('authors.index')"
-                                class="whitespace-nowrap text-[1.0625rem] leading-6 transition-colors hover:text-accent"
-                                :class="isAuthorsPage ? 'text-accent underline decoration-2 underline-offset-[7px]' : 'text-muted'"
-                            >
-                                Авторы
-                            </Link>
-                        </li>
                         <li v-for="category in categories" :key="category.id">
                             <Link
                                 :href="route('articlesByCategory', category.slug)"
@@ -74,6 +65,16 @@
                 </form>
 
                 <div class="site-header-actions flex shrink-0 items-center gap-0.5 lg:gap-3">
+                    <!-- «Авторы» — отдельный раздел, а не рубрика: в верхнем ряду, рядом с поиском -->
+                    <Link
+                        :href="route('authors.index')"
+                        class="hidden whitespace-nowrap text-[1.0625rem] leading-6 transition-colors hover:text-accent lg:inline-flex lg:h-10 lg:items-center"
+                        :class="isAuthorsPage ? 'text-accent underline decoration-2 underline-offset-[7px]' : 'text-muted'"
+                        :aria-current="isAuthorsPage ? 'page' : undefined"
+                    >
+                        Авторы
+                    </Link>
+
                     <!-- Тема оформления -->
                     <div ref="themeDropdown" class="theme-menu">
                         <button
@@ -390,6 +391,7 @@
 </template>
 <script setup>
 import { onClickOutside } from "@vueuse/core";
+import { applyTheme as applyThemeToDom, savedThemeId, themeGroups } from "@/Support/themes";
 import { Link, router, usePage } from "@inertiajs/vue3";
 import SearchIcon from "vue-material-design-icons/Magnify.vue";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -419,62 +421,20 @@ const isMobileMenuOpen = ref(false);
 const isSearchOpen = ref(false);
 const dropdown = ref(null);
 const mobileSearchInput = ref(null);
-const themes = [
-    { id: "paper", label: "Бумага", swatch: "#e6e1d7", dark: false },
-    { id: "light", label: "Светлая", swatch: "#f5f1e8", dark: false },
-    { id: "cupcake", label: "Cupcake", swatch: "#efeae6", dark: false },
-    { id: "corporate", label: "Corporate", swatch: "#e8e8e8", dark: false },
-    { id: "lofi", label: "Lofi", swatch: "#f2f2f2", dark: false },
-    { id: "garden", label: "Garden", swatch: "#d4d2d2", dark: false },
-    { id: "retro", label: "Retro", swatch: "#e4d8b4", dark: false },
-    { id: "winter", label: "Winter", swatch: "#f2f7ff", dark: false },
-    { id: "toner", label: "Тонер", swatch: "#121110", dark: true },
-    { id: "dark", label: "Тёмная", swatch: "#151515", dark: true },
-    { id: "dracula", label: "Dracula", swatch: "#232530", dark: true },
-    { id: "business", label: "Business", swatch: "#1c1c1c", dark: true },
-    { id: "night", label: "Night", swatch: "#0c1425", dark: true },
-    { id: "forest", label: "Forest", swatch: "#140f0f", dark: true },
-    { id: "coffee", label: "Coffee", swatch: "#1c131b", dark: true },
-    { id: "dim", label: "Dim", swatch: "#242933", dark: true },
-];
-
-const themeGroups = [
-    { label: "Светлые", items: themes.filter((theme) => !theme.dark) },
-    { label: "Тёмные", items: themes.filter((theme) => theme.dark) },
-];
-
 const isThemeOpen = ref(false);
 const activeTheme = ref("light");
 const themeDropdown = ref(null);
 
 const applyTheme = (id) => {
-    const theme = themes.find((item) => item.id === id) ?? themes[0];
-    const html = document.documentElement;
-
-    html.setAttribute("data-theme", theme.id);
-    html.setAttribute("data-mode", theme.dark ? "dark" : "light");
-    html.style.colorScheme = theme.dark ? "dark" : "light";
-    localStorage.setItem("theme", theme.id);
-
-    activeTheme.value = theme.id;
+    activeTheme.value = applyThemeToDom(id);
     isThemeOpen.value = false;
-};
-
-const savedThemeId = () => {
-    const saved = localStorage.getItem("theme");
-    return themes.some((item) => item.id === saved) ? saved : null;
 };
 
 onMounted(() => {
     // Новым посетителям — «Бумага»; выбор пользователя важнее системной схемы.
     const initial = savedThemeId() ?? "paper";
 
-    const theme = themes.find((item) => item.id === initial) ?? themes[0];
-
-    document.documentElement.setAttribute("data-theme", theme.id);
-    document.documentElement.setAttribute("data-mode", theme.dark ? "dark" : "light");
-    document.documentElement.style.colorScheme = theme.dark ? "dark" : "light";
-    activeTheme.value = theme.id;
+    activeTheme.value = applyThemeToDom(initial);
 
     window.addEventListener("resize", handleResize);
     window.addEventListener("keydown", handleEscape);

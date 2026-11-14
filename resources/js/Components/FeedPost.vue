@@ -2,7 +2,7 @@
 <template>
     <!-- Пост в открытой ленте: без подложки, рамки и скругления.
          Посты разделяет линия и воздух в родительском .feed-list. -->
-    <article class="min-w-0">
+    <article ref="cardRef" class="min-w-0">
         <!-- Шапка: автор, категория и дата; просмотры остаются справа -->
         <header class="flex items-start gap-3 leading-snug text-muted">
             <UserAvatar v-if="showAuthor" :user="article.user" :size="44" class="shrink-0" />
@@ -15,9 +15,10 @@
                     {{ article.user.name }}
                 </Link>
                 <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem]">
-                    <!-- Закрепление живёт в профиле автора и на его странице, не в общей ленте -->
+                    <!-- Закрепление живёт в профиле автора, на его странице и в общей ленте
+                         у собственного поста — там метка и подсказывает, что пин сработал -->
                     <span
-                        v-if="article.is_pinned && !showAuthor"
+                        v-if="article.is_pinned && (!showAuthor || isOwner)"
                         class="inline-flex items-center gap-1 font-medium text-accent"
                     >
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
@@ -46,10 +47,6 @@
                     </Link>
                     <span v-else>Без категории</span>
 
-                    <time :datetime="article.created_at" class="num tracking-[0.02em]">
-                        {{ formatDateTime(article.created_at) }}
-                    </time>
-
                     <span
                         class="ml-auto inline-flex items-center gap-1"
                         :aria-label="`${article.views_count} ${pluralViews(article.views_count)}`"
@@ -72,8 +69,8 @@
                         <span class="num font-medium">{{ article.views_count }}</span>
                     </span>
 
-                    <!-- Действия автора — «⋯» рядом с просмотрами; в чужой ленте слота нет -->
-                    <div v-if="$slots.actions" class="-my-1 flex items-center"><slot name="actions" /></div>
+                    <!-- Действия автора — «⋯» рядом с просмотрами; в чужом посте слота нет -->
+                    <div v-if="$slots.actions && isOwner" class="-my-1 flex items-center"><slot name="actions" /></div>
                 </div>
             </div>
         </header>
@@ -87,16 +84,23 @@
             </Link>
         </h3>
 
+        <!-- Телефон: тот же HTML, что на десктопе, — контент идёт в авторском порядке,
+             фото стоят на своих местах и растягиваются на всю ширину экрана. Свёрнутый
+             пост обрезан по высоте экрана (расчёт в скрипте), «Читать дальше» встроена
+             в последний видимый абзац — сразу за последним словом -->
         <div
             ref="bodyRef"
             class="post-content mt-3 text-content"
-            :class="{ 'feed-body--clamped': article.has_more && !expanded }"
-            v-html="postHtml"
+            :class="{
+                'feed-body': isMobile,
+                'feed-body--clamped': !isMobile && article.has_more && !expanded,
+            }"
+            v-html="isMobile && mobileCollapsed ? teaserHtml : postHtml"
             @click="handleContentClick"
         />
 
         <!-- Текстовые действия чтения остаются ссылками, без лишних пилюль -->
-        <div v-if="article.has_more || expanded" class="mt-3 flex flex-wrap items-center gap-x-5">
+        <div v-if="(article.has_more || expanded) && !mobileCollapsed" class="mt-3 flex flex-wrap items-center gap-x-5">
             <button
                 type="button"
                 class="inline-flex min-h-10 items-center text-sm font-medium text-accent transition-colors hover:text-accent-hover"
@@ -107,156 +111,82 @@
             </button>
         </div>
 
-        <!-- Взаимодействия — мягкие пилюли: единственный скруглённый элемент в посте -->
-        <footer class="mt-4 flex flex-wrap items-center gap-2">
-            <LikeButton
-                :article="article"
-                :initial-liked="Boolean(article.is_liked)"
-                :initial-likes-count="article.likes_count ?? 0"
-                :label="pluralLikes(article.likes_count ?? 0)"
-                pill
-            />
-
-            <Link :href="articleUrl" class="ui-pill">
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                </svg>
-                <span>К статье</span>
-            </Link>
-
-            <!-- Если обсуждения ещё нет и гость не может писать, ведём к форме на странице поста.
-                 Автор комментария пишет прямо в ленте, поэтому дубля кнопки нет. -->
-            <Link
-                v-if="!commentsCount && !canComment"
-                :href="articleUrl + '#comments'"
-                class="ui-pill"
-            >
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                </svg>
-                <span>Комментировать</span>
-            </Link>
-
-            <button type="button" class="ui-pill" :aria-label="copied ? 'Ссылка скопирована' : 'Скопировать ссылку на пост'" @click="share">
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 11-5.656-5.656l1.5-1.5m9.656-1.5l1.5-1.5a4 4 0 10-5.656-5.656l-3 3a4 4 0 000 5.656"
-                    />
-                </svg>
-                <span class="hidden sm:inline">{{ copied ? "Скопировано" : "Поделиться" }}</span>
-            </button>
-        </footer>
-
-        <!-- Комментарии — как на странице поста: подпись с числом, знакомое поле ввода
-             и несколько свежих веток с ответами. Полная лента — по «Все комментарии». -->
-        <section
-            v-if="commentsCount > 0 || canComment"
-            class="mt-6 border-t border-line/70 pt-5"
-            aria-label="Комментарии к посту"
-        >
-            <p class="flex items-baseline gap-2 text-[0.9375rem] font-semibold text-content">
-                Комментарии
-                <span class="num font-normal text-muted">{{ commentsCount }}</span>
-            </p>
-
-            <form v-if="canComment" class="mt-4" @submit.prevent="submitComment">
-                <CommentInput
-                    :id="`feed-comment-${article.id}`"
-                    v-model="newComment"
-                    v-model:image="newImage"
-                    label="Ваш комментарий"
-                    placeholder="..."
-                    submit-label="Отправить комментарий"
-                    :loading="commentLoading"
-                    :error="commentErrors.content"
-                    :image-error="commentErrors.image"
-                    :hint="commentHint"
+        <!-- Взаимодействия: лайк, комментарий и «поделиться» — голыми иконками без общей
+             обёртки, рядом «К статье», справа по краю — время публикации -->
+        <footer class="mt-4 flex flex-wrap items-center gap-x-1 gap-y-2">
+            <div class="flex items-center" role="group" aria-label="Действия с постом">
+                <LikeButton
+                    :article="article"
+                    :initial-liked="Boolean(article.is_liked)"
+                    :initial-likes-count="article.likes_count ?? 0"
+                    class="post-action"
                 />
-            </form>
 
-            <p v-else class="mt-4 text-sm text-muted">
-                <Link :href="route('login')" class="font-medium text-accent transition-colors hover:text-accent-hover">
-                    Войдите
-                </Link>, чтобы комментировать.
-            </p>
-
-            <ol v-if="recentComments.length" class="mt-6 space-y-6" aria-label="Комментарии">
-                <li v-for="comment in recentComments" :key="comment.id">
-                    <div class="flex items-start gap-3">
-                        <UserAvatar :user="comment.user" :size="30" class="mt-0.5 shrink-0" />
-                        <div class="min-w-0">
-                            <p class="flex flex-wrap items-baseline gap-x-2 text-[0.9375rem] leading-snug">
-                                <span class="font-semibold text-content">{{ comment.user?.name }}</span>
-                                <time :datetime="comment.created_at" class="num text-[0.8125rem] text-muted">
-                                    {{ formatDateTime(comment.created_at) }}
-                                </time>
-                            </p>
-                            <p
-                                v-if="comment.body"
-                                class="comment-content mt-1 break-words text-[0.9375rem] leading-snug text-content"
-                            >
-                                <MentionText :text="comment.body" />
-                            </p>
-                            <img
-                                v-if="comment.image_url"
-                                :src="comment.image_url"
-                                alt="Фото в комментарии"
-                                loading="lazy"
-                                class="mt-2 max-h-56 w-auto max-w-full rounded-lg border border-line object-cover"
-                            />
-
-                            <!-- Ответы — одной веткой с линией, как в полном обсуждении -->
-                            <ul v-if="comment.replies?.length" class="mt-3 space-y-3 border-l-2 border-line pl-3.5">
-                                <li v-for="reply in comment.replies" :key="reply.id" class="flex items-start gap-2.5">
-                                    <UserAvatar :user="reply.user" :size="24" class="mt-0.5 shrink-0" />
-                                    <div class="min-w-0">
-                                        <p class="flex flex-wrap items-baseline gap-x-2 text-[0.9375rem] leading-snug">
-                                            <span class="font-semibold text-content">{{ reply.user?.name }}</span>
-                                            <time :datetime="reply.created_at" class="num text-[0.8125rem] text-muted">
-                                                {{ formatDateTime(reply.created_at) }}
-                                            </time>
-                                        </p>
-                                        <p
-                                            v-if="reply.body"
-                                            class="comment-content mt-1 break-words text-[0.9375rem] leading-snug text-content"
-                                        >
-                                            <MentionText :text="reply.body" />
-                                        </p>
-                                        <img
-                                            v-if="reply.image_url"
-                                            :src="reply.image_url"
-                                            alt="Фото в комментарии"
-                                            loading="lazy"
-                                            class="mt-2 max-h-48 w-auto max-w-full rounded-lg border border-line object-cover"
-                                        />
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </li>
-            </ol>
-
-            <!-- Одна точка входа в полное обсуждение — в конце ветки, а не в заголовке -->
-            <div v-if="commentsCount > 0" class="mt-3 flex justify-end">
                 <Link
                     :href="articleUrl + '#comments'"
-                    class="text-sm font-semibold text-accent transition-colors hover:text-accent-hover"
+                    class="post-action"
+                    :aria-label="article.comments_count ? `Комментарии: ${article.comments_count}` : 'Комментировать'"
                 >
-                    Все комментарии
+                    <svg class="h-[1.375rem] w-[1.375rem] sm:h-[1.125rem] sm:w-[1.125rem] shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                    </svg>
+                    <span v-if="article.comments_count" class="num">{{ article.comments_count }}</span>
+                </Link>
+
+                <button
+                    type="button"
+                    class="post-action"
+                    :aria-label="copied ? 'Ссылка скопирована' : 'Скопировать ссылку на пост'"
+                    @click="share"
+                >
+                    <svg
+                        v-if="copied"
+                        class="h-[1.375rem] w-[1.375rem] sm:h-[1.125rem] sm:w-[1.125rem] shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <svg v-else class="h-[1.375rem] w-[1.375rem] sm:h-[1.125rem] sm:w-[1.125rem] shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 11-5.656-5.656l1.5-1.5m9.656-1.5l1.5-1.5a4 4 0 10-5.656-5.656l-3 3a4 4 0 000 5.656"
+                        />
+                    </svg>
+                    <span class="sr-only" aria-live="polite">{{ copied ? "Скопировано" : "" }}</span>
+                </button>
+
+                <!-- «К статье» — та же иконка-действие, без пилюли: в ряду не выделяется -->
+                <Link :href="articleUrl" class="post-action" aria-label="Открыть статью целиком">
+                    <svg class="h-[1.375rem] w-[1.375rem] sm:h-[1.125rem] sm:w-[1.125rem] shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                    </svg>
                 </Link>
             </div>
-        </section>
+
+            <!-- Время публикации: сколько прошло с момента выхода.
+                 На телефоне идёт сразу за действиями в той же строке: у правого
+                 края снизу висит кнопка «Наверх», и время оказывалось под ней -->
+            <time
+                :datetime="article.created_at"
+                :title="formatDateTime(article.created_at)"
+                class="num ml-2 text-[0.8125rem] tracking-[0.02em] text-muted sm:ml-auto"
+            >
+                {{ relativeTime(article.created_at) }}
+            </time>
+        </footer>
 
         <!-- Лайтбокс: фото из поста на полный экран, карусель листается по кадрам -->
         <ImageLightbox
@@ -271,13 +201,12 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
 import LikeButton from "@/Components/LikeButton.vue";
-import CommentInput from "@/Components/Comments/CommentInput.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import ImageLightbox from "@/Components/ImageLightbox.vue";
-import MentionText from "@/Components/MentionText.vue";
+import { formatDateTime, relativeTime } from "@/Support/relativeTime";
 
 const props = defineProps({
     article: {
@@ -296,100 +225,9 @@ const props = defineProps({
 });
 
 const page = usePage();
-const canComment = computed(() => Boolean(page.props.auth?.user));
 
-// Комментарий из ленты: то же поле, что и на странице поста, но без отдельного компонента формы
-const MAX_COMMENT_LENGTH = 1000;
-const newComment = ref("");
-const newImage = ref(null);
-const commentLoading = ref(false);
-const commentErrors = reactive({});
-
-// Комментарии обновляем локально после AJAX-ответа: Inertia не перерисовывает
-// всю страницу и не восстанавливает scroll, поэтому форма не «прыгает».
-const commentsCount = ref(props.article.comments_count ?? 0);
-const recentComments = ref([...(props.article.recent_comments ?? [])]);
-
-watch(
-    () => props.article.comments_count,
-    (value) => {
-        commentsCount.value = value ?? 0;
-    },
-);
-
-watch(
-    () => props.article.recent_comments,
-    (value) => {
-        recentComments.value = [...(value ?? [])];
-    },
-);
-
-const commentHint = computed(() => {
-    const remaining = MAX_COMMENT_LENGTH - newComment.value.length;
-
-    return remaining <= 200 ? `${remaining} ${pluralize(remaining, ["символ", "символа", "символов"])} осталось` : "";
-});
-
-const submitComment = async () => {
-    if ((!newComment.value.trim() && !newImage.value) || commentLoading.value) return;
-
-    commentLoading.value = true;
-    commentErrors.content = "";
-    commentErrors.image = "";
-
-    const payload = new FormData();
-    payload.append("content", newComment.value);
-    if (newImage.value) payload.append("image", newImage.value);
-
-    try {
-        const response = await fetch(route("comments.store", { article: props.article.slug }), {
-            method: "POST",
-            headers: {
-                Accept: "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content"),
-            },
-            body: payload,
-        });
-
-        if (response.status === 401) {
-            router.visit(route("login"));
-            return;
-        }
-
-        if (response.status === 422) {
-            const data = await response.json();
-            if (data.errors?.content) commentErrors.content = data.errors.content[0];
-            if (data.errors?.image) commentErrors.image = data.errors.image[0];
-            return;
-        }
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const created = await response.json();
-        recentComments.value = [
-            {
-                id: created.id,
-                body: created.content ?? "",
-                image_url: created.image_url,
-                created_at: created.created_at,
-                user: {
-                    name: created.user?.name ?? "",
-                    avatar_url: created.user?.avatar_url,
-                },
-                replies: [],
-            },
-            ...recentComments.value.filter((comment) => comment.id !== created.id),
-        ].slice(0, 3);
-        commentsCount.value += 1;
-        newComment.value = "";
-        newImage.value = null;
-    } catch (error) {
-        console.error("Не удалось отправить комментарий:", error);
-        commentErrors.content = "Не удалось отправить комментарий. Попробуйте ещё раз.";
-    } finally {
-        commentLoading.value = false;
-    }
-};
+// Свой ли пост: меню «⋯» и метка «Закреплено» в общей ленте — только владельцу
+const isOwner = computed(() => page.props.auth?.user?.id === props.article.user?.id);
 
 const expanded = ref(false);
 const copied = ref(false);
@@ -410,6 +248,13 @@ const closeLightbox = () => {
 // Делегирование: работает и для превью, и для картинок, догруженных кнопкой «Читать дальше»
 const handleContentClick = (event) => {
     const target = event.target;
+
+    // «Читать дальше» в анонсе приходит из v-html — ловим клик по классу
+    if (target instanceof Element && target.closest(".feed-teaser__more")) {
+        event.preventDefault();
+        toggleExpand();
+        return;
+    }
 
     if (!(target instanceof HTMLImageElement)) return;
 
@@ -453,6 +298,217 @@ const categoryName = computed(() => props.categories.find((c) => c.slug === prop
 const statusLabel = computed(() => (props.article.status === "draft" ? "Черновик" : "Скрыто"));
 
 const heading = computed(() => (props.article.title ?? "").trim());
+
+/* --- Мобильная карточка: один пост — один экран -------------------------------
+   Контент не переставляется: тот же HTML превью, что на десктопе, фото стоят
+   на своих местах в авторском порядке и растягиваются на всю ширину экрана.
+   Свёрнутый пост обрезан по высоте экрана, «Читать дальше» встроена в последний
+   видимый абзац — сразу за последним словом. */
+const MOBILE_QUERY = "(max-width: 639px)";
+// Зазор между постом и нижней панелью/кромкой экрана
+const BOTTOM_GUTTER = 12;
+// Высота нижней навигации: 60px ряд + 1px граница (см. .bottom-nav в app.css).
+// Константой, а не замером: Layout вставляет панель после страницы, и в момент
+// первого расчёта её ещё нет в DOM.
+const BOTTOM_NAV_HEIGHT = 61;
+const MORE_LABEL = "Читать дальше";
+
+const isMobile = ref(typeof window !== "undefined" && window.matchMedia(MOBILE_QUERY).matches);
+const mobileCollapsed = computed(() => isMobile.value && !expanded.value);
+
+const cardRef = ref(null);
+const teaserHtml = ref("");
+
+const escapeHtml = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const moreMarkup = () =>
+    `<span class="feed-teaser__cut">… </span><button type="button" class="feed-teaser__more">${MORE_LABEL}</button>`;
+
+// Блок не влезает целиком: режем текст по словам и дописываем «Читать дальше»
+// внутрь того же абзаца, чтобы она стояла в конце последней видимой строки
+const cutTextBlock = (mirror, node, text, space) => {
+    const probe = document.createElement(node.tagName.toLowerCase());
+    probe.className = node.className;
+    mirror.appendChild(probe);
+
+    const fits = (length) => {
+        probe.innerHTML = escapeHtml(text.slice(0, length).trimEnd()) + " " + moreMarkup();
+        return probe.getBoundingClientRect().height <= space;
+    };
+
+    let best = 0;
+    let low = 0;
+    let high = text.length;
+
+    while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        if (fits(mid)) {
+            best = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    if (best < text.length) {
+        const spaceAt = text.lastIndexOf(" ", best);
+        if (spaceAt > 0) best = spaceAt;
+    }
+
+    probe.innerHTML = escapeHtml(text.slice(0, best).trimEnd()) + " " + moreMarkup();
+    const html = probe.outerHTML;
+    probe.remove();
+    return html;
+};
+
+let teaserRun = 0;
+
+const buildTeaser = async () => {
+    if (!isMobile.value || expanded.value) return;
+
+    const card = cardRef.value;
+    const body = bodyRef.value;
+    if (!card || !body) return;
+
+    const run = ++teaserRun;
+
+    // Зеркало той же ширины и с теми же классами: блоки меряются в тех же условиях
+    const mirror = document.createElement("div");
+    mirror.className = "post-content feed-body text-content";
+    mirror.style.cssText = `position:absolute;left:-9999px;top:0;width:${body.clientWidth}px;margin:0;`;
+    mirror.innerHTML = postHtml.value;
+    document.body.appendChild(mirror);
+
+    // Картинка без размеров весит ноль — без загрузки обрезка съедет
+    mirror.querySelectorAll("img").forEach((img) => (img.loading = "eager"));
+    await Promise.all(
+        [...mirror.querySelectorAll("img")].map(
+            (img) =>
+                img.complete ||
+                new Promise((resolve) => {
+                    img.addEventListener("load", resolve, { once: true });
+                    img.addEventListener("error", resolve, { once: true });
+                }),
+        ),
+    );
+
+    if (run !== teaserRun || !mirror.isConnected) {
+        mirror.remove();
+        return;
+    }
+
+    // Нижняя навигация перекрывает низ экрана: пост не должен уезжать под неё
+    const budget = window.innerHeight - BOTTOM_NAV_HEIGHT - BOTTOM_GUTTER;
+    // Всё, кроме тела поста: шапка, заголовок, ряд действий и их отступы
+    const rest = card.getBoundingClientRect().height - body.getBoundingClientRect().height;
+    const available = budget - rest;
+
+    const mirrorTop = mirror.getBoundingClientRect().top;
+    const blocks = [...mirror.children];
+
+    const kept = [];
+    let cut = null;
+
+    for (const node of blocks) {
+        const rect = node.getBoundingClientRect();
+        const top = rect.top - mirrorTop;
+
+        if (top + rect.height <= available) {
+            kept.push(node.outerHTML);
+            continue;
+        }
+
+        // В блоке нет медиа — дорезаем текст по словам, кнопка встанет в строку.
+        // Проверяем и сам блок: редактор вставляет картинку отдельным <img>,
+        // без обёртки, и querySelector её не находил
+        const media =
+            node.matches("img, video, iframe, .image-carousel, .video-embed") ||
+            node.querySelector("img, video, iframe, .image-carousel, .video-embed");
+        const text = (node.textContent || "").trim();
+        const rest = available - top;
+
+        if (!media && text && rest > 24) {
+            cut = cutTextBlock(mirror, node, text, rest);
+        } else if (media) {
+            // Высокое фото не обрезаем: показываем кадр целиком во всю ширину, даже
+            // если из-за этого карточка станет выше экрана. Потолок — высота экрана,
+            // и только на совсем вытянутых кадрах включается contain (поля по бокам),
+            // чтобы одно фото не занимало два экрана
+            // Отдельная картинка растягивается на всю ширину экрана, поэтому
+            // натуральную высоту считаем от ширины вьюпорта, а не колонки
+            const blockWidth = node.matches("img")
+                ? window.innerWidth
+                : node.getBoundingClientRect().width || body.clientWidth;
+            const first = node.matches("img") ? node : node.querySelector("img");
+            const naturalHeight =
+                first && first.naturalWidth ? (first.naturalHeight / first.naturalWidth) * blockWidth : rest;
+            // Потолок — два экрана: одно фото не должно растягивать пост на три
+            const cap = Math.round(Math.min(Math.max(naturalHeight, 80), window.innerHeight * 2));
+
+            const holder = document.createElement("div");
+            holder.innerHTML = node.outerHTML;
+            holder.querySelectorAll("img").forEach((img) => {
+                img.style.maxHeight = `${cap}px`;
+                img.style.objectFit = "contain";
+            });
+            kept.push(holder.innerHTML);
+        }
+
+        break;
+    }
+
+    const truncated = Boolean(cut) || kept.length < blocks.length;
+    let html = kept.join("");
+
+    if (cut) {
+        html += cut;
+    } else if (truncated || props.article.has_more) {
+        // Упёрлись в фото: кнопка идёт строкой сразу под кадром
+        html += `<p class="feed-teaser__row"><button type="button" class="feed-teaser__more">${MORE_LABEL}</button></p>`;
+    }
+
+    teaserHtml.value = html;
+    mirror.remove();
+};
+
+const mobileMedia = typeof window !== "undefined" ? window.matchMedia(MOBILE_QUERY) : null;
+
+const onMobileChange = (event) => {
+    isMobile.value = event.matches;
+    buildTeaser();
+};
+
+let resizeTimer = 0;
+let lastWidth = 0;
+
+const onResize = () => {
+    // На телефоне адресная строка при прокрутке меняет только высоту экрана.
+    // Пересчитывать из-за этого нельзя: карточка меняет число строк и «прыгает».
+    // Поворот и смена окна меняют ширину — вот на неё и реагируем.
+    if (window.innerWidth === lastWidth) return;
+
+    lastWidth = window.innerWidth;
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(buildTeaser, 150);
+};
+
+onMounted(() => {
+    lastWidth = window.innerWidth;
+    mobileMedia?.addEventListener("change", onMobileChange);
+    window.addEventListener("resize", onResize);
+    buildTeaser();
+
+    // Golos Text грузится после первого рендера: без пересчёта строки лягут иначе
+    document.fonts?.ready.then(() => buildTeaser());
+});
+
+onBeforeUnmount(() => {
+    mobileMedia?.removeEventListener("change", onMobileChange);
+    window.removeEventListener("resize", onResize);
+    window.clearTimeout(resizeTimer);
+});
+
+watch([mobileCollapsed, () => props.article.preview], () => buildTeaser());
 
 // Авторские подзаголовки не должны конкурировать с заголовками страницы:
 // оставляем их визуально, но как абзацы, а не как h2/h3
@@ -519,15 +575,6 @@ const toggleExpand = async () => {
     expanded.value = true;
 };
 
-// Дата и время в шапке — по-русски, без года: 4 ноября, 14:20
-const MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-
-const formatDateTime = (value) => {
-    const date = new Date(value);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${date.getDate()} ${MONTHS[date.getMonth()]}, ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
-
 const pluralize = (n, [one, few, many]) => {
     const mod10 = n % 10;
     const mod100 = n % 100;
@@ -537,6 +584,4 @@ const pluralize = (n, [one, few, many]) => {
 };
 
 const pluralViews = (n) => pluralize(n, ["просмотр", "просмотра", "просмотров"]);
-const pluralLikes = (n) => pluralize(n, ["лайк", "лайка", "лайков"]);
-const pluralComments = (n) => pluralize(n, ["комментарий", "комментария", "комментариев"]);
 </script>

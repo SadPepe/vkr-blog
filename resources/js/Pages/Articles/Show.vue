@@ -42,6 +42,8 @@
                             </Link>
 
                             <div class="ml-auto flex items-center gap-3">
+                                <span class="whitespace-nowrap text-sm text-muted">{{ readingMinutes }} мин чтения</span>
+
                                 <span
                                     class="inline-flex items-center gap-1.5 text-sm text-muted"
                                     :aria-label="`${article.views_count} ${pluralViews(article.views_count)}`"
@@ -107,16 +109,10 @@
                             {{ article.title }}
                         </h1>
 
-                        <!-- Дата и время чтения — строкой после заголовка.
-                             Категория уже есть в хлебных крошках, поэтому здесь её нет -->
-                        <p class="type-meta mt-4">
-                            <template v-if="article.is_pinned">
-                                <span class="font-medium text-accent">Закреплено</span>
-                                <span aria-hidden="true"> · </span>
-                            </template>
-                            <time :datetime="article.created_at">{{ formatDate(article.created_at) }}</time>
-                            <span aria-hidden="true"> · </span>
-                            <span class="whitespace-nowrap">{{ readingMinutes }} мин чтения</span>
+                        <!-- В мете под заголовком осталось только закрепление:
+                             дата ушла в ряд действий, время чтения — к просмотрам -->
+                        <p v-if="article.is_pinned" class="type-meta mt-4">
+                            <span class="font-medium text-accent">Закреплено</span>
                         </p>
                     </div>
 
@@ -126,7 +122,7 @@
                     <!-- Действия под постом: лайк и «поделиться» одной строкой
                          на всех ширинах, отдельных копий для lg больше нет -->
                     <div class="article-measure">
-                        <ArticleFooter :article="article" :share-url="absoluteUrl" :share-title="displayTitle" />
+                        <ArticleFooter :article="article" :share-url="absoluteUrl" />
                     </div>
 
                     <div class="article-measure">
@@ -247,21 +243,6 @@ const category = computed(() => {
     const categories = page.props.categories ?? [];
     return categories.find((c) => c.slug === props.article.category_slug) ?? null;
 });
-
-// Дата без года: свежие посты читают в основном в том же году,
-// а год только удлинял строку меты
-const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const day = date.toLocaleDateString("ru-RU", {
-        month: "long",
-        day: "numeric",
-    });
-    const time = date.toLocaleTimeString("ru-RU", {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-    return `${day}, ${time}`;
-};
 
 const readingMinutes = computed(() => {
     const text = String(props.article.content || "")

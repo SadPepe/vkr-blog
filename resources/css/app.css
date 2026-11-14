@@ -736,6 +736,13 @@ b {
         text-wrap: pretty;
     }
 
+    .article-body h1 {
+        margin-top: 2.5rem;
+        font-weight: 600;
+        font-size: clamp(1.5rem, 2.6vw, 2.25rem);
+        line-height: 1.15;
+    }
+
     .article-body h2 {
         margin-top: 2.5rem;
         font-weight: 600;
@@ -959,6 +966,13 @@ b {
         font-weight: 600;
         font-size: 1.125rem;
         line-height: 1.35;
+    }
+
+    .post-content h1 {
+        margin-top: 2rem;
+        font-weight: 600;
+        font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+        line-height: 1.2;
     }
 
     .post-content h2 {
@@ -1679,21 +1693,320 @@ b {
         border-color: transparent;
     }
 
+    /* Действия поста — лайк, комментарий и «поделиться» — голые иконки без общей
+       обёртки: подсветка только у самой кнопки, ряд не растягивает пост. */
+    .post-action {
+        display: inline-flex;
+        min-height: 2.25rem;
+        align-items: center;
+        gap: 0.25rem;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        padding: 0 0.5rem;
+        color: rgb(var(--c-muted));
+        font-size: 0.9375rem;
+        font-weight: 500;
+        line-height: 1.2;
+        text-decoration: none;
+        transition:
+            color 150ms ease,
+            background-color 150ms ease;
+    }
+
+    /* Штрих иконок толще обычных 1.5: в приглушённом цвете тонкая линия
+       сливается с текстом поста, а плотная читается как отдельный значок */
+    .post-action svg {
+        stroke-width: 2;
+    }
+
+    .post-action:hover {
+        background: rgb(var(--c-accent-soft));
+        color: rgb(var(--c-accent));
+    }
+
+    .post-action:focus-visible {
+        outline: 2px solid rgb(var(--c-accent));
+        outline-offset: 2px;
+    }
+
+    /* Телефон: те же действия крупнее — иконка 22px и площадка 44px под палец */
+    @media (max-width: 639px) {
+        .post-action {
+            min-height: 2.75rem;
+            padding: 0 0.5625rem;
+            font-size: 1rem;
+            gap: 0.25rem;
+        }
+    }
+
+    /* Лайк включён: та же мягкая подложка, что и при наведении, — состояние видно */
+    .post-action[aria-pressed="true"] {
+        background: rgb(var(--c-accent-soft));
+        color: rgb(var(--c-accent));
+    }
+
     .feed-list {
         display: flex;
         flex-direction: column;
     }
 
+    /* Посты разделяет только воздух: линий между ними нет — рамки спорили
+       с рамками картинок внутри поста и дробили ленту на «блоки» */
     .feed-list > li + li {
-        margin-top: 3rem;
-        border-top: 1px solid rgb(var(--c-line) / 0.72);
-        padding-top: 3rem;
+        margin-top: 3.5rem;
+    }
+
+    /* На телефоне пост занимает почти весь экран, поэтому воздух между постами
+       не нужен таким большим: край экрана уже разделяет их */
+    @media (max-width: 639px) {
+        .feed-list > li + li {
+            margin-top: 2rem;
+        }
     }
 
     @media (min-width: 640px) {
         .feed-list > li + li {
-            margin-top: 3.5rem;
-            padding-top: 3.5rem;
+            margin-top: 4.5rem;
+        }
+    }
+
+    /* Телефонная карточка поста: фото во всю ширину экрана и три строки анонса
+       с кнопкой в потоке — один пост на один экран, как в ВК. Высота кадра
+       считается в FeedPost.vue от остатка экрана; кадр подрезается по центру,
+       целиком фото открывается в лайтбоксе. */
+    /* Телефонная карточка поста: контент тот же, что на десктопе и в авторском
+       порядке, но фото идут от края до края экрана. Обрезку по высоте экрана
+       делает FeedPost.vue, поэтому здесь только ширина и потолок кадра. */
+    @media (max-width: 639px) {
+        .feed-body :where(p, figure, div):has(> img),
+        .feed-body > img {
+            width: 100vw;
+            max-width: none;
+            margin-inline: calc(50% - 50vw);
+        }
+
+        .feed-body img {
+            display: block;
+            width: 100%;
+            max-width: none;
+            height: auto;
+            /* Кадр не режем: высокое фото показывается целиком во всю ширину.
+               В свёрнутой карточке высоту ограничивает расчёт в FeedPost.vue */
+            max-height: none;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        /* Картинка отдельным блоком (редактор вставляет её без обёртки):
+           после общего правила — иначе width: 100% оставлял её уже экрана */
+        .feed-body > img {
+            width: 100vw;
+            max-width: none;
+            margin-inline: calc(50% - 50vw);
+        }
+    }
+
+    /* Кнопка в потоке: тот же кегль и ритм, что у текста, только акцентный цвет */
+    .feed-teaser__more {
+        margin-inline-start: 0.25rem;
+        border: 0;
+        background: none;
+        padding: 0;
+        font: inherit;
+        font-weight: 600;
+        color: rgb(var(--c-accent));
+        cursor: pointer;
+    }
+
+    .feed-teaser__more:hover {
+        color: rgb(var(--c-accent-hover));
+    }
+
+    /* Многоточие перед кнопкой — не текст поста, поэтому приглушённое */
+    .feed-teaser__cut {
+        color: rgb(var(--c-muted));
+    }
+
+    /* Если обрезка упёрлась в фото, кнопка идёт строкой сразу под кадром */
+    .feed-teaser__row {
+        margin-top: 0.5rem;
+    }
+
+    /* Нижняя навигация на телефоне: ряд 60px над безопасной зоной iPhone.
+       z-30 — ниже уведомления о cookie (40) и модалок (50). */
+    .bottom-nav {
+        position: fixed;
+        inset-inline: 0;
+        bottom: 0;
+        z-index: 30;
+        display: grid;
+        /* Две ячейки, монограмма 56px, ещё две: 5 слотов по ~78px на 375px */
+        grid-template-columns: repeat(2, minmax(0, 1fr)) 3.5rem repeat(2, minmax(0, 1fr));
+        align-items: center;
+        border-top: 1px solid rgb(var(--c-line));
+        background: rgb(var(--c-surface));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .bottom-nav__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.125rem;
+        min-height: 3.75rem;
+        font-size: 0.6875rem;
+        font-weight: 500;
+        color: rgb(var(--c-muted));
+        text-decoration: none;
+        transition: color 150ms ease;
+    }
+
+    .bottom-nav__item svg {
+        width: 1.375rem;
+        height: 1.375rem;
+    }
+
+    .bottom-nav__item:hover {
+        color: rgb(var(--c-content));
+    }
+
+    /* Активный раздел — акцентный цвет, как в верхнем меню */
+    .bottom-nav__item--active {
+        color: rgb(var(--c-accent));
+    }
+
+    .bottom-nav__item:focus-visible,
+    .bottom-nav__logo:focus-visible {
+        outline: 2px solid rgb(var(--c-accent));
+        outline-offset: 2px;
+    }
+
+    /* Центр: монограмма на приподнятом круге — «ЧП» вместо мелкого SVG-логотипа */
+    .bottom-nav__logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        justify-self: center;
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 9999px;
+        background: rgb(var(--c-accent));
+        color: rgb(var(--c-accent-contrast));
+        font-size: 0.9375rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-decoration: none;
+        transform: translateY(-0.75rem);
+    }
+
+    /* Шторка оформления: поднимается над нижней панелью, не перекрывая её */
+    .bottom-sheet {
+        position: fixed;
+        inset-inline: 0;
+        /* 61px = 60px панели + её верхняя граница: шторка встаёт вплотную */
+        bottom: calc(3.8125rem + env(safe-area-inset-bottom, 0px));
+        z-index: 40;
+        max-height: 70vh;
+        overflow-y: auto;
+        border-top: 1px solid rgb(var(--c-line-strong));
+        background: rgb(var(--c-surface));
+        padding: 1rem 1.25rem 1.25rem;
+    }
+
+    .bottom-sheet__close {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border: 0;
+        background: transparent;
+        color: rgb(var(--c-muted));
+        cursor: pointer;
+        transition: color 150ms ease;
+    }
+
+    .bottom-sheet__close:hover {
+        color: rgb(var(--c-content));
+    }
+
+    /* Плашка палитры: образец цвета, название и состояние выбора */
+    .theme-choice {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        padding: 0.5rem 0.625rem;
+        font-size: 0.9375rem;
+        color: rgb(var(--c-content));
+        text-align: left;
+        cursor: pointer;
+        transition:
+            background-color 150ms ease,
+            color 150ms ease;
+    }
+
+    .theme-choice:hover {
+        background: rgb(var(--c-surface-muted));
+    }
+
+    .theme-choice--active {
+        background: rgb(var(--c-accent-soft));
+        color: rgb(var(--c-accent));
+    }
+
+    .theme-choice__swatch {
+        width: 0.75rem;
+        height: 0.75rem;
+        flex: none;
+        border: 1px solid rgb(var(--c-line));
+        border-radius: 2px;
+    }
+
+    /* Место под нижнюю навигацию: отступ страницы и подъём плавающих элементов */
+    /* 60px панели + 12px, на которые поднято центральное «ЧП» */
+    .page-with-bottom-nav {
+        padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .above-bottom-nav {
+        bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .cookie-above-bottom-nav {
+        bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Панель работает до 1024px: на планшете она тоже удобнее меню в шапке */
+    @media (min-width: 1024px) {
+        .page-with-bottom-nav {
+            padding-bottom: 0;
+        }
+
+        .above-bottom-nav {
+            bottom: 1.5rem;
+        }
+
+        .cookie-above-bottom-nav {
+            bottom: 0;
+        }
+    }
+
+    /* Планшет: ячейки шире, поэтому иконки и подписи чуть крупнее */
+    @media (min-width: 640px) and (max-width: 1023.98px) {
+        .bottom-nav__item {
+            font-size: 0.75rem;
+        }
+
+        .bottom-nav__item svg {
+            width: 1.5rem;
+            height: 1.5rem;
         }
     }
 

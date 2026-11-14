@@ -12,7 +12,7 @@
         <button
             v-if="visible"
             type="button"
-            class="fixed bottom-6 right-4 z-30 inline-flex h-11 w-11 items-center justify-center bg-surface-muted text-content shadow-sm transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:right-6"
+            class="above-bottom-nav fixed right-4 z-30 sm:bottom-6 inline-flex h-11 w-11 items-center justify-center bg-surface-muted text-content shadow-sm transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:right-6"
             aria-label="Наверх"
             title="Наверх"
             @click="backToTop"

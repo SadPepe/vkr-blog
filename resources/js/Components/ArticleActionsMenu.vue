@@ -85,7 +85,9 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["delete"]);
+// Родитель узнаёт результат действия: в ленте с локальным срезом (Home)
+// метку и исчезновение поста нужно обновить без перезагрузки страницы
+const emit = defineEmits(["delete", "pin", "visibility"]);
 
 const open = ref(false);
 const rootRef = ref(null);
@@ -112,12 +114,24 @@ onBeforeUnmount(() => {
 
 const togglePin = () => {
     open.value = false;
-    router.patch(route("articles.pin", { article: props.article.slug }), {}, { preserveScroll: true });
+    // Значение вычисляем до запроса: после него props.article придёт уже новым
+    const pinned = !props.article.is_pinned;
+
+    router.patch(route("articles.pin", { article: props.article.slug }), {}, {
+        preserveScroll: true,
+        onSuccess: () => emit("pin", props.article, pinned),
+    });
 };
 
 const toggleVisibility = () => {
     open.value = false;
-    router.patch(route("articles.visibility", { article: props.article.slug }), {}, { preserveScroll: true });
+    // Текущий статус тоже запоминаем заранее
+    const hidden = props.article.status === "published";
+
+    router.patch(route("articles.visibility", { article: props.article.slug }), {}, {
+        preserveScroll: true,
+        onSuccess: () => emit("visibility", props.article, hidden),
+    });
 };
 
 const requestDelete = () => {

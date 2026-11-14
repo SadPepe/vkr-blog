@@ -38,7 +38,7 @@ const accept = () => {
     >
         <div
             v-if="visible"
-            class="fixed inset-x-0 bottom-0 z-40 border-t border-line-strong bg-surface"
+            class="cookie-above-bottom-nav fixed inset-x-0 z-40 border-t border-line-strong bg-surface"
             role="region"
             aria-label="Использование файлов cookie"
         >

@@ -1,5 +1,9 @@
 * text=auto eol=lf
 
+# Скрипты для Windows: CRLF, иначе cmd.exe спотыкается на блоках и метках
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
 *.blade.php diff=html
 *.css diff=css
 *.html diff=html
