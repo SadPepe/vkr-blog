@@ -22,8 +22,8 @@
 
 .PARAMETER BackupDir
     Куда складывать бэкап. По умолчанию backups в папке проекта,
-    scripts/backup.sh удаляет копии старше 14 дней. Абсолютный путь задавайте
-    в нотации WSL (/mnt/d/vkr-backups) — каталог читает backup.sh внутри WSL.
+    scripts/backup.ps1 удаляет копии старше 14 дней. Можно передать
+    абсолютный путь, например D:\vkr-backups.
 
 .PARAMETER HealthUrl
     Адрес проверки после перезапуска. По умолчанию http://127.0.0.1:8080/up.
@@ -123,18 +123,19 @@ function Assert-ProdBranch {
 
 function Invoke-Backup {
     Write-Step "Бэкап БД и загруженных файлов"
-    if (-not (Get-Command wsl -ErrorAction SilentlyContinue)) {
-        Stop-Deploy "wsl не найден, а бэкап идёт через scripts/backup.sh под WSL. Если копия уже есть — запустите с -SkipBackup."
+
+    $backupScript = Join-Path $PSScriptRoot "backup.ps1"
+    if (-not (Test-Path $backupScript)) {
+        Stop-Deploy "Не найден $backupScript — бэкап делать нечем. Если свежая копия уже есть, запустите с -SkipBackup."
     }
 
-    # Путь нельзя передавать аргументом: wsl.exe искажает обратные слэши и кириллицу
-    # (в Windows PowerShell ломаются ещё и двойные кавычки), а дефолтный каталог
-    # проекта — G:\диплом\... Поэтому каталог задаётся через --cd (WSL переводит
-    # Windows-путь сам), а BACKUP_DIR приходит переменной окружения.
-    $env:BACKUP_DIR = $BackupDir
-    $env:WSLENV = "BACKUP_DIR"
+    # Тем же движком PowerShell, который запустил deploy.ps1 (обычно 5.1 из deploy.cmd)
+    $engine = (Get-Process -Id $PID).Path
+    if (-not $engine) {
+        $engine = "powershell"
+    }
 
-    Invoke-Checked "wsl" @("--cd", $root, "-e", "sh", "scripts/backup.sh")
+    Invoke-Checked $engine @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $backupScript, "-BackupDir", $BackupDir)
 }
 
 function Wait-Health {

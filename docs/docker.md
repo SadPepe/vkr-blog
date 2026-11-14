@@ -63,7 +63,8 @@ DB_SEED=true docker compose up -d --build
 и `Storage::url()` для новых картинок. После изменения `.env` — `docker compose restart app`.
 
 Логи контейнеров ограничены `10m × 3` через `logging` в `docker-compose.yml`.
-Бэкапы БД и файлов — `sh scripts/backup.sh` (см. [docs/backup.md](backup.md)).
+Бэкапы БД и файлов — `scripts/backup.ps1` (Windows) или `sh scripts/backup.sh` (Linux)
+(см. [docs/backup.md](backup.md)).
 
 ## Доступ по локальной сети
 

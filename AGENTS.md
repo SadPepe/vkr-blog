@@ -160,7 +160,8 @@ docker/entrypoint.sh      миграции, ассеты Filament, кэши пр
 - Сервер — домашний ПК (Windows + WSL + Docker), `.env` там **свой и в git не входит**. Секреты и сетевые
   настройки (`APP_URL`, `APP_DOMAIN`, `ACME_EMAIL`, `DB_*`, `SESSION_SECURE_COOKIE`) не коммитить.
 - Выкладка на сервере:
-  `sh scripts/backup.sh` → `git pull --ff-only` → `docker compose build app`
+  бэкап (`scripts/backup.ps1` на Windows, `scripts/backup.sh` на Linux) → `git pull --ff-only`
+  → `docker compose build app`
   → `docker compose up -d` → проверка `/up`. На Windows это делает `scripts\deploy.cmd`
   (меню: релиз / статус и логи / откат на образ `previous` / очистка; ключи `-SkipBackup`,
   `-SkipPull` — обойти шаги). Entrypoint сам делает `storage:link`, `migrate --force`,

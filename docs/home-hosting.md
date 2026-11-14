@@ -231,15 +231,18 @@ Caddy сам выпускает и продлевает сертификат Let
 
 ## 7. Бэкапы
 
-Скрипт `scripts/backup.sh` снимает дамп PostgreSQL и архив загруженных файлов:
+Скрипт `scripts/backup.ps1` снимает дамп PostgreSQL и архив загруженных файлов:
 
 ```powershell
-wsl -e sh -c "cd /mnt/d/<путь-к-проекту> && BACKUP_DIR=/mnt/d/vkr-backups sh scripts/backup.sh"
+.\scripts\backup.ps1
+.\scripts\backup.ps1 -BackupDir D:\vkr-backups
 ```
 
-Настройте запуск раз в сутки через Планировщик заданий Windows (программа `wsl.exe`,
-те же аргументы). Дополнительно сохраните `.env` в защищённое место: без `APP_KEY`
-не расшифруются старые сессии, а без пароля БД не восстановится дамп.
+Настройте запуск раз в сутки через Планировщик заданий Windows (программа
+`powershell.exe`, аргументы `-NoProfile -ExecutionPolicy Bypass -File
+"<папка проекта>\scripts\backup.ps1" -BackupDir D:\vkr-backups`). Дополнительно
+сохраните `.env` в защищённое место: без `APP_KEY` не расшифруются старые сессии,
+а без пароля БД не восстановится дамп.
 
 Требования:
 
@@ -265,7 +268,8 @@ wsl -e sh -c "cd /mnt/d/<путь-к-проекту> && BACKUP_DIR=/mnt/d/vkr-ba
 нет локальных правок, затем снимает бэкап, делает `git pull --ff-only`, `docker compose build app`,
 `docker compose up -d` и до четырёх минут ждёт ответа `http://127.0.0.1:8080/up`.
 На первой ошибке останавливается: контейнер до перезапуска не трогается, сайт остаётся на прежней
-версии. Бэкап идёт через WSL (`scripts/backup.sh`), поэтому без WSL запускайте с `-SkipBackup`.
+версии. Бэкап делает `scripts\backup.ps1` (см. [backup.md](backup.md)), бэкап идёт до `git pull`,
+поэтому при его падении код тоже остаётся прежним.
 
 Без параметров скрипт показывает меню:
 
@@ -283,7 +287,7 @@ wsl -e sh -c "cd /mnt/d/<путь-к-проекту> && BACKUP_DIR=/mnt/d/vkr-ba
 Ручной порядок — если скрипт недоступен:
 
 ```powershell
-wsl -e sh -c "cd /mnt/d/<путь-к-проекту> && sh scripts/backup.sh"
+.\scripts\backup.ps1
 git pull --ff-only
 docker compose build app
 docker compose up -d
