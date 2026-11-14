@@ -22,7 +22,8 @@
 
 .PARAMETER BackupDir
     Куда складывать бэкап. По умолчанию backups в папке проекта,
-    scripts/backup.sh удаляет копии старше 14 дней.
+    scripts/backup.sh удаляет копии старше 14 дней. Абсолютный путь задавайте
+    в нотации WSL (/mnt/d/vkr-backups) — каталог читает backup.sh внутри WSL.
 
 .PARAMETER HealthUrl
     Адрес проверки после перезапуска. По умолчанию http://127.0.0.1:8080/up.
@@ -126,13 +127,14 @@ function Invoke-Backup {
         Stop-Deploy "wsl не найден, а бэкап идёт через scripts/backup.sh под WSL. Если копия уже есть — запустите с -SkipBackup."
     }
 
-    $wslRoot = & wsl wslpath -a $root
-    if ($LASTEXITCODE -ne 0 -or -not $wslRoot) {
-        Stop-Deploy "Не удалось получить путь WSL для '$root'."
-    }
-    $wslRoot = "$wslRoot".Trim()
+    # Путь нельзя передавать аргументом: wsl.exe искажает обратные слэши и кириллицу
+    # (в Windows PowerShell ломаются ещё и двойные кавычки), а дефолтный каталог
+    # проекта — G:\диплом\... Поэтому каталог задаётся через --cd (WSL переводит
+    # Windows-путь сам), а BACKUP_DIR приходит переменной окружения.
+    $env:BACKUP_DIR = $BackupDir
+    $env:WSLENV = "BACKUP_DIR"
 
-    Invoke-Checked "wsl" @("-e", "sh", "-c", "cd '$wslRoot' && BACKUP_DIR='$BackupDir' sh scripts/backup.sh")
+    Invoke-Checked "wsl" @("--cd", $root, "-e", "sh", "scripts/backup.sh")
 }
 
 function Wait-Health {
