@@ -933,3 +933,10 @@ node ~/.dsh/skills/design-taste-frontend/scripts/inspect.mjs "http://127.0.0.1:8
 - Проверено: 375 (ссылка скрыта, скролла нет), 1024/1280/1440 — «Авторы» в верхнем ряду, категории
   начинаются с «Еда», `document.scrollWidth <= innerWidth`; `npm run build` — ok.
 - Ветка `redesign/underground-dev`, коммит не сделан (последний — `88b8fa1`, 2026-11-13).
+
+## 2026-11-14 — итерация зафиксирована
+
+- Коммит итерации — `d2e618f`: нижняя навигация (`BottomNav`), меню «⋯» у своего поста в ленте,
+  автоподгрузка при прокрутке, «Авторы» отдельным пунктом в шапке, `scripts/deploy.cmd`/`deploy.ps1`.
+- Ветки `redesign/underground-dev` и `redesign/underground` на этом коммите, обе запушены.
+- Проверки перед коммитом: `php artisan test` — 173 passed, 2 skipped; `npm run build` — ok.
